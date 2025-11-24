@@ -39,17 +39,29 @@
         .tariff-table td { border: 1px solid #9ca3af; padding: 2px; text-align: center; background-color: white; color: black; }
         .tariff-table input { width: 100%; text-align: center; background: transparent; border: none; font-size: 0.7rem; font-weight: 700; color: #111827; }
         .tariff-table select { width: 100%; text-align: center; background: transparent; border: none; font-size: 0.7rem; font-weight: 700; color: #111827; outline: none; }
-        .tariff-table input:focus, .tariff-table select:focus { background-color: #eff6ff; }
+        
+        /* Textarea specific for tables */
+        .tariff-table textarea { width: 100%; text-align: left; background: transparent; border: none; font-size: 0.7rem; font-weight: 700; color: #111827; resize: none; padding: 2px; line-height: 1.1; }
+        
+        .tariff-table input:focus, .tariff-table select:focus, .tariff-table textarea:focus { background-color: #eff6ff; }
 
-        /* View Mode */
+        /* View Mode General */
         .view-mode .input-field, .view-mode input, .view-mode select, .view-mode textarea { 
             pointer-events: none; background-color: #e5e7eb !important; color: #4b5563 !important; border-color: transparent; 
         }
         
-        /* STATUS BOX STYLES */
-        .status-valid { background-color: #fef08a !important; color: #854d0e !important; border: 2px solid #eab308 !important; } 
-        .status-expired { background-color: #fee2e2 !important; color: #991b1b !important; border: 2px solid #ef4444 !important; } 
+        /* STATUS BOX STYLES (Overrides View Mode) */
+        .status-valid, .view-mode .status-valid { background-color: #bbf7d0 !important; color: #14532d !important; border: 2px solid #15803d !important; } /* Green */
+        .status-expired, .view-mode .status-expired { background-color: #fbcfe8 !important; color: #831843 !important; border: 2px solid #db2777 !important; } /* Pink */
         .status-pending { background-color: #f3f4f6 !important; color: #6b7280 !important; border: 2px solid #d1d5db !important; } 
+
+        /* Free Days Box Override for Read Only */
+        .view-mode #freeDays {
+            background-color: #fde047 !important; /* Yellow-300 */
+            color: #000 !important;
+            font-weight: 800 !important;
+            border: 2px solid #eab308 !important;
+        }
 
         /* Overlays */
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
@@ -60,7 +72,6 @@
 </head>
 <body class="p-2 md:p-4 overflow-hidden" id="mainBody">
 
-    <!-- Access Overlay -->
     <div id="accessOverlay" class="overlay">
         <div class="bg-gray-800 p-8 rounded-xl shadow-2xl text-center w-80 md:w-96 border border-gray-700">
             <div class="mb-6 flex justify-center">
@@ -73,7 +84,6 @@
         </div>
     </div>
 
-    <!-- Reports Modal -->
     <div id="reportsModal" class="overlay" onclick="if(event.target===this)closeReports()">
         <div class="bg-white w-11/12 max-w-7xl rounded-lg shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
             <div class="bg-indigo-900 p-4 flex justify-between items-center text-white">
@@ -90,7 +100,6 @@
                     <button onclick="closeReports()" class="hover:text-red-400 ml-2"><i class="fas fa-times text-xl"></i></button>
                 </div>
             </div>
-            <!-- Report Header -->
             <div class="bg-gray-100 px-4 py-2 border-b border-gray-300 font-bold text-xs flex justify-between text-gray-700">
                 <div class="w-1/5">Customer Name</div>
                 <div class="w-1/12">Mode</div>
@@ -98,28 +107,23 @@
                 <div class="w-1/12 text-center">End Date</div>
                 <div class="w-1/12 text-right">Status</div>
             </div>
-            <!-- Report Body -->
             <div class="p-0 overflow-y-auto flex-1 bg-white" id="reportsArea">
-                <!-- Rows injected via JS -->
-            </div>
+                </div>
             <div class="bg-gray-100 p-2 text-right text-xs text-gray-500 border-t border-gray-300" id="reportCount">0 Records</div>
         </div>
     </div>
 
-    <!-- Loading Overlay -->
     <div id="loadingOverlay" class="overlay">
         <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
         <h2 class="text-xl font-bold text-white" id="loadingText">Saving Data...</h2>
     </div>
 
-    <!-- Top Controls -->
     <div class="max-w-[1400px] mx-auto mb-4 no-print opacity-0 transition-opacity duration-500" id="topControls">
         <div class="bg-white border-l-4 border-blue-600 p-3 rounded shadow-md flex flex-col md:flex-row justify-between items-end gap-3">
             
             <div class="flex flex-col gap-2 w-full md:w-auto">
                 <div id="syncStatus" class="text-[10px] font-bold text-gray-500"><i class="fas fa-circle-notch fa-spin mr-1"></i> Connecting...</div>
                 <div class="flex gap-1 items-center">
-                    <!-- SEARCH DROPDOWN -->
                     <select id="cloudHistory" class="border border-gray-400 rounded px-2 py-1 text-xs w-96 text-blue-900 font-bold bg-blue-50" onchange="loadFromDropdown(this.value)">
                         <option value="">-- Select Customer (A-Z) --</option>
                     </select>
@@ -131,17 +135,14 @@
             <div class="flex flex-wrap gap-2 justify-end">
                 <span id="modeBadge" class="hidden bg-gray-200 text-gray-600 px-3 py-1 rounded text-xs font-extrabold uppercase border border-gray-400">READ ONLY</span>
                 
-                <!-- REPORTS BUTTON -->
                 <button onclick="openReports()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded shadow font-bold text-xs flex items-center">
                     <i class="fas fa-chart-pie mr-1"></i> Reports
                 </button>
 
-                <!-- EMAIL BUTTON -->
                 <button onclick="sendEmail()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1.5 rounded shadow font-bold text-xs flex items-center">
                     <i class="fas fa-envelope mr-1"></i> Email
                 </button>
 
-                <!-- UPLOAD BUTTON -->
                 <div class="relative">
                     <input type="file" id="approvalUpload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" onchange="handleApproval(this)">
                     <button onclick="document.getElementById('approvalUpload').click()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-1.5 rounded shadow font-bold text-xs flex items-center border border-yellow-500">
@@ -161,7 +162,6 @@
         </div>
     </div>
 
-    <!-- MAIN FORM -->
     <div id="printArea" class="page-container max-w-[1350px] mx-auto bg-gray-300 shadow-2xl p-6 rounded-lg border border-gray-400 opacity-0 transition-opacity duration-500 text-black min-h-[800px]">
         
         <div class="mb-2">
@@ -181,7 +181,6 @@
         </div>
 
         <div class="grid grid-cols-6 gap-3 mb-4 bg-gray-100 p-4 rounded border border-gray-300 shadow-sm">
-            <!-- Tariff Mode -->
             <div class="col-span-1">
                 <label class="block text-[10px] font-bold text-purple-700 uppercase">Tariff Mode <span class="text-red-600">*</span></label>
                 <select id="tariffMode" onchange="toggleTariffTables()" class="input-field h-8 bg-purple-50 border-purple-300 text-purple-900">
@@ -190,7 +189,6 @@
                     <option value="FreeDays">Free Days Only</option>
                 </select>
             </div>
-            <!-- Destuffing Type -->
             <div class="col-span-1">
                 <label class="block text-[10px] font-bold text-blue-700 uppercase">Destuffing Type</label>
                 <select id="destuffType" onchange="toggleTariffTables()" class="input-field h-8 bg-blue-50 border-blue-300 text-blue-900">
@@ -200,14 +198,28 @@
                     <option value="ICD">ICD Destuffing</option>
                 </select>
             </div>
-            <!-- Customer Name -->
             <div class="col-span-2"><label class="block text-[10px] font-bold text-gray-600 uppercase">Customer Name <span class="text-red-600">*</span></label><input type="text" id="customerName" class="input-field font-bold text-blue-900 h-8 bg-white uppercase border-l-4 border-blue-600" placeholder="ENTER NAME" oninput="syncCustomerName()"></div>
-            <!-- CHA -->
+            
+            <div class="col-span-1">
+                <label class="block text-[10px] font-bold text-gray-600 uppercase">Customer Type <span class="text-red-600">*</span></label>
+                <select id="customerType" class="input-field h-8 bg-white uppercase">
+                    <option value="">-- Select --</option>
+                    <option>Importer</option>
+                    <option>CHA</option>
+                    <option>Forwarder</option>
+                    <option>Shipping Line</option>
+                    <option>Transporter</option>
+                </select>
+            </div>
+            
+            <div class="col-span-1">
+                <label class="block text-[10px] font-bold text-gray-600 uppercase">Vol / Month <span class="text-red-600">*</span></label>
+                <input type="text" id="volMonth" class="input-field h-8 bg-white uppercase" placeholder="TEUs">
+            </div>
+
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">CHA / Forwarder</label><input type="text" id="chaName" class="input-field h-8 bg-white uppercase"></div>
-            <!-- Version -->
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Version</label><input type="text" id="version" value="Version 1" class="input-field h-8 bg-white text-center"></div>
             
-            <!-- Sales Person -->
             <div class="col-span-1">
                 <label class="block text-[10px] font-bold text-gray-600 uppercase">Sales Person</label>
                 <select id="salesPerson" class="input-field h-8 bg-white uppercase">
@@ -220,15 +232,12 @@
                     <option>Mohik Sharma</option>
                 </select>
             </div>
-            <!-- Dates -->
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Effective From</label><input type="date" id="dateFrom" onchange="calculateMonths()" class="input-field h-8 bg-white"></div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">End Date</label><input type="date" id="dateTo" onchange="calculateMonths()" class="input-field h-8 bg-white"></div>
-            <!-- Free Days -->
-            <div class="col-span-1"><label class="block text-[10px] font-bold text-green-700 uppercase">Free Days</label><input type="text" id="freeDays" oninput="updateFooter(this.value); toggleTariffTables();" placeholder="" class="input-field h-8 bg-white border-green-500 text-green-800"></div>
-            <!-- Valid For -->
+            <div class="col-span-1"><label class="block text-[10px] font-bold text-green-700 uppercase">Free Days</label><input type="text" id="freeDays" oninput="updateFooter(this.value); toggleTariffTables();" placeholder="" class="input-field h-8 bg-yellow-300 text-black border-yellow-500 font-extrabold"></div>
+            
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Valid For</label><input type="text" id="validity" readonly class="input-field bg-transparent border-none text-red-700 font-bold text-xs h-8"></div>
             
-            <!-- STATUS BOX -->
             <div class="col-span-1">
                 <label class="block text-[10px] font-bold text-gray-600 uppercase">Tariff Status</label>
                 <div id="statusBox" class="input-field h-8 flex items-center justify-center font-bold text-[10px] uppercase rounded border text-center status-valid">
@@ -237,15 +246,12 @@
             </div>
         </div>
 
-        <!-- Free Days Box -->
         <div id="prominentFreeDays" class="hidden mb-6 bg-green-50 border-2 border-green-500 p-6 rounded text-center shadow-lg">
             <h3 class="text-green-800 text-lg font-bold uppercase mb-2">Free Days Allocation</h3>
             <p id="prominentFreeDaysText" class="text-4xl font-extrabold text-green-600">03 DAYS</p>
         </div>
 
-        <!-- TARIFF TABLES -->
         <div id="tariffsContainer">
-            <!-- TABLE 1: Factory -->
             <div id="factorySection" class="mb-6" style="display:none;">
                 <div class="bg-blue-900 text-white text-xs font-bold px-3 py-1.5 uppercase mb-0 rounded-t flex justify-between items-center shadow"><span><i class="fas fa-industry mr-2"></i>1. Factory Destuffing Tariff</span><span class="text-[10px] text-yellow-300 bg-blue-800 px-2 py-0.5 rounded">Details Head Wise</span></div>
                 <table class="tariff-table border-2 border-blue-900" id="tableFactory">
@@ -265,7 +271,6 @@
                 </table>
             </div>
 
-            <!-- TABLE 2: ICD -->
             <div id="icdSection" class="mb-6" style="display:none;">
                 <div class="bg-purple-900 text-white text-xs font-bold px-3 py-1.5 uppercase mb-0 rounded-t shadow"><i class="fas fa-warehouse mr-2"></i>2. ICD Destuffing Weight Slab</div>
                 <table class="tariff-table border-2 border-purple-900" id="tableICD">
@@ -287,7 +292,6 @@
             </div>
         </div>
 
-        <!-- TRANSPORT -->
         <div class="mb-4 pt-4">
             <div class="flex justify-between items-end mb-1">
                 <div class="bg-yellow-600 text-white px-3 py-1.5 rounded-t font-bold text-xs uppercase"><i class="fas fa-truck mr-2"></i> 3. Transport Tariff</div>
@@ -304,8 +308,8 @@
                         <th class="w-32">Origin</th> 
                         <th class="w-32">Destination</th> 
                         <th class="w-32">Return Empty</th> 
-                        <th>Discount (₹)</th> 
-                        <th>Remarks</th> 
+                        <th class="w-20">Discount (₹)</th> 
+                        <th class="w-64">Remarks</th> 
                         <th class="bg-white border-none w-6 no-print"></th>
                     </tr>
                 </thead>
@@ -313,7 +317,6 @@
             </table>
         </div>
 
-        <!-- INCENTIVE -->
         <div class="mb-4 pt-2">
             <div class="flex justify-between items-end mb-1">
                 <div class="bg-teal-700 text-white px-3 py-1.5 rounded-t font-bold text-xs uppercase"><i class="fas fa-gift mr-2"></i> 4. Incentive Details</div>
@@ -326,7 +329,9 @@
             <table class="tariff-table border-2 border-teal-700">
                 <thead>
                     <tr class="bg-teal-800 text-white">
-                        <th class="w-48">Line (MSC / NON MSC)</th> <th>Discount 20"</th> <th>Discount 40"</th> <th class="bg-white border-none w-6 no-print"></th>
+                        <th class="w-48">Line (MSC / NON MSC)</th> <th>Discount 20"</th> <th>Discount 40"</th> 
+                        <th class="w-64">Remarks</th> 
+                        <th class="bg-white border-none w-6 no-print"></th>
                     </tr>
                 </thead>
                 <tbody id="tbodyIncentive"></tbody>
@@ -335,7 +340,6 @@
 
         <div class="bg-yellow-50 p-2 rounded border border-yellow-400 mb-4"><label class="block text-[10px] font-bold text-yellow-900 mb-1 uppercase">Remarks / Special Notes</label><textarea id="remarks" class="w-full border border-yellow-300 rounded p-1 text-xs bg-white focus:outline-none text-gray-700 font-bold" rows="2"></textarea></div>
         
-        <!-- PREVIEW SECTION -->
         <div id="approvalPreviewSection" class="hidden mt-6 border-2 border-dashed border-gray-400 rounded p-4 bg-gray-50 break-inside-avoid">
             <div class="flex justify-between items-center mb-2 border-b border-gray-300 pb-1">
                 <h3 class="text-sm font-bold text-gray-700 uppercase"><i class="fas fa-paperclip mr-1"></i> Approval Reference</h3>
@@ -709,8 +713,13 @@
             const dFrom = document.getElementById('dateFrom').value;
             const dTo = document.getElementById('dateTo').value;
             const free = document.getElementById('freeDays').value;
+            // New Mandatory Fields
+            const cType = document.getElementById('customerType').value;
+            const vol = document.getElementById('volMonth').value;
 
             if(!cust) return alert("Error: Customer Name is Required");
+            if(!cType) return alert("Error: Customer Type is Mandatory");
+            if(!vol) return alert("Error: Volume per Month is Mandatory");
             if(!dFrom || !dTo) return alert("Error: Effective From & End Date are Required");
             if(!free) return alert("Error: Free Days are Required");
 
@@ -751,7 +760,7 @@
                     transValues.push({
                         t: document.getElementById(`${uid}_trans`).value,
                         d: document.getElementById(`${uid}_dest`).value,
-                        b: document.getElementById(`${uid}_base`).value,
+                        b: document.getElementById(`${uid}_base`).value, // This is the textarea now
                         v: document.getElementById(`${uid}_disc`).value
                     });
                 });
@@ -762,7 +771,8 @@
                     incValues.push({
                         l: document.getElementById(`${uid}_line`).value,
                         d20: document.getElementById(`${uid}_d20`).value,
-                        d40: document.getElementById(`${uid}_d40`).value
+                        d40: document.getElementById(`${uid}_d40`).value,
+                        rem: document.getElementById(`${uid}_rem`).value // Added Remarks
                     });
                 });
 
@@ -770,7 +780,8 @@
                 fd.append('Date', document.getElementById('dateToday').value);
                 fd.append('Name', `[MASTER] ${cust} [ID:${entryId}]`);
                 fd.append('Email', `Ref: ${document.getElementById('tariffNo').value} | Dates: ${dFrom} to ${dTo} | Mode: ${document.getElementById('tariffMode').value} | Type: ${document.getElementById('destuffType').value}`);
-                fd.append('Phone', `Valid: ${document.getElementById('validity').value} | Free: ${free}`);
+                // Added CType and Vol to Phone storage string
+                fd.append('Phone', `Valid: ${document.getElementById('validity').value} | Free: ${free} | CType: ${cType} | Vol: ${vol}`);
                 fd.append('Department', `Sales: ${document.getElementById('salesPerson').value} | CHA: ${document.getElementById('chaName').value} | TC: ${document.getElementById('transportClaimedBy').value} | IC: ${document.getElementById('incentiveClaimedBy').value}`);
                 fd.append('City', `Ver: ${document.getElementById('version').value} | Rem: ${document.getElementById('remarks').value}`);
                 fd.append('Data1', JSON.stringify(factoryValues));  
@@ -808,6 +819,10 @@
                         type: meta1.find(s=>s.includes('Type:'))?.split('Type:')[1]?.trim(),
                         valid: meta2[0]?.split('Valid:')[1]?.trim(),
                         free: meta2.find(s=>s.includes('Free:'))?.split('Free:')[1]?.trim(),
+                        // NEW PARSING
+                        cType: meta2.find(s=>s.includes('CType:'))?.split('CType:')[1]?.trim(),
+                        vol: meta2.find(s=>s.includes('Vol:'))?.split('Vol:')[1]?.trim(),
+                        
                         sales: meta3[0]?.split('Sales:')[1]?.trim(),
                         cha: meta3.find(s=>s.includes('CHA:'))?.split('CHA:')[1]?.trim(),
                         tc: meta3.find(s=>s.includes('TC:'))?.split('TC:')[1]?.trim(),
@@ -863,6 +878,9 @@
             document.getElementById('destuffType').value = rec.type || "";
             document.getElementById('transportClaimedBy').value = rec.tc || rec.name; 
             document.getElementById('incentiveClaimedBy').value = rec.ic || rec.name;
+            // LOAD NEW FIELDS
+            document.getElementById('customerType').value = rec.cType || "";
+            document.getElementById('volMonth').value = rec.vol || "";
             
             if(rec.dates && rec.dates.includes('to')) {
                 const parts = rec.dates.split('to');
@@ -904,7 +922,10 @@
                 document.getElementById('tbodyIncentive').innerHTML = '';
                 if(rec.jsonInc) {
                     const iData = JSON.parse(rec.jsonInc);
-                    iData.forEach(i => { addIncentiveRow({ line: i.l, d20: i.d20, d40: i.d40 }); });
+                    iData.forEach(i => { 
+                        // Modified to load the new remarks field
+                        addIncentiveRow({ line: i.l, d20: i.d20, d40: i.d40, rem: i.rem || '' }); 
+                    });
                 } else { addIncentiveRow(); }
             } catch(e) { console.error("JSON Parse Error", e); alert("Data corrupted."); }
             toggleReadOnly(true);
@@ -985,7 +1006,8 @@
                 const uid = `${tableId}_${rIdx}`;
                 let html = `<td class="font-bold text-gray-700 whitespace-nowrap text-left px-2 bg-gray-50">${row.slab}</td>`;
                 let pTotal = 0;
-                row.p.forEach((val, cIdx) => { pTotal += val; html += `<td><input type="number" id="${uid}_p${cIdx}" value="${val}" readonly class="text-blue-900 font-bold bg-transparent"></td>`; });
+                // ADDED tabindex="-1" and visual styling for Public Tariff Read-Only
+                row.p.forEach((val, cIdx) => { pTotal += val; html += `<td><input type="number" id="${uid}_p${cIdx}" value="${val}" readonly tabindex="-1" class="text-blue-900 font-bold bg-gray-100 pointer-events-none"></td>`; });
                 html += `<td class="bg-blue-100 font-extrabold text-blue-900" id="${uid}_ptotal">${pTotal.toLocaleString()}</td>`;
                 for(let i=0; i<colCount; i++) { html += `<td><input type="number" id="${uid}_d${i}" value="0" oninput="calcRow('${uid}', ${colCount})" class="text-green-700 font-bold border-b border-green-100 focus:bg-green-50"></td>`; }
                 html += `<td class="bg-green-100 font-bold text-green-800" id="${uid}_dtotal">0</td>`;
@@ -1062,7 +1084,8 @@
             const transOpts = ['HCPL','PCS','OTHER','SELF'].map(o => `<option ${data.trans===o?'selected':''}>${o}</option>`).join('');
             const dests = ['Ludhiana','Mandi Gobindgarh','Malerkotla','Sangrur','Dhuri','Sunam'];
             const destOpts = dests.map(o => `<option ${data.dest===o?'selected':''}>${o}</option>`).join('');
-            tr.innerHTML = `<td><select id="${uid}_trans" class="text-blue-900 font-bold"><option value="">-- Select --</option>${transOpts}</select></td><td><input type="text" value="Kilaraipur" id="${uid}_org" class="w-full text-center uppercase font-bold text-gray-600" readonly></td><td><select id="${uid}_dest" onchange="updateDiscount('${uid}')" class="uppercase font-bold"><option value="">--</option>${destOpts}</select></td><td><input type="text" value="${data.ret||'Empty Yard'}" id="${uid}_ret" class="w-full text-center uppercase font-bold"></td><td><input type="number" value="${data.disc||''}" id="${uid}_disc" class="bg-yellow-50 text-red-600 font-bold"></td><td><input type="text" value="${data.base||''}" id="${uid}_base" class="bg-yellow-50 font-bold"></td><td class="no-print"><button onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button></td>`;
+            // CHANGED: Remarks is now a textarea
+            tr.innerHTML = `<td><select id="${uid}_trans" class="text-blue-900 font-bold"><option value="">-- Select --</option>${transOpts}</select></td><td><input type="text" value="Kilaraipur" id="${uid}_org" class="w-full text-center uppercase font-bold text-gray-600" readonly></td><td><select id="${uid}_dest" onchange="updateDiscount('${uid}')" class="uppercase font-bold"><option value="">--</option>${destOpts}</select></td><td><input type="text" value="${data.ret||'Empty Yard'}" id="${uid}_ret" class="w-full text-center uppercase font-bold"></td><td><input type="number" value="${data.disc||''}" id="${uid}_disc" class="bg-yellow-50 text-red-600 font-bold"></td><td><textarea id="${uid}_base" class="w-full text-xs bg-yellow-50 font-bold p-1 border-none focus:outline-none resize-none overflow-hidden" rows="2" style="min-height:30px;">${data.base||''}</textarea></td><td class="no-print"><button onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button></td>`;
             tbody.appendChild(tr); 
             if(data.trans) document.getElementById(`${uid}_trans`).value = data.trans;
             if(data.dest) document.getElementById(`${uid}_dest`).value = data.dest;
@@ -1079,7 +1102,8 @@
 
         function addIncentiveRow(data={}) {
             const tbody = document.getElementById('tbodyIncentive'); const tr = document.createElement('tr'); const uid = `inc_${Date.now()}`;
-            tr.innerHTML = `<td><select id="${uid}_line" class="text-teal-900 font-bold w-full bg-transparent"><option>MSC</option><option>NON MSC</option></select></td><td><input type="number" value="${data.d20||''}" id="${uid}_d20" class="w-full bg-teal-50 text-center font-bold"></td><td><input type="number" value="${data.d40||''}" id="${uid}_d40" class="w-full bg-teal-50 text-center font-bold"></td><td class="no-print"><button onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button></td>`;
+            // CHANGED: Added Remarks Textarea Column
+            tr.innerHTML = `<td><select id="${uid}_line" class="text-teal-900 font-bold w-full bg-transparent"><option>MSC</option><option>NON MSC</option></select></td><td><input type="number" value="${data.d20||''}" id="${uid}_d20" class="w-full bg-teal-50 text-center font-bold"></td><td><input type="number" value="${data.d40||''}" id="${uid}_d40" class="w-full bg-teal-50 text-center font-bold"></td><td><textarea id="${uid}_rem" class="w-full text-xs bg-teal-50 font-bold p-1 border-none focus:outline-none resize-none overflow-hidden" rows="2" style="min-height:30px;">${data.rem||''}</textarea></td><td class="no-print"><button onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button></td>`;
             tbody.appendChild(tr);
             if(data.line) document.getElementById(`${uid}_line`).value = data.line;
         }
