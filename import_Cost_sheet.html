@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Import Tariff Sheet Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* --- DESIGN LOGIC --- */
+        body { background-color: #1f2937; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #e5e7eb; }
+        
+        @media print {
+            @page { size: A4 landscape; margin: 5mm; }
+            body { background-color: white !important; color: black !important; -webkit-print-color-adjust: exact; }
+            .page-container { background-color: white !important; box-shadow: none !important; border: none !important; width: 100% !important; margin: 0 !important; max-width: 100% !important; }
+            .no-print { display: none !important; }
+            input, select, textarea { border: none !important; background: transparent !important; padding: 0 !important; resize: none; color: black !important; appearance: none; }
+            
+            /* Force Colors */
+            .bg-header-public { background-color: #1e40af !important; color: white !important; }
+            .bg-header-discount { background-color: #15803d !important; color: white !important; }
+            .bg-purple-header { background-color: #581c87 !important; color: white !important; }
+            .bg-yellow-100 { background-color: #fef9c3 !important; }
+            
+            .hide-on-freedays { display: none !important; }
+            .hide-section { display: none !important; }
+            .status-box-print { border: 2px solid #000 !important; font-weight: bold !important; }
+        }
+
+        /* Inputs & Tables */
+        .input-field { border: 1px solid #6b7280; border-radius: 4px; padding: 4px 8px; width: 100%; font-size: 0.75rem; background-color: #f3f4f6; color: #111827; font-weight: 700; transition: 0.2s; }
+        .input-field:focus { outline: none; border-color: #2563eb; background-color: #ffffff; }
+        .input-field:disabled { background-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; } 
+        
+        .tariff-table { width: 100%; border-collapse: collapse; font-size: 0.65rem; }
+        .tariff-table th { border: 1px solid #fff; padding: 5px 2px; text-align: center; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
+        .tariff-table td { border: 1px solid #9ca3af; padding: 2px; text-align: center; background-color: white; color: black; }
+        .tariff-table input { width: 100%; text-align: center; background: transparent; border: none; font-size: 0.7rem; font-weight: 700; color: #111827; }
+        .tariff-table select { width: 100%; text-align: center; background: transparent; border: none; font-size: 0.7rem; font-weight: 700; color: #111827; outline: none; }
+        .tariff-table input:focus, .tariff-table select:focus { background-color: #eff6ff; }
+
+        /* View Mode */
+        .view-mode .input-field, .view-mode input, .view-mode select, .view-mode textarea { 
+            pointer-events: none; background-color: #e5e7eb !important; color: #4b5563 !important; border-color: transparent; 
+        }
+        
+        /* STATUS BOX STYLES */
+        .status-valid { background-color: #fef08a !important; color: #854d0e !important; border: 2px solid #eab308 !important; } 
+        .status-expired { background-color: #fee2e2 !important; color: #991b1b !important; border: 2px solid #ef4444 !important; } 
+        .status-pending { background-color: #f3f4f6 !important; color: #6b7280 !important; border: 2px solid #d1d5db !important; } 
+
+        /* Overlays */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        #loadingOverlay { background: rgba(0,0,0,0.9); display: none; z-index: 1000; color: white; }
+        #accessOverlay { background: #111827; }
+        #reportsModal { background: rgba(0,0,0,0.8); display: none; z-index: 3000; align-items: flex-start; padding-top: 50px; }
+    </style>
+</head>
+<body class="p-2 md:p-4 overflow-hidden" id="mainBody">
+
+    <!-- Access Overlay -->
+    <div id="accessOverlay" class="overlay">
+        <div class="bg-gray-800 p-8 rounded-xl shadow-2xl text-center w-80 md:w-96 border border-gray-700">
+            <div class="mb-6 flex justify-center">
+                <img src="https://www.hindterminals.com/adminAssets/img/siteSetting/1754228093_footer.png" alt="Hind Terminals Logo" class="h-20 object-contain bg-white p-2 rounded">
+            </div>
+            <h2 class="text-xl font-bold text-white mb-1">Import Tariff Sheet Generator</h2>
+            <p class="text-gray-400 text-xs mb-6">Hind Terminals Pvt Ltd</p>
+            <input type="password" id="accessPass" class="w-full border-2 border-gray-600 rounded-lg p-3 text-center text-lg mb-4 bg-gray-700 text-white focus:border-blue-500 outline-none" placeholder="Enter Password">
+            <button onclick="checkAccess()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition">UNLOCK</button>
+        </div>
+    </div>
+
+    <!-- Reports Modal -->
+    <div id="reportsModal" class="overlay" onclick="if(event.target===this)closeReports()">
+        <div class="bg-white w-11/12 max-w-7xl rounded-lg shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
+            <div class="bg-indigo-900 p-4 flex justify-between items-center text-white">
+                <div class="flex gap-4 items-center">
+                    <h3 class="font-bold text-lg"><i class="fas fa-chart-bar mr-2"></i> Tariff Reports</h3>
+                    <div class="flex bg-indigo-800 rounded p-1 gap-1">
+                        <button onclick="showReport('Discounted')" class="px-3 py-1 text-xs font-bold rounded hover:bg-indigo-600 bg-indigo-600" id="btnRepDisc">Discounted Tariffs</button>
+                        <button onclick="showReport('FreeDays')" class="px-3 py-1 text-xs font-bold rounded hover:bg-indigo-600" id="btnRepFree">Free Days Only</button>
+                        <button onclick="showReport('Expired')" class="px-3 py-1 text-xs font-bold rounded hover:bg-indigo-600 text-red-200" id="btnRepExp">Expired List</button>
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="downloadReportExcel()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-bold shadow"><i class="fas fa-file-excel mr-1"></i> Download Excel</button>
+                    <button onclick="closeReports()" class="hover:text-red-400 ml-2"><i class="fas fa-times text-xl"></i></button>
+                </div>
+            </div>
+            <!-- Report Header -->
+            <div class="bg-gray-100 px-4 py-2 border-b border-gray-300 font-bold text-xs flex justify-between text-gray-700">
+                <div class="w-1/5">Customer Name</div>
+                <div class="w-1/12">Mode</div>
+                <div class="w-1/2">Tariff Details / Slabs (Discount Value)</div>
+                <div class="w-1/12 text-center">End Date</div>
+                <div class="w-1/12 text-right">Status</div>
+            </div>
+            <!-- Report Body -->
+            <div class="p-0 overflow-y-auto flex-1 bg-white" id="reportsArea">
+                <!-- Rows injected via JS -->
+            </div>
+            <div class="bg-gray-100 p-2 text-right text-xs text-gray-500 border-t border-gray-300" id="reportCount">0 Records</div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="overlay">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mb-4"></div>
+        <h2 class="text-xl font-bold text-white" id="loadingText">Saving Data...</h2>
+    </div>
+
+    <!-- Top Controls -->
+    <div class="max-w-[1400px] mx-auto mb-4 no-print opacity-0 transition-opacity duration-500" id="topControls">
+        <div class="bg-white border-l-4 border-blue-600 p-3 rounded shadow-md flex flex-col md:flex-row justify-between items-end gap-3">
+            
+            <div class="flex flex-col gap-2 w-full md:w-auto">
+                <div id="syncStatus" class="text-[10px] font-bold text-gray-500"><i class="fas fa-circle-notch fa-spin mr-1"></i> Connecting...</div>
+                <div class="flex gap-1 items-center">
+                    <!-- SEARCH DROPDOWN -->
+                    <select id="cloudHistory" class="border border-gray-400 rounded px-2 py-1 text-xs w-96 text-blue-900 font-bold bg-blue-50" onchange="loadFromDropdown(this.value)">
+                        <option value="">-- Select Customer (A-Z) --</option>
+                    </select>
+                    <input type="text" class="border border-gray-400 rounded px-2 py-1 text-xs w-32 text-black font-bold" placeholder="Filter..." onkeyup="filterDropdown(this.value)">
+                    <button onclick="startSync()" class="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded shadow text-xs font-bold" title="Refresh Data"><i class="fas fa-sync-alt"></i></button>
+                </div>
+            </div>
+
+            <div class="flex flex-wrap gap-2 justify-end">
+                <span id="modeBadge" class="hidden bg-gray-200 text-gray-600 px-3 py-1 rounded text-xs font-extrabold uppercase border border-gray-400">READ ONLY</span>
+                
+                <!-- REPORTS BUTTON -->
+                <button onclick="openReports()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1.5 rounded shadow font-bold text-xs flex items-center">
+                    <i class="fas fa-chart-pie mr-1"></i> Reports
+                </button>
+
+                <!-- EMAIL BUTTON -->
+                <button onclick="sendEmail()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-1.5 rounded shadow font-bold text-xs flex items-center">
+                    <i class="fas fa-envelope mr-1"></i> Email
+                </button>
+
+                <!-- UPLOAD BUTTON -->
+                <div class="relative">
+                    <input type="file" id="approvalUpload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" onchange="handleApproval(this)">
+                    <button onclick="document.getElementById('approvalUpload').click()" class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-1.5 rounded shadow font-bold text-xs flex items-center border border-yellow-500">
+                        <i class="fas fa-file-upload mr-1"></i> Upload
+                    </button>
+                </div>
+
+                <button onclick="enableEdit()" id="btnEdit" class="hidden bg-orange-500 hover:bg-orange-600 text-white px-4 py-1.5 rounded shadow font-bold text-xs"><i class="fas fa-edit mr-1"></i> Edit</button>
+                <button onclick="revalidateRecord()" id="btnRevalid" class="hidden bg-purple-600 hover:bg-purple-700 text-white px-4 py-1.5 rounded shadow font-bold text-xs"><i class="fas fa-copy mr-1"></i> Revalid</button>
+                
+                <div class="w-px h-6 bg-gray-300 mx-1"></div>
+                
+                <button onclick="initiateSave()" class="bg-green-600 hover:bg-green-700 text-white px-6 py-1.5 rounded shadow font-bold text-xs flex items-center animate-pulse"><i class="fas fa-save mr-1"></i> SAVE / UPDATE</button>
+                <button onclick="window.print()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 rounded shadow font-bold text-xs"><i class="fas fa-print"></i></button>
+                <button onclick="resetForm()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded shadow font-bold text-xs"><i class="fas fa-plus"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN FORM -->
+    <div id="printArea" class="page-container max-w-[1350px] mx-auto bg-gray-300 shadow-2xl p-6 rounded-lg border border-gray-400 opacity-0 transition-opacity duration-500 text-black min-h-[800px]">
+        
+        <div class="mb-2">
+            <img src="https://www.hindterminals.com/adminAssets/img/siteSetting/1754228093_footer.png" alt="Hind Terminals Logo" class="h-16 object-contain">
+        </div>
+
+        <div class="border-b-4 border-blue-900 pb-2 mb-4 flex justify-between items-start">
+            <div>
+                <h2 class="text-3xl font-extrabold text-blue-900 uppercase tracking-wide">Tariff Sheet</h2>
+                <p class="text-gray-700 text-sm font-bold uppercase tracking-widest">(Imports THC/Free days)</p>
+                <p class="text-blue-800 text-lg font-bold uppercase tracking-wide mt-1">Hind Terminals Pvt Ltd</p>
+            </div>
+            <div class="text-right">
+                <div class="flex items-center justify-end mb-1"><span class="text-xs font-bold text-gray-800 mr-2 uppercase">Ref No:</span><input type="text" id="tariffNo" readonly class="text-right font-mono font-bold text-blue-900 border-none w-32 bg-transparent"></div>
+                <div class="flex items-center justify-end"><span class="text-xs font-bold text-gray-800 mr-2 uppercase">Date:</span><input type="date" id="dateToday" readonly class="text-right text-xs bg-transparent border-none w-32 font-bold"></div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-6 gap-3 mb-4 bg-gray-100 p-4 rounded border border-gray-300 shadow-sm">
+            <!-- Tariff Mode -->
+            <div class="col-span-1">
+                <label class="block text-[10px] font-bold text-purple-700 uppercase">Tariff Mode <span class="text-red-600">*</span></label>
+                <select id="tariffMode" onchange="toggleTariffTables()" class="input-field h-8 bg-purple-50 border-purple-300 text-purple-900">
+                    <option value="">-- Select Mode --</option>
+                    <option value="Discounted">Discounted Tariff</option>
+                    <option value="FreeDays">Free Days Only</option>
+                </select>
+            </div>
+            <!-- Destuffing Type -->
+            <div class="col-span-1">
+                <label class="block text-[10px] font-bold text-blue-700 uppercase">Destuffing Type</label>
+                <select id="destuffType" onchange="toggleTariffTables()" class="input-field h-8 bg-blue-50 border-blue-300 text-blue-900">
+                    <option value="">-- Select --</option>
+                    <option value="Both">Both (Factory & ICD)</option>
+                    <option value="Factory">Factory Destuffing</option>
+                    <option value="ICD">ICD Destuffing</option>
+                </select>
+            </div>
+            <!-- Customer Name -->
+            <div class="col-span-2"><label class="block text-[10px] font-bold text-gray-600 uppercase">Customer Name <span class="text-red-600">*</span></label><input type="text" id="customerName" class="input-field font-bold text-blue-900 h-8 bg-white uppercase border-l-4 border-blue-600" placeholder="ENTER NAME" oninput="syncCustomerName()"></div>
+            <!-- CHA -->
+            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">CHA / Forwarder</label><input type="text" id="chaName" class="input-field h-8 bg-white uppercase"></div>
+            <!-- Version -->
+            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Version</label><input type="text" id="version" value="Version 1" class="input-field h-8 bg-white text-center"></div>
+            
+            <!-- Sales Person -->
+            <div class="col-span-1">
+                <label class="block text-[10px] font-bold text-gray-600 uppercase">Sales Person</label>
+                <select id="salesPerson" class="input-field h-8 bg-white uppercase">
+                    <option value="">-- Select --</option>
+                    <option>Rajesh Kumar</option>
+                    <option>Kunal Sahi</option>
+                    <option>Anurag Pandey</option>
+                    <option>Damanjit Singh</option>
+                    <option>Chirag Rana</option>
+                    <option>Mohik Sharma</option>
+                </select>
+            </div>
+            <!-- Dates -->
+            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Effective From</label><input type="date" id="dateFrom" onchange="calculateMonths()" class="input-field h-8 bg-white"></div>
+            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">End Date</label><input type="date" id="dateTo" onchange="calculateMonths()" class="input-field h-8 bg-white"></div>
+            <!-- Free Days -->
+            <div class="col-span-1"><label class="block text-[10px] font-bold text-green-700 uppercase">Free Days</label><input type="text" id="freeDays" oninput="updateFooter(this.value); toggleTariffTables();" placeholder="" class="input-field h-8 bg-white border-green-500 text-green-800"></div>
+            <!-- Valid For -->
+            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Valid For</label><input type="text" id="validity" readonly class="input-field bg-transparent border-none text-red-700 font-bold text-xs h-8"></div>
+            
+            <!-- STATUS BOX -->
+            <div class="col-span-1">
+                <label class="block text-[10px] font-bold text-gray-600 uppercase">Tariff Status</label>
+                <div id="statusBox" class="input-field h-8 flex items-center justify-center font-bold text-[10px] uppercase rounded border text-center status-valid">
+                    Approved & Valid
+                </div>
+            </div>
+        </div>
+
+        <!-- Free Days Box -->
+        <div id="prominentFreeDays" class="hidden mb-6 bg-green-50 border-2 border-green-500 p-6 rounded text-center shadow-lg">
+            <h3 class="text-green-800 text-lg font-bold uppercase mb-2">Free Days Allocation</h3>
+            <p id="prominentFreeDaysText" class="text-4xl font-extrabold text-green-600">03 DAYS</p>
+        </div>
+
+        <!-- TARIFF TABLES -->
+        <div id="tariffsContainer">
+            <!-- TABLE 1: Factory -->
+            <div id="factorySection" class="mb-6" style="display:none;">
+                <div class="bg-blue-900 text-white text-xs font-bold px-3 py-1.5 uppercase mb-0 rounded-t flex justify-between items-center shadow"><span><i class="fas fa-industry mr-2"></i>1. Factory Destuffing Tariff</span><span class="text-[10px] text-yellow-300 bg-blue-800 px-2 py-0.5 rounded">Details Head Wise</span></div>
+                <table class="tariff-table border-2 border-blue-900" id="tableFactory">
+                    <thead>
+                        <tr>
+                            <th class="bg-gray-700 w-20 text-white" rowspan="2">Weight Slab</th>
+                            <th class="bg-header-public" colspan="7">PUBLIC TARIFF (INR)</th>
+                            <th class="bg-header-discount" colspan="7">DISCOUNTED TARIFF (INR)</th>
+                            <th class="bg-black text-white w-24" rowspan="2">Total Billing<br><span class="text-[9px] font-normal">(Public - Disc)</span></th>
+                        </tr>
+                        <tr class="text-[9px]">
+                            <th class="bg-blue-800 text-white">Terminal Handing</th> <th class="bg-blue-800 text-white">Infra.</th> <th class="bg-blue-800 text-white">Weighment</th> <th class="bg-blue-800 text-white">Energy Surcharge</th> <th class="bg-blue-800 text-white">EIC AND Congesion</th> <th class="bg-blue-800 text-white">Port SSR</th> <th class="bg-blue-900 border-l border-white text-white">Total</th>
+                            <th class="bg-green-700 text-white">Terminal Handing</th> <th class="bg-green-700 text-white">Infra.</th> <th class="bg-green-700 text-white">Weighment</th> <th class="bg-green-700 text-white">Energy Surcharge</th> <th class="bg-green-700 text-white">EIC AND Congesion</th> <th class="bg-green-700 text-white">Port SSR</th> <th class="bg-green-900 border-l border-white text-white">Total Disc</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <!-- TABLE 2: ICD -->
+            <div id="icdSection" class="mb-6" style="display:none;">
+                <div class="bg-purple-900 text-white text-xs font-bold px-3 py-1.5 uppercase mb-0 rounded-t shadow"><i class="fas fa-warehouse mr-2"></i>2. ICD Destuffing Weight Slab</div>
+                <table class="tariff-table border-2 border-purple-900" id="tableICD">
+                    <thead>
+                        <tr>
+                            <th class="bg-gray-700 w-20 text-white" rowspan="2">Weight Slab</th>
+                            <th class="bg-header-public" colspan="8">PUBLIC TARIFF (INR)</th>
+                            <th class="bg-header-discount" colspan="8">DISCOUNTED TARIFF (INR)</th>
+                            <th class="bg-black text-white w-24" rowspan="2">Total Billing<br><span class="text-[9px] font-normal">(Public - Disc)</span></th>
+                        </tr>
+                        <tr class="text-[9px]">
+                            <th class="bg-purple-800 text-white">Destuff</th> <th class="bg-purple-800 text-white">THC</th> <th class="bg-purple-800 text-white">Infra</th> <th class="bg-purple-800 text-white">Weight</th> <th class="bg-purple-800 text-white">Energy</th> <th class="bg-purple-800 text-white">EIC/Cong</th> <th class="bg-purple-800 text-white">Port SSR</th> <th class="bg-purple-900 border-l border-white text-white">Total</th>
+                            <th class="bg-green-700 text-white">Destuff</th> <th class="bg-green-700 text-white">THC</th> <th class="bg-green-700 text-white">Infra</th> <th class="bg-green-700 text-white">Weight</th> <th class="bg-green-700 text-white">Energy</th> <th class="bg-green-700 text-white">EIC/Cong</th> <th class="bg-green-700 text-white">Port SSR</th> <th class="bg-green-900 border-l border-white text-white">Total Disc</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+                <div class="mt-0 bg-green-50 border-x-2 border-b-2 border-green-600 p-2 text-center"><p class="text-xs font-extrabold text-green-900" id="freeDaysDisplay">DISCOUNTED: ARRIVAL + 03 DAYS FREE TIME ONLY</p></div>
+            </div>
+        </div>
+
+        <!-- TRANSPORT -->
+        <div class="mb-4 pt-4">
+            <div class="flex justify-between items-end mb-1">
+                <div class="bg-yellow-600 text-white px-3 py-1.5 rounded-t font-bold text-xs uppercase"><i class="fas fa-truck mr-2"></i> 3. Transport Tariff</div>
+                <div class="mb-1 flex items-center gap-2">
+                    <label class="text-[10px] font-bold text-gray-700 uppercase">Claimed By:</label>
+                    <input type="text" id="transportClaimedBy" class="border border-gray-400 rounded px-2 py-0.5 text-xs font-bold w-80 bg-white uppercase" placeholder="CUSTOMER NAME">
+                    <button onclick="addTransportRow()" class="bg-white text-yellow-700 hover:bg-gray-100 text-[10px] font-bold px-2 py-0.5 rounded no-print shadow uppercase border border-yellow-600">Add Location</button>
+                </div>
+            </div>
+            <table class="tariff-table border-2 border-yellow-600" id="tableTransport">
+                <thead>
+                    <tr class="bg-yellow-700 text-white">
+                        <th class="w-32">Transporter <span class="text-red-200">*</span></th> 
+                        <th class="w-32">Origin</th> 
+                        <th class="w-32">Destination</th> 
+                        <th class="w-32">Return Empty</th> 
+                        <th>Discount (₹)</th> 
+                        <th>Remarks</th> 
+                        <th class="bg-white border-none w-6 no-print"></th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyTransport"></tbody>
+            </table>
+        </div>
+
+        <!-- INCENTIVE -->
+        <div class="mb-4 pt-2">
+            <div class="flex justify-between items-end mb-1">
+                <div class="bg-teal-700 text-white px-3 py-1.5 rounded-t font-bold text-xs uppercase"><i class="fas fa-gift mr-2"></i> 4. Incentive Details</div>
+                <div class="mb-1 flex items-center gap-2">
+                    <label class="text-[10px] font-bold text-gray-700 uppercase">Claimed By:</label>
+                    <input type="text" id="incentiveClaimedBy" class="border border-gray-400 rounded px-2 py-0.5 text-xs font-bold w-80 bg-white uppercase" placeholder="CUSTOMER NAME">
+                    <button onclick="addIncentiveRow()" class="bg-white text-teal-800 hover:bg-gray-100 text-[10px] font-bold px-2 py-0.5 rounded no-print shadow uppercase border border-teal-700">Add Row</button>
+                </div>
+            </div>
+            <table class="tariff-table border-2 border-teal-700">
+                <thead>
+                    <tr class="bg-teal-800 text-white">
+                        <th class="w-48">Line (MSC / NON MSC)</th> <th>Discount 20"</th> <th>Discount 40"</th> <th class="bg-white border-none w-6 no-print"></th>
+                    </tr>
+                </thead>
+                <tbody id="tbodyIncentive"></tbody>
+            </table>
+        </div>
+
+        <div class="bg-yellow-50 p-2 rounded border border-yellow-400 mb-4"><label class="block text-[10px] font-bold text-yellow-900 mb-1 uppercase">Remarks / Special Notes</label><textarea id="remarks" class="w-full border border-yellow-300 rounded p-1 text-xs bg-white focus:outline-none text-gray-700 font-bold" rows="2"></textarea></div>
+        
+        <!-- PREVIEW SECTION -->
+        <div id="approvalPreviewSection" class="hidden mt-6 border-2 border-dashed border-gray-400 rounded p-4 bg-gray-50 break-inside-avoid">
+            <div class="flex justify-between items-center mb-2 border-b border-gray-300 pb-1">
+                <h3 class="text-sm font-bold text-gray-700 uppercase"><i class="fas fa-paperclip mr-1"></i> Approval Reference</h3>
+                <span id="approvalFileName" class="text-xs text-gray-500"></span>
+            </div>
+            <div id="previewContainer" class="w-full h-96 flex items-center justify-center bg-white border border-gray-200"></div>
+        </div>
+
+        <div class="mt-6 pt-4 border-t-2 border-gray-400 flex justify-between print-only">
+            <div class="text-center"><p class="font-bold text-[10px] border-t-2 border-black px-8 pt-1 inline-block text-black uppercase">Prepared By</p></div>
+            <div class="text-center"><p class="font-bold text-[10px] border-t-2 border-black px-8 pt-1 inline-block text-black uppercase">Approved By</p></div>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIGURATION ---
+        const SCRIPT_SAVE_URL = 'https://script.google.com/macros/s/AKfycbzsxcINub9C_8CMshJvHZ-TGR4kUWSeOUqgRtL7vToLtnIHwIy-OhKXwXqbOl7NOE0p/exec';
+        const SHEET_ID = '11LsDU-tfxh8vJ4RK_JYcF5AYJQBzLSMZDmOvfKcPE5s';
+        const TARGET_GID = '0'; 
+        const DIRECT_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${TARGET_GID}`;
+
+        const factoryData = [{slab:"(20) 0 - 27MT",p:[3595,2300,200,337,2500,150]},{slab:"(20) 27 - 30MT",p:[4494,2300,200,337,2500,150]},{slab:"(20) > 31MT",p:[7190,2300,200,337,2500,150]},{slab:"For 40\"",p:[6790,4500,200,509,3500,300]}];
+        const icdData = [{slab:"(20) 0 - 27MT",p:[900,4345,2300,200,337,2500,150]},{slab:"(20) 27 - 30MT",p:[900,5431,2300,200,337,2500,150]},{slab:"(20) > 31MT",p:[900,8690,2300,200,337,2500,150]},{slab:"For 40\"",p:[1800,8240,4500,200,509,3500,300]}];
+
+        let globalRecords = [];
+        let loadedRecordId = null; 
+        let currentReportData = []; // Store current filtered data for Excel export
+
+        function checkAccess() {
+            if (document.getElementById('accessPass').value === "16111980") {
+                document.getElementById('accessOverlay').style.display = "none";
+                document.getElementById('mainBody').classList.remove('overflow-hidden');
+                document.getElementById('topControls').classList.remove('opacity-0');
+                document.getElementById('printArea').classList.remove('opacity-0');
+                initApp();
+            } else { alert("Wrong Password"); }
+        }
+        function initApp() {
+            document.getElementById('dateToday').valueAsDate = new Date();
+            document.getElementById('tariffNo').value = `TS-${new Date().getFullYear()}${Math.floor(1000+Math.random()*9000)}`;
+            renderTable('tableFactory', factoryData, 6);
+            renderTable('tableICD', icdData, 7);
+            addTransportRow();
+            addIncentiveRow();
+            startSync();
+            toggleTariffTables();
+        }
+
+        // --- EMAIL LOGIC ---
+        function sendEmail() {
+            const cust = document.getElementById('customerName').value;
+            const mode = document.getElementById('tariffMode').value;
+            
+            if(!cust) return alert("Please create or load a tariff first.");
+
+            const to = "aman.sharma@hindterminals.com;sourav.thakur@hindterminals.com;sukhwinder.singh@hindterminals.com";
+            const cc = "rajesh.kumar@hindterminals.com;rajeev.sharma@hindterminals.com;dinesh.negi@hindterminals.com;ekta@hindterminals.com";
+            const subject = `Import Tariff Sheet of "${cust}" ${mode}`;
+            
+            // Note: %0D%0A is a line break in mailto links
+            const body = `Dear Accounts Team,%0D%0A%0D%0APlease find attached Tariff Sheet of "${cust}"%0D%0ADISCOUNTED TARIFF%0D%0A%0D%0AThanks and Regards,%0D%0AVikram Singh%0D%0AHind Terminals Pvt Ltd.`;
+
+            window.location.href = `mailto:${to}?cc=${cc}&subject=${subject}&body=${body}`;
+        }
+
+        // --- REPORTS LOGIC ---
+        function openReports() {
+            document.getElementById('reportsModal').style.display = 'flex';
+            showReport('Discounted'); // Default view
+        }
+        function closeReports() {
+            document.getElementById('reportsModal').style.display = 'none';
+        }
+
+        function formatReportDate(isoDate) {
+            if(!isoDate || isoDate === 'N/A') return 'N/A';
+            return isoDate.split('-').reverse().join('-');
+        }
+
+        function showReport(type) {
+            const area = document.getElementById('reportsArea');
+            const countLabel = document.getElementById('reportCount');
+            const btns = document.querySelectorAll('#reportsModal button[id^="btnRep"]');
+            
+            // Reset Buttons
+            btns.forEach(b => b.classList.remove('bg-indigo-600'));
+            if(type === 'Discounted') document.getElementById('btnRepDisc').classList.add('bg-indigo-600');
+            if(type === 'FreeDays') document.getElementById('btnRepFree').classList.add('bg-indigo-600');
+            if(type === 'Expired') document.getElementById('btnRepExp').classList.add('bg-indigo-600');
+
+            area.innerHTML = '';
+            
+            // 1. Identify Latest Versions for "Previous Version" Logic
+            const latestVersions = {};
+            globalRecords.forEach(r => {
+                const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1;
+                if (!latestVersions[r.name] || vNum > latestVersions[r.name]) {
+                    latestVersions[r.name] = vNum;
+                }
+            });
+
+            // 2. Filter Logic
+            let filtered = [];
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            if (type === 'Expired') {
+                filtered = globalRecords.filter(r => {
+                    // Condition A: Date is Expired
+                    let isExpiredDate = false;
+                    if (r.dates) {
+                        const end = new Date(r.dates.split('to')[1]?.trim());
+                        if(end < today) isExpiredDate = true;
+                    }
+                    // Condition B: Superseded by newer version
+                    const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1;
+                    const isSuperseded = vNum < latestVersions[r.name];
+
+                    return isExpiredDate || isSuperseded;
+                });
+            } else {
+                // MODIFIED: Exclude Old Versions from standard reports
+                filtered = globalRecords.filter(r => {
+                    if (r.mode !== type) return false;
+
+                    // Check if Old Version
+                    const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1;
+                    const isOldVer = vNum < latestVersions[r.name];
+                    
+                    return !isOldVer; // Hide if Old Version
+                });
+            }
+
+            currentReportData = filtered; // Save for Excel
+
+            if (filtered.length === 0) {
+                area.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">No records found for this category.</div>';
+            } else {
+                // Sort by name
+                filtered.sort((a,b) => a.name.localeCompare(b.name));
+                
+                filtered.forEach(r => {
+                    const endDateStr = r.dates ? r.dates.split('to')[1]?.trim() : "N/A";
+                    let status = "Active";
+                    let statusClass = "text-green-600 bg-green-100";
+                    
+                    // Check expiry for status badge
+                    if (endDateStr !== "N/A") {
+                        const end = new Date(endDateStr);
+                        if (end < today) {
+                            status = "Expired";
+                            statusClass = "text-red-600 bg-red-100";
+                        }
+                    }
+                    // Check Superseded
+                    const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1;
+                    if (vNum < latestVersions[r.name]) {
+                         status = "Old Ver";
+                         statusClass = "text-gray-600 bg-gray-200";
+                    }
+
+                    // --- GENERATE DETAILS STRING (Slab Wise / Free Days) ---
+                    let detailsHtml = "";
+                    
+                    if (type === 'FreeDays') {
+                        detailsHtml = `<span class="text-green-700 font-extrabold">${r.free || 'N/A'}</span>`;
+                    } else {
+                        // For Discounted: Parse JSON and Calculate Total DISCOUNT Amount per slab
+                        let slabDetails = [];
+                        try {
+                            if (r.jsonFactory) {
+                                const fInputs = JSON.parse(r.jsonFactory);
+                                fInputs.forEach((row, idx) => {
+                                    if(factoryData[idx]) {
+                                        const dTotal = row.reduce((a,b)=>a+(parseFloat(b)||0),0);
+                                        // Only show if there is a discount
+                                        let sName = factoryData[idx].slab.replace('(20) ','').replace('For ','');
+                                        if (dTotal > 0) slabDetails.push(`${sName}: ₹${dTotal}`);
+                                    }
+                                });
+                            }
+                            if (r.jsonICD) {
+                                const iInputs = JSON.parse(r.jsonICD);
+                                iInputs.forEach((row, idx) => {
+                                    if(icdData[idx]) {
+                                        const dTotal = row.reduce((a,b)=>a+(parseFloat(b)||0),0);
+                                        let sName = icdData[idx].slab.replace('(20) ','').replace('For ','');
+                                        if (dTotal > 0) slabDetails.push(`ICD ${sName}: ₹${dTotal}`);
+                                    }
+                                });
+                            }
+                        } catch(e) {}
+                        
+                        if(slabDetails.length > 0) {
+                            detailsHtml = `<span class="text-[10px] text-gray-600">${slabDetails.join(' | ')}</span>`;
+                        } else {
+                            detailsHtml = `<span class="text-gray-400">No Discount</span>`;
+                        }
+                    }
+
+                    const formattedDate = formatReportDate(endDateStr);
+
+                    const div = document.createElement('div');
+                    div.className = "flex justify-between items-center px-4 py-2 border-b border-gray-200 hover:bg-gray-50 text-xs text-gray-800";
+                    div.innerHTML = `
+                        <div class="w-1/5 font-bold text-blue-900">${r.name} <span class="text-[10px] text-gray-400 font-normal">(${r.ver || 'V1'})</span></div>
+                        <div class="w-1/12">${r.mode || '-'}</div>
+                        <div class="w-1/2 overflow-hidden text-ellipsis whitespace-nowrap">${detailsHtml}</div>
+                        <div class="w-1/12 text-center font-mono">${formattedDate}</div>
+                        <div class="w-1/12 text-right"><span class="px-2 py-0.5 rounded ${statusClass} font-bold text-[10px] whitespace-nowrap">${status}</span></div>
+                    `;
+                    div.onclick = () => { closeReports(); loadRecord(r); }; // Click to load
+                    div.style.cursor = 'pointer';
+                    area.appendChild(div);
+                });
+            }
+            countLabel.innerText = `${filtered.length} Records found`;
+        }
+
+        // --- EXCEL DOWNLOAD (CORRECTED: SEPARATE CELLS FOR DISCOUNTS) ---
+        function downloadReportExcel() {
+            if (!currentReportData || currentReportData.length === 0) {
+                return alert("No data to download!");
+            }
+
+            // Define Fixed Headers for the Excel
+            // F = Factory, I = ICD
+            const headers = [
+                "Customer Name", "Version", "Mode", "End Date", "Status",
+                "Factory 0-27MT Disc", "Factory 27-30MT Disc", "Factory >31MT Disc", "Factory 40\" Disc",
+                "ICD 0-27MT Disc", "ICD 27-30MT Disc", "ICD >31MT Disc", "ICD 40\" Disc",
+                "Free Days"
+            ];
+            
+            let csvContent = headers.join(",") + "\n";
+
+            currentReportData.forEach(r => {
+                const endDateStr = r.dates ? r.dates.split('to')[1]?.trim() : "N/A";
+                const formattedDate = formatReportDate(endDateStr);
+                
+                // Init Discount Slots
+                let fDisc = [0,0,0,0]; // Factory 4 slots
+                let iDisc = [0,0,0,0]; // ICD 4 slots
+                
+                // Parse Data
+                try {
+                    if (r.jsonFactory) {
+                        const fInputs = JSON.parse(r.jsonFactory);
+                        fInputs.forEach((row, idx) => {
+                            if(idx < 4) fDisc[idx] = row.reduce((a,b)=>a+(parseFloat(b)||0),0);
+                        });
+                    }
+                    if (r.jsonICD) {
+                        const iInputs = JSON.parse(r.jsonICD);
+                        iInputs.forEach((row, idx) => {
+                             if(idx < 4) iDisc[idx] = row.reduce((a,b)=>a+(parseFloat(b)||0),0);
+                        });
+                    }
+                } catch(e) {}
+
+                // Prepare Row
+                const safeName = `"${r.name.replace(/"/g, '""')}"`;
+                const freeDaysVal = r.mode === 'FreeDays' ? (r.free || "") : "";
+                
+                // Construct CSV Row
+                const row = [
+                    safeName,
+                    r.ver||'V1',
+                    r.mode,
+                    formattedDate,
+                    "Active", // Simplified for CSV
+                    fDisc[0] || "", fDisc[1] || "", fDisc[2] || "", fDisc[3] || "",
+                    iDisc[0] || "", iDisc[1] || "", iDisc[2] || "", iDisc[3] || "",
+                    freeDaysVal
+                ];
+                
+                csvContent += row.join(",") + "\n";
+            });
+
+            // Create Download Link
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "Tariff_Report.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- FILE UPLOAD ---
+        function handleApproval(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const custName = document.getElementById('customerName').value || "Unknown";
+            const version = document.getElementById('version').value || "V1";
+            const ext = file.name.split('.').pop();
+            const newFileName = `${custName.replace(/[^a-z0-9]/gi, '_')}_${version}.${ext}`;
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(file);
+            link.download = newFileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            const previewSection = document.getElementById('approvalPreviewSection');
+            const container = document.getElementById('previewContainer');
+            const nameLabel = document.getElementById('approvalFileName');
+            previewSection.classList.remove('hidden');
+            nameLabel.innerText = `Attached: ${newFileName}`;
+            container.innerHTML = ''; 
+
+            if (ext.toLowerCase() === 'pdf') {
+                const iframe = document.createElement('iframe');
+                iframe.src = URL.createObjectURL(file);
+                iframe.className = "w-full h-full";
+                container.appendChild(iframe);
+            } else if (['jpg', 'jpeg', 'png'].includes(ext.toLowerCase())) {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.className = "max-h-full max-w-full object-contain";
+                container.appendChild(img);
+            } else {
+                container.innerHTML = `<p class="text-red-500 font-bold">Preview not available for .${ext} files. (Saved to PC)</p>`;
+            }
+            alert(`File prepared as: ${newFileName}\nPlease save it to D:\\Tariff_Approvals`);
+        }
+
+        function syncCustomerName() {
+            const name = document.getElementById('customerName').value;
+            document.getElementById('transportClaimedBy').value = name;
+            document.getElementById('incentiveClaimedBy').value = name;
+        }
+
+        // --- TOGGLE TABLES ---
+        function toggleTariffTables() {
+            const mode = document.getElementById('tariffMode').value;
+            const type = document.getElementById('destuffType').value;
+            const destuffSelect = document.getElementById('destuffType');
+            
+            const factorySec = document.getElementById('factorySection');
+            const icdSec = document.getElementById('icdSection');
+            const promoBox = document.getElementById('prominentFreeDays');
+            const promoText = document.getElementById('prominentFreeDaysText');
+            const freeVal = document.getElementById('freeDays').value || "03 DAYS";
+
+            factorySec.style.display = 'none';
+            icdSec.style.display = 'none';
+            promoBox.style.display = 'none';
+            destuffSelect.disabled = false;
+            destuffSelect.classList.remove('bg-gray-200');
+
+            if (mode === 'FreeDays') {
+                promoBox.style.display = 'block';
+                promoText.innerText = freeVal.toUpperCase();
+                destuffSelect.disabled = true;
+                destuffSelect.value = "";
+                destuffSelect.classList.add('bg-gray-200');
+            } else {
+                if (type === 'Factory') factorySec.style.display = 'block';
+                else if (type === 'ICD') icdSec.style.display = 'block';
+                else if (type === 'Both') { factorySec.style.display = 'block'; icdSec.style.display = 'block'; }
+            }
+        }
+
+        async function initiateSave() {
+            calculateMonths(); 
+
+            const cust = document.getElementById('customerName').value;
+            const dFrom = document.getElementById('dateFrom').value;
+            const dTo = document.getElementById('dateTo').value;
+            const free = document.getElementById('freeDays').value;
+
+            if(!cust) return alert("Error: Customer Name is Required");
+            if(!dFrom || !dTo) return alert("Error: Effective From & End Date are Required");
+            if(!free) return alert("Error: Free Days are Required");
+
+            let transError = false;
+            document.querySelectorAll('#tbodyTransport tr').forEach(tr => {
+                const sel = tr.querySelector('select[id*="_trans"]');
+                if (sel && sel.value === "") transError = true;
+            });
+            if(transError) return alert("Error: Select Transporter in Transport Table");
+
+            if(loadedRecordId) {
+                const pass = prompt("To Save Changes, Enter Password:");
+                if(pass !== "Honey@143") return alert("Incorrect Password! Save Cancelled.");
+            }
+
+            document.getElementById('loadingOverlay').style.display = 'flex';
+
+            try {
+                const entryId = loadedRecordId || Date.now();
+
+                const factoryValues = [];
+                for(let i=0; i<factoryData.length; i++) {
+                    const vals = [];
+                    for(let k=0; k<6; k++) vals.push(document.getElementById(`tableFactory_${i}_d${k}`).value || "0");
+                    factoryValues.push(vals);
+                }
+
+                const icdValues = [];
+                for(let i=0; i<icdData.length; i++) {
+                    const vals = [];
+                    for(let k=0; k<7; k++) vals.push(document.getElementById(`tableICD_${i}_d${k}`).value || "0");
+                    icdValues.push(vals);
+                }
+
+                const transValues = [];
+                document.querySelectorAll('#tbodyTransport tr').forEach(tr => {
+                    const uid = tr.querySelector('select').id.split('_trans')[0];
+                    transValues.push({
+                        t: document.getElementById(`${uid}_trans`).value,
+                        d: document.getElementById(`${uid}_dest`).value,
+                        b: document.getElementById(`${uid}_base`).value,
+                        v: document.getElementById(`${uid}_disc`).value
+                    });
+                });
+
+                const incValues = [];
+                document.querySelectorAll('#tbodyIncentive tr').forEach(tr => {
+                    const uid = tr.querySelector('select').id.split('_line')[0];
+                    incValues.push({
+                        l: document.getElementById(`${uid}_line`).value,
+                        d20: document.getElementById(`${uid}_d20`).value,
+                        d40: document.getElementById(`${uid}_d40`).value
+                    });
+                });
+
+                const fd = new FormData();
+                fd.append('Date', document.getElementById('dateToday').value);
+                fd.append('Name', `[MASTER] ${cust} [ID:${entryId}]`);
+                fd.append('Email', `Ref: ${document.getElementById('tariffNo').value} | Dates: ${dFrom} to ${dTo} | Mode: ${document.getElementById('tariffMode').value} | Type: ${document.getElementById('destuffType').value}`);
+                fd.append('Phone', `Valid: ${document.getElementById('validity').value} | Free: ${free}`);
+                fd.append('Department', `Sales: ${document.getElementById('salesPerson').value} | CHA: ${document.getElementById('chaName').value} | TC: ${document.getElementById('transportClaimedBy').value} | IC: ${document.getElementById('incentiveClaimedBy').value}`);
+                fd.append('City', `Ver: ${document.getElementById('version').value} | Rem: ${document.getElementById('remarks').value}`);
+                fd.append('Data1', JSON.stringify(factoryValues));  
+                fd.append('Data2', JSON.stringify(icdValues));      
+                fd.append('Data3', JSON.stringify(transValues));    
+                fd.append('Data4', JSON.stringify(incValues));
+
+                await fetch(SCRIPT_SAVE_URL, { method: 'POST', body: fd, mode: 'no-cors' });
+                await new Promise(r => setTimeout(r, 800)); 
+                
+                alert("✅ Saved Successfully!");
+                toggleReadOnly(true);
+                startSync();
+
+            } catch(e) { alert("Error: " + e.message); }
+            finally { document.getElementById('loadingOverlay').style.display = 'none'; }
+        }
+
+        function processCloudData(rows) {
+            const recordMap = new Map();
+            rows.forEach(r => {
+                if(r[1] && r[1].includes('[MASTER]')) {
+                    const rawName = r[1].replace('[MASTER]','').trim();
+                    const idMatch = rawName.match(/\[ID:(.*?)\]/);
+                    const realID = idMatch ? idMatch[1] : rawName;
+                    const realName = rawName.split('[ID')[0].trim();
+                    const meta1 = (r[2]||"").split('|'); const meta2 = (r[3]||"").split('|'); 
+                    const meta3 = (r[4]||"").split('|'); const meta4 = (r[5]||"").split('|'); 
+
+                    recordMap.set(realID, {
+                        id: realID, date: r[0], name: realName,
+                        ref: meta1[0]?.split('Ref:')[1]?.trim(),
+                        dates: meta1.find(s=>s.includes('Dates:'))?.split('Dates:')[1]?.trim(),
+                        mode: meta1.find(s=>s.includes('Mode:'))?.split('Mode:')[1]?.trim(),
+                        type: meta1.find(s=>s.includes('Type:'))?.split('Type:')[1]?.trim(),
+                        valid: meta2[0]?.split('Valid:')[1]?.trim(),
+                        free: meta2.find(s=>s.includes('Free:'))?.split('Free:')[1]?.trim(),
+                        sales: meta3[0]?.split('Sales:')[1]?.trim(),
+                        cha: meta3.find(s=>s.includes('CHA:'))?.split('CHA:')[1]?.trim(),
+                        tc: meta3.find(s=>s.includes('TC:'))?.split('TC:')[1]?.trim(),
+                        ic: meta3.find(s=>s.includes('IC:'))?.split('IC:')[1]?.trim(),
+                        ver: meta4[0]?.split('Ver:')[1]?.trim(),
+                        rem: meta4.find(s=>s.includes('Rem:'))?.split('Rem:')[1]?.trim(),
+                        jsonFactory: r[6], jsonICD: r[7], jsonTrans: r[8], jsonInc: r[9]
+                    });
+                }
+            });
+            globalRecords = Array.from(recordMap.values());
+            populateDropdown();
+        }
+
+        function populateDropdown() {
+            const dd = document.getElementById('cloudHistory');
+            dd.innerHTML = '<option value="">-- Select Customer (A-Z) --</option>';
+            const sorted = [...globalRecords].sort((a,b) => a.name.localeCompare(b.name));
+            sorted.forEach(rec => {
+                const opt = document.createElement('option');
+                opt.value = rec.id;
+                opt.text = `${rec.name} - ${rec.ver || 'V1'}`;
+                dd.appendChild(opt);
+            });
+        }
+        
+        function filterDropdown(val) {
+            const dd = document.getElementById('cloudHistory');
+            const opts = dd.options;
+            val = val.toLowerCase();
+            for(let i=1; i<opts.length; i++) {
+                opts[i].style.display = opts[i].text.toLowerCase().includes(val) ? 'block' : 'none';
+            }
+        }
+        function loadFromDropdown(id) {
+            const rec = globalRecords.find(r => r.id === id);
+            if(rec) loadRecord(rec);
+        }
+
+        function loadRecord(rec) {
+            if(!confirm("Load " + rec.name + "?")) return;
+            
+            loadedRecordId = rec.id; 
+            document.getElementById('customerName').value = rec.name;
+            document.getElementById('tariffNo').value = rec.ref || "";
+            document.getElementById('chaName').value = rec.cha || "";
+            document.getElementById('salesPerson').value = rec.sales || "";
+            document.getElementById('validity').value = rec.valid || "";
+            document.getElementById('freeDays').value = rec.free || "";
+            document.getElementById('version').value = rec.ver || "Version 1";
+            document.getElementById('remarks').value = rec.rem || "";
+            document.getElementById('tariffMode').value = rec.mode || "";
+            document.getElementById('destuffType').value = rec.type || "";
+            document.getElementById('transportClaimedBy').value = rec.tc || rec.name; 
+            document.getElementById('incentiveClaimedBy').value = rec.ic || rec.name;
+            
+            if(rec.dates && rec.dates.includes('to')) {
+                const parts = rec.dates.split('to');
+                document.getElementById('dateFrom').value = parts[0].trim();
+                document.getElementById('dateTo').value = parts[1].trim();
+            }
+            calculateMonths(); 
+            updateFooter(rec.free);
+            toggleTariffTables(); 
+
+            try {
+                if(rec.jsonFactory) {
+                    const fData = JSON.parse(rec.jsonFactory);
+                    fData.forEach((rowVals, rIdx) => {
+                        rowVals.forEach((val, cIdx) => {
+                            const el = document.getElementById(`tableFactory_${rIdx}_d${cIdx}`);
+                            if(el) el.value = val;
+                        });
+                        calcRow(`tableFactory_${rIdx}`, 6);
+                    });
+                }
+                if(rec.jsonICD) {
+                    const iData = JSON.parse(rec.jsonICD);
+                    iData.forEach((rowVals, rIdx) => {
+                        rowVals.forEach((val, cIdx) => {
+                            const el = document.getElementById(`tableICD_${rIdx}_d${cIdx}`);
+                            if(el) el.value = val;
+                        });
+                        calcRow(`tableICD_${rIdx}`, 7);
+                    });
+                }
+                document.getElementById('tbodyTransport').innerHTML = '';
+                if(rec.jsonTrans) {
+                    const tData = JSON.parse(rec.jsonTrans);
+                    tData.forEach(t => {
+                        addTransportRow({ trans: t.t, dest: t.d, base: t.b, disc: t.v });
+                    });
+                } else { addTransportRow(); }
+                document.getElementById('tbodyIncentive').innerHTML = '';
+                if(rec.jsonInc) {
+                    const iData = JSON.parse(rec.jsonInc);
+                    iData.forEach(i => { addIncentiveRow({ line: i.l, d20: i.d20, d40: i.d40 }); });
+                } else { addIncentiveRow(); }
+            } catch(e) { console.error("JSON Parse Error", e); alert("Data corrupted."); }
+            toggleReadOnly(true);
+        }
+
+        function toggleReadOnly(state) {
+            const container = document.getElementById('printArea');
+            const badge = document.getElementById('modeBadge');
+            const btnEdit = document.getElementById('btnEdit');
+            const btnRevalid = document.getElementById('btnRevalid');
+            if(state) {
+                container.classList.add('view-mode');
+                badge.classList.remove('hidden');
+                btnEdit.classList.remove('hidden');
+                btnRevalid.classList.remove('hidden');
+            } else {
+                container.classList.remove('view-mode');
+                badge.classList.add('hidden');
+                btnEdit.classList.add('hidden');
+                btnRevalid.classList.add('hidden');
+            }
+        }
+
+        function enableEdit() { if(confirm("Enable Editing?")) toggleReadOnly(false); }
+
+        function revalidateRecord() {
+            const pass = prompt("Enter Password to Revalidate:");
+            if(pass !== "Honey@143") return alert("Incorrect Password!");
+            toggleReadOnly(false);
+            const vField = document.getElementById('version');
+            let currentVer = parseInt(vField.value.replace(/\D/g,'')) || 1;
+            vField.value = "Version " + (currentVer + 1);
+            document.getElementById('dateToday').valueAsDate = new Date();
+            loadedRecordId = null; 
+            alert("Ready! Check dates and Save.");
+        }
+
+        async function startSync() {
+            const statusEl = document.getElementById('syncStatus');
+            statusEl.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1"></i> Loading...';
+            try {
+                const response = await fetch(DIRECT_CSV_URL + '&t=' + Date.now());
+                if (!response.ok) throw new Error("Blocked");
+                const text = await response.text();
+                const rows = parseCSV(text);
+                if (rows.length > 0) {
+                    statusEl.innerHTML = `<i class="fas fa-circle text-green-500 mr-1" style="font-size: 8px;"></i> System Online`;
+                    processCloudData(rows);
+                }
+            } catch (e) { syncWithVizApi(); }
+        }
+        function syncWithVizApi() {
+            const callbackName = 'jsonp_' + Date.now();
+            window[callbackName] = function(response) {
+                if (response.status === 'error') return;
+                const rows = response.table.rows.map(r => {
+                    const row = [];
+                    for(let i=0; i<26; i++) row.push(r.c[i]?.v || "");
+                    return row;
+                });
+                document.getElementById('syncStatus').innerHTML = `<i class="fas fa-circle text-green-500 mr-1" style="font-size: 8px;"></i> System Online`;
+                processCloudData(rows);
+                document.getElementById(callbackName).remove();
+                delete window[callbackName];
+            };
+            const script = document.createElement('script');
+            script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${TARGET_GID}&tqx=responseHandler:${callbackName}&tq=SELECT%20*`;
+            script.id = callbackName;
+            document.body.appendChild(script);
+        }
+        function parseCSV(str) { const arr = []; let q = false, c = 0, r = 0; for (let i = 0; i < str.length; i++) { let cc = str[i], nc = str[i + 1]; arr[r] = arr[r] || []; arr[r][c] = arr[r][c] || ''; if (cc == '"' && q && nc == '"') { arr[r][c] += '"'; ++i; } else if (cc == '"') { q = !q; } else if (cc == ',' && !q) { ++c; } else if (cc == '\r' && !q && nc == '\n') { ++r; c = 0; ++i; } else if (cc == '\n' && !q) { ++r; c = 0; } else { arr[r][c] += cc; } } return arr; }
+
+        function renderTable(tableId, data, colCount) {
+            const tbody = document.getElementById(tableId).querySelector('tbody');
+            tbody.innerHTML = '';
+            data.forEach((row, rIdx) => {
+                const tr = document.createElement('tr');
+                const uid = `${tableId}_${rIdx}`;
+                let html = `<td class="font-bold text-gray-700 whitespace-nowrap text-left px-2 bg-gray-50">${row.slab}</td>`;
+                let pTotal = 0;
+                row.p.forEach((val, cIdx) => { pTotal += val; html += `<td><input type="number" id="${uid}_p${cIdx}" value="${val}" readonly class="text-blue-900 font-bold bg-transparent"></td>`; });
+                html += `<td class="bg-blue-100 font-extrabold text-blue-900" id="${uid}_ptotal">${pTotal.toLocaleString()}</td>`;
+                for(let i=0; i<colCount; i++) { html += `<td><input type="number" id="${uid}_d${i}" value="0" oninput="calcRow('${uid}', ${colCount})" class="text-green-700 font-bold border-b border-green-100 focus:bg-green-50"></td>`; }
+                html += `<td class="bg-green-100 font-bold text-green-800" id="${uid}_dtotal">0</td>`;
+                html += `<td class="bg-black text-white font-bold text-sm" id="${uid}_final">0</td>`;
+                tr.innerHTML = html;
+                tbody.appendChild(tr);
+                calcRow(uid, colCount);
+            });
+        }
+        function calcRow(uid, colCount) {
+            let pTotal = 0, dTotal = 0;
+            for(let i=0; i<colCount; i++) pTotal += parseFloat(document.getElementById(`${uid}_p${i}`).value)||0;
+            for(let i=0; i<colCount; i++) dTotal += parseFloat(document.getElementById(`${uid}_d${i}`).value)||0;
+            document.getElementById(`${uid}_dtotal`).innerText = dTotal.toLocaleString();
+            document.getElementById(`${uid}_final`).innerText = (pTotal - dTotal).toLocaleString();
+        }
+        function updateFooter(val) { 
+            const txt = val ? val.toUpperCase() : "03 DAYS";
+            document.getElementById('freeDaysDisplay').innerText = `DISCOUNTED: ARRIVAL + ${txt} FREE TIME ONLY`; 
+            document.getElementById('prominentFreeDaysText').innerText = txt;
+        }
+        
+        function calculateMonths() { 
+            const d1 = new Date(document.getElementById('dateFrom').value); 
+            const d2 = new Date(document.getElementById('dateTo').value);
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            const statusBox = document.getElementById('statusBox');
+            const currentName = document.getElementById('customerName').value.trim();
+            
+            // VERSION EXPIRY CHECK
+            if(currentName) {
+                const currentVerStr = document.getElementById('version').value; 
+                const currentVer = parseInt(currentVerStr.replace(/\D/g,'')) || 0;
+                
+                let maxVer = 0;
+                globalRecords.forEach(r => {
+                    if(r.name.toLowerCase() === currentName.toLowerCase()) {
+                        const v = parseInt((r.ver || "Version 1").replace(/\D/g,'')) || 1;
+                        if(v > maxVer) maxVer = v;
+                    }
+                });
+
+                if (maxVer > currentVer) {
+                    statusBox.innerText = `EXPIRED`;
+                    statusBox.className = "input-field h-8 flex items-center justify-center font-extrabold text-xs uppercase rounded border text-center status-expired tracking-widest";
+                    return;
+                }
+            }
+
+            if(d1 && d2 && d2 > d1){ 
+                let m = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth()); 
+                if(d2.getDate() < d1.getDate()) m--; 
+                const days = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24));
+                document.getElementById('validity').value = `${m} Months (${days} Days)`; 
+                
+                if (today > d2) {
+                    statusBox.innerText = `EXPIRED`;
+                    statusBox.className = "input-field h-8 flex items-center justify-center font-extrabold text-lg uppercase rounded border text-center status-expired tracking-widest";
+                } else {
+                    statusBox.innerText = "ACTIVE";
+                    statusBox.className = "input-field h-8 flex items-center justify-center font-extrabold text-lg uppercase rounded border text-center status-valid tracking-widest";
+                }
+            } else {
+                if(statusBox.innerText !== `EXPIRED`) {
+                   // Pending Logic
+                }
+            }
+        }
+        
+        function addTransportRow(data={}) {
+            const tbody = document.getElementById('tbodyTransport'); const tr = document.createElement('tr'); const uid = `trans_${Date.now()}`;
+            const transOpts = ['HCPL','PCS','OTHER','SELF'].map(o => `<option ${data.trans===o?'selected':''}>${o}</option>`).join('');
+            const dests = ['Ludhiana','Mandi Gobindgarh','Malerkotla','Sangrur','Dhuri','Sunam'];
+            const destOpts = dests.map(o => `<option ${data.dest===o?'selected':''}>${o}</option>`).join('');
+            tr.innerHTML = `<td><select id="${uid}_trans" class="text-blue-900 font-bold"><option value="">-- Select --</option>${transOpts}</select></td><td><input type="text" value="Kilaraipur" id="${uid}_org" class="w-full text-center uppercase font-bold text-gray-600" readonly></td><td><select id="${uid}_dest" onchange="updateDiscount('${uid}')" class="uppercase font-bold"><option value="">--</option>${destOpts}</select></td><td><input type="text" value="${data.ret||'Empty Yard'}" id="${uid}_ret" class="w-full text-center uppercase font-bold"></td><td><input type="number" value="${data.disc||''}" id="${uid}_disc" class="bg-yellow-50 text-red-600 font-bold"></td><td><input type="text" value="${data.base||''}" id="${uid}_base" class="bg-yellow-50 font-bold"></td><td class="no-print"><button onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button></td>`;
+            tbody.appendChild(tr); 
+            if(data.trans) document.getElementById(`${uid}_trans`).value = data.trans;
+            if(data.dest) document.getElementById(`${uid}_dest`).value = data.dest;
+            if(!data.disc) updateDiscount(uid);
+        }
+
+        function updateDiscount(uid) {
+            const dest = document.getElementById(`${uid}_dest`).value;
+            let disc = 0;
+            if(dest === 'Ludhiana') disc = 2000;
+            else if(dest === 'Mandi Gobindgarh') disc = 1500;
+            document.getElementById(`${uid}_disc`).value = disc;
+        }
+
+        function addIncentiveRow(data={}) {
+            const tbody = document.getElementById('tbodyIncentive'); const tr = document.createElement('tr'); const uid = `inc_${Date.now()}`;
+            tr.innerHTML = `<td><select id="${uid}_line" class="text-teal-900 font-bold w-full bg-transparent"><option>MSC</option><option>NON MSC</option></select></td><td><input type="number" value="${data.d20||''}" id="${uid}_d20" class="w-full bg-teal-50 text-center font-bold"></td><td><input type="number" value="${data.d40||''}" id="${uid}_d40" class="w-full bg-teal-50 text-center font-bold"></td><td class="no-print"><button onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button></td>`;
+            tbody.appendChild(tr);
+            if(data.line) document.getElementById(`${uid}_line`).value = data.line;
+        }
+
+        function resetForm() { window.location.reload(); }
+    </script>
+</body>
+</html>
