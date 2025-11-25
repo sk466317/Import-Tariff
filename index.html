@@ -9,11 +9,11 @@
 
     <style>
         /* --- DESIGN LOGIC --- */
-        body { background-color: #1f2937; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #e5e7eb; }
+        body { background-color: #1f2937; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #e5e7eb; zoom: 90%; }
         
         @media print {
             @page { size: A4 landscape; margin: 5mm; }
-            body { background-color: white !important; color: black !important; -webkit-print-color-adjust: exact; }
+            body { background-color: white !important; color: black !important; -webkit-print-color-adjust: exact; zoom: 100%; }
             .page-container { background-color: white !important; box-shadow: none !important; border: none !important; width: 100% !important; margin: 0 !important; max-width: 100% !important; }
             .no-print { display: none !important; }
             input, select, textarea { border: none !important; background: transparent !important; padding: 0 !important; resize: none; color: black !important; appearance: none; }
@@ -27,6 +27,9 @@
             .hide-on-freedays { display: none !important; }
             .hide-section { display: none !important; }
             .status-box-print { border: 2px solid #000 !important; font-weight: bold !important; }
+            
+            .text-red-600 { color: #dc2626 !important; }
+            .text-blue-900 { color: #1e3a8a !important; }
         }
 
         /* Inputs & Tables */
@@ -34,13 +37,12 @@
         .input-field:focus { outline: none; border-color: #2563eb; background-color: #ffffff; }
         .input-field:disabled { background-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; } 
         
-        .tariff-table { width: 100%; border-collapse: collapse; font-size: 0.65rem; }
-        .tariff-table th { border: 1px solid #fff; padding: 5px 2px; text-align: center; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; }
-        .tariff-table td { border: 1px solid #9ca3af; padding: 2px; text-align: center; background-color: white; color: black; }
+        .tariff-table { width: 100%; border-collapse: collapse; font-size: 0.65rem; table-layout: fixed; } 
+        .tariff-table th { border: 1px solid #fff; padding: 5px 2px; text-align: center; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; overflow: hidden; text-overflow: ellipsis; }
+        .tariff-table td { border: 1px solid #9ca3af; padding: 2px; text-align: center; background-color: white; color: black; overflow: hidden; }
         .tariff-table input { width: 100%; text-align: center; background: transparent; border: none; font-size: 0.7rem; font-weight: 700; color: #111827; }
         .tariff-table select { width: 100%; text-align: center; background: transparent; border: none; font-size: 0.7rem; font-weight: 700; color: #111827; outline: none; }
         
-        /* Textarea specific for tables */
         .tariff-table textarea { width: 100%; text-align: left; background: transparent; border: none; font-size: 0.7rem; font-weight: 700; color: #111827; resize: none; padding: 2px; line-height: 1.1; }
         
         .tariff-table input:focus, .tariff-table select:focus, .tariff-table textarea:focus { background-color: #eff6ff; }
@@ -50,9 +52,9 @@
             pointer-events: none; background-color: #e5e7eb !important; color: #4b5563 !important; border-color: transparent; 
         }
         
-        /* STATUS BOX STYLES (Overrides View Mode) */
-        .status-valid, .view-mode .status-valid { background-color: #bbf7d0 !important; color: #14532d !important; border: 2px solid #15803d !important; } /* Green */
-        .status-expired, .view-mode .status-expired { background-color: #fbcfe8 !important; color: #831843 !important; border: 2px solid #db2777 !important; } /* Pink */
+        /* STATUS BOX STYLES */
+        .status-valid, .view-mode .status-valid { background-color: #bbf7d0 !important; color: #14532d !important; border: 2px solid #15803d !important; } 
+        .status-expired, .view-mode .status-expired { background-color: #fbcfe8 !important; color: #831843 !important; border: 2px solid #db2777 !important; } 
         .status-pending { background-color: #f3f4f6 !important; color: #6b7280 !important; border: 2px solid #d1d5db !important; } 
 
         /* Free Days Box Override for Read Only */
@@ -62,6 +64,12 @@
             font-weight: 800 !important;
             border: 2px solid #eab308 !important;
         }
+
+        /* History Table Styles (Compact) */
+        .history-table { width: 100%; border-collapse: collapse; font-size: 0.6rem; margin-bottom: 8px; }
+        .history-table th { background-color: #374151; color: white; padding: 4px; text-align: center; border: 1px solid #4b5563; }
+        .history-table td { background-color: #f9fafb; color: black; padding: 3px; text-align: center; border: 1px solid #d1d5db; font-weight: bold; }
+        .history-table td.total-cell { background-color: #d1fae5; color: #065f46; }
 
         /* Overlays */
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
@@ -107,8 +115,7 @@
                 <div class="w-1/12 text-center">End Date</div>
                 <div class="w-1/12 text-right">Status</div>
             </div>
-            <div class="p-0 overflow-y-auto flex-1 bg-white" id="reportsArea">
-                </div>
+            <div class="p-0 overflow-y-auto flex-1 bg-white" id="reportsArea"></div>
             <div class="bg-gray-100 p-2 text-right text-xs text-gray-500 border-t border-gray-300" id="reportCount">0 Records</div>
         </div>
     </div>
@@ -118,7 +125,7 @@
         <h2 class="text-xl font-bold text-white" id="loadingText">Saving Data...</h2>
     </div>
 
-    <div class="max-w-[1400px] mx-auto mb-4 no-print opacity-0 transition-opacity duration-500" id="topControls">
+    <div class="sticky top-0 z-50 max-w-[1400px] mx-auto mb-4 no-print opacity-0 transition-opacity duration-500" id="topControls">
         <div class="bg-white border-l-4 border-blue-600 p-3 rounded shadow-md flex flex-col md:flex-row justify-between items-end gap-3">
             
             <div class="flex flex-col gap-2 w-full md:w-auto">
@@ -198,7 +205,7 @@
                     <option value="ICD">ICD Destuffing</option>
                 </select>
             </div>
-            <div class="col-span-2"><label class="block text-[10px] font-bold text-gray-600 uppercase">Customer Name <span class="text-red-600">*</span></label><input type="text" id="customerName" class="input-field font-bold text-blue-900 h-8 bg-white uppercase border-l-4 border-blue-600" placeholder="ENTER NAME" oninput="syncCustomerName()"></div>
+            <div class="col-span-2"><label class="block text-[10px] font-bold text-gray-600 uppercase">Customer Name <span class="text-red-600">*</span></label><input type="text" id="customerName" class="input-field font-bold text-blue-900 h-8 bg-white uppercase border-l-4 border-blue-600" placeholder="ENTER NAME"></div>
             
             <div class="col-span-1">
                 <label class="block text-[10px] font-bold text-gray-600 uppercase">Customer Type <span class="text-red-600">*</span></label>
@@ -257,14 +264,14 @@
                 <table class="tariff-table border-2 border-blue-900" id="tableFactory">
                     <thead>
                         <tr>
-                            <th class="bg-gray-700 w-20 text-white" rowspan="2">Weight Slab</th>
+                            <th class="bg-gray-700 text-white w-[10%]" rowspan="2">Weight Slab</th>
                             <th class="bg-header-public" colspan="7">PUBLIC TARIFF (INR)</th>
                             <th class="bg-header-discount" colspan="7">DISCOUNTED TARIFF (INR)</th>
-                            <th class="bg-black text-white w-24" rowspan="2">Total Billing<br><span class="text-[9px] font-normal">(Public - Disc)</span></th>
+                            <th class="bg-black text-white w-[8%]" rowspan="2">Total Billing<br><span class="text-[9px] font-normal">(Public - Disc)</span></th>
                         </tr>
                         <tr class="text-[9px]">
-                            <th class="bg-blue-800 text-white">Terminal Handing</th> <th class="bg-blue-800 text-white">Infra.</th> <th class="bg-blue-800 text-white">Weighment</th> <th class="bg-blue-800 text-white">Energy Surcharge</th> <th class="bg-blue-800 text-white">EIC AND Congesion</th> <th class="bg-blue-800 text-white">Port SSR</th> <th class="bg-blue-900 border-l border-white text-white">Total</th>
-                            <th class="bg-green-700 text-white">Terminal Handing</th> <th class="bg-green-700 text-white">Infra.</th> <th class="bg-green-700 text-white">Weighment</th> <th class="bg-green-700 text-white">Energy Surcharge</th> <th class="bg-green-700 text-white">EIC AND Congesion</th> <th class="bg-green-700 text-white">Port SSR</th> <th class="bg-green-900 border-l border-white text-white">Total Disc</th>
+                            <th class="bg-blue-800 text-white w-[5.8%]">Terminal Handing</th> <th class="bg-blue-800 text-white w-[5.8%]">Infra.</th> <th class="bg-blue-800 text-white w-[5.8%]">Weighment</th> <th class="bg-blue-800 text-white w-[5.8%]">Energy Surcharge</th> <th class="bg-blue-800 text-white w-[5.8%]">EIC AND Congesion</th> <th class="bg-blue-800 text-white w-[5.8%]">Port SSR</th> <th class="bg-blue-900 border-l border-white text-white w-[5.8%]">Total</th>
+                            <th class="bg-green-700 text-white w-[5.8%]">Terminal Handing</th> <th class="bg-green-700 text-white w-[5.8%]">Infra.</th> <th class="bg-green-700 text-white w-[5.8%]">Weighment</th> <th class="bg-green-700 text-white w-[5.8%]">Energy Surcharge</th> <th class="bg-green-700 text-white w-[5.8%]">EIC AND Congesion</th> <th class="bg-green-700 text-white w-[5.8%]">Port SSR</th> <th class="bg-green-900 border-l border-white text-white w-[5.8%]">Total Disc</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -276,14 +283,14 @@
                 <table class="tariff-table border-2 border-purple-900" id="tableICD">
                     <thead>
                         <tr>
-                            <th class="bg-gray-700 w-20 text-white" rowspan="2">Weight Slab</th>
+                            <th class="bg-gray-700 text-white w-[10%]" rowspan="2">Weight Slab</th>
                             <th class="bg-header-public" colspan="8">PUBLIC TARIFF (INR)</th>
                             <th class="bg-header-discount" colspan="8">DISCOUNTED TARIFF (INR)</th>
-                            <th class="bg-black text-white w-24" rowspan="2">Total Billing<br><span class="text-[9px] font-normal">(Public - Disc)</span></th>
+                            <th class="bg-black text-white w-[8%]" rowspan="2">Total Billing<br><span class="text-[9px] font-normal">(Public - Disc)</span></th>
                         </tr>
                         <tr class="text-[9px]">
-                            <th class="bg-purple-800 text-white">Destuff</th> <th class="bg-purple-800 text-white">THC</th> <th class="bg-purple-800 text-white">Infra</th> <th class="bg-purple-800 text-white">Weight</th> <th class="bg-purple-800 text-white">Energy</th> <th class="bg-purple-800 text-white">EIC/Cong</th> <th class="bg-purple-800 text-white">Port SSR</th> <th class="bg-purple-900 border-l border-white text-white">Total</th>
-                            <th class="bg-green-700 text-white">Destuff</th> <th class="bg-green-700 text-white">THC</th> <th class="bg-green-700 text-white">Infra</th> <th class="bg-green-700 text-white">Weight</th> <th class="bg-green-700 text-white">Energy</th> <th class="bg-green-700 text-white">EIC/Cong</th> <th class="bg-green-700 text-white">Port SSR</th> <th class="bg-green-900 border-l border-white text-white">Total Disc</th>
+                            <th class="bg-purple-800 text-white w-[5.1%]">Destuff</th> <th class="bg-purple-800 text-white w-[5.1%]">THC</th> <th class="bg-purple-800 text-white w-[5.1%]">Infra</th> <th class="bg-purple-800 text-white w-[5.1%]">Weight</th> <th class="bg-purple-800 text-white w-[5.1%]">Energy</th> <th class="bg-purple-800 text-white w-[5.1%]">EIC/Cong</th> <th class="bg-purple-800 text-white w-[5.1%]">Port SSR</th> <th class="bg-purple-900 border-l border-white text-white w-[5.1%]">Total</th>
+                            <th class="bg-green-700 text-white w-[5.1%]">Destuff</th> <th class="bg-green-700 text-white w-[5.1%]">THC</th> <th class="bg-green-700 text-white w-[5.1%]">Infra</th> <th class="bg-green-700 text-white w-[5.1%]">Weight</th> <th class="bg-green-700 text-white w-[5.1%]">Energy</th> <th class="bg-green-700 text-white w-[5.1%]">EIC/Cong</th> <th class="bg-green-700 text-white w-[5.1%]">Port SSR</th> <th class="bg-green-900 border-l border-white text-white w-[5.1%]">Total Disc</th>
                         </tr>
                     </thead>
                     <tbody></tbody>
@@ -297,7 +304,7 @@
                 <div class="bg-yellow-600 text-white px-3 py-1.5 rounded-t font-bold text-xs uppercase"><i class="fas fa-truck mr-2"></i> 3. Transport Tariff</div>
                 <div class="mb-1 flex items-center gap-2">
                     <label class="text-[10px] font-bold text-gray-700 uppercase">Claimed By:</label>
-                    <input type="text" id="transportClaimedBy" class="border border-gray-400 rounded px-2 py-0.5 text-xs font-bold w-80 bg-white uppercase" placeholder="CUSTOMER NAME">
+                    <input type="text" id="transportClaimedBy" class="border border-gray-400 rounded px-2 py-0.5 text-xs font-bold w-80 bg-white uppercase" value="TRANSPORTER">
                     <button onclick="addTransportRow()" class="bg-white text-yellow-700 hover:bg-gray-100 text-[10px] font-bold px-2 py-0.5 rounded no-print shadow uppercase border border-yellow-600">Add Location</button>
                 </div>
             </div>
@@ -322,7 +329,7 @@
                 <div class="bg-teal-700 text-white px-3 py-1.5 rounded-t font-bold text-xs uppercase"><i class="fas fa-gift mr-2"></i> 4. Incentive Details</div>
                 <div class="mb-1 flex items-center gap-2">
                     <label class="text-[10px] font-bold text-gray-700 uppercase">Claimed By:</label>
-                    <input type="text" id="incentiveClaimedBy" class="border border-gray-400 rounded px-2 py-0.5 text-xs font-bold w-80 bg-white uppercase" placeholder="CUSTOMER NAME">
+                    <input type="text" id="incentiveClaimedBy" class="border border-gray-400 rounded px-2 py-0.5 text-xs font-bold w-80 bg-white uppercase" value="CHA">
                     <button onclick="addIncentiveRow()" class="bg-white text-teal-800 hover:bg-gray-100 text-[10px] font-bold px-2 py-0.5 rounded no-print shadow uppercase border border-teal-700">Add Row</button>
                 </div>
             </div>
@@ -354,6 +361,13 @@
         </div>
     </div>
 
+    <div id="historySection" class="max-w-[1350px] mx-auto mt-8 no-print hidden">
+        <h3 class="text-2xl font-bold text-gray-400 mb-4 border-b border-gray-600 pb-2">
+            <i class="fas fa-history mr-2"></i> Version History
+        </h3>
+        <div id="historyContent" class="space-y-6"></div>
+    </div>
+
     <script>
         // --- CONFIGURATION ---
         const SCRIPT_SAVE_URL = 'https://script.google.com/macros/s/AKfycbzsxcINub9C_8CMshJvHZ-TGR4kUWSeOUqgRtL7vToLtnIHwIy-OhKXwXqbOl7NOE0p/exec';
@@ -366,7 +380,7 @@
 
         let globalRecords = [];
         let loadedRecordId = null; 
-        let currentReportData = []; // Store current filtered data for Excel export
+        let currentReportData = []; 
 
         function checkAccess() {
             if (document.getElementById('accessPass').value === "16111980") {
@@ -388,27 +402,20 @@
             toggleTariffTables();
         }
 
-        // --- EMAIL LOGIC ---
         function sendEmail() {
             const cust = document.getElementById('customerName').value;
             const mode = document.getElementById('tariffMode').value;
-            
             if(!cust) return alert("Please create or load a tariff first.");
-
             const to = "aman.sharma@hindterminals.com;sourav.thakur@hindterminals.com;sukhwinder.singh@hindterminals.com";
             const cc = "rajesh.kumar@hindterminals.com;rajeev.sharma@hindterminals.com;dinesh.negi@hindterminals.com;ekta@hindterminals.com";
             const subject = `Import Tariff Sheet of "${cust}" ${mode}`;
-            
-            // Note: %0D%0A is a line break in mailto links
             const body = `Dear Accounts Team,%0D%0A%0D%0APlease find attached Tariff Sheet of "${cust}"%0D%0ADISCOUNTED TARIFF%0D%0A%0D%0AThanks and Regards,%0D%0AVikram Singh%0D%0AHind Terminals Pvt Ltd.`;
-
             window.location.href = `mailto:${to}?cc=${cc}&subject=${subject}&body=${body}`;
         }
 
-        // --- REPORTS LOGIC ---
         function openReports() {
             document.getElementById('reportsModal').style.display = 'flex';
-            showReport('Discounted'); // Default view
+            showReport('Discounted');
         }
         function closeReports() {
             document.getElementById('reportsModal').style.display = 'none';
@@ -424,7 +431,6 @@
             const countLabel = document.getElementById('reportCount');
             const btns = document.querySelectorAll('#reportsModal button[id^="btnRep"]');
             
-            // Reset Buttons
             btns.forEach(b => b.classList.remove('bg-indigo-600'));
             if(type === 'Discounted') document.getElementById('btnRepDisc').classList.add('bg-indigo-600');
             if(type === 'FreeDays') document.getElementById('btnRepFree').classList.add('bg-indigo-600');
@@ -432,7 +438,6 @@
 
             area.innerHTML = '';
             
-            // 1. Identify Latest Versions for "Previous Version" Logic
             const latestVersions = {};
             globalRecords.forEach(r => {
                 const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1;
@@ -441,52 +446,41 @@
                 }
             });
 
-            // 2. Filter Logic
             let filtered = [];
             const today = new Date();
             today.setHours(0,0,0,0);
 
             if (type === 'Expired') {
                 filtered = globalRecords.filter(r => {
-                    // Condition A: Date is Expired
                     let isExpiredDate = false;
                     if (r.dates) {
                         const end = new Date(r.dates.split('to')[1]?.trim());
                         if(end < today) isExpiredDate = true;
                     }
-                    // Condition B: Superseded by newer version
                     const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1;
                     const isSuperseded = vNum < latestVersions[r.name];
-
                     return isExpiredDate || isSuperseded;
                 });
             } else {
-                // MODIFIED: Exclude Old Versions from standard reports
                 filtered = globalRecords.filter(r => {
                     if (r.mode !== type) return false;
-
-                    // Check if Old Version
                     const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1;
                     const isOldVer = vNum < latestVersions[r.name];
-                    
-                    return !isOldVer; // Hide if Old Version
+                    return !isOldVer; 
                 });
             }
 
-            currentReportData = filtered; // Save for Excel
+            currentReportData = filtered;
 
             if (filtered.length === 0) {
                 area.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">No records found for this category.</div>';
             } else {
-                // Sort by name
                 filtered.sort((a,b) => a.name.localeCompare(b.name));
-                
                 filtered.forEach(r => {
                     const endDateStr = r.dates ? r.dates.split('to')[1]?.trim() : "N/A";
                     let status = "Active";
                     let statusClass = "text-green-600 bg-green-100";
                     
-                    // Check expiry for status badge
                     if (endDateStr !== "N/A") {
                         const end = new Date(endDateStr);
                         if (end < today) {
@@ -494,20 +488,16 @@
                             statusClass = "text-red-600 bg-red-100";
                         }
                     }
-                    // Check Superseded
                     const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1;
                     if (vNum < latestVersions[r.name]) {
                          status = "Old Ver";
                          statusClass = "text-gray-600 bg-gray-200";
                     }
 
-                    // --- GENERATE DETAILS STRING (Slab Wise / Free Days) ---
                     let detailsHtml = "";
-                    
                     if (type === 'FreeDays') {
                         detailsHtml = `<span class="text-green-700 font-extrabold">${r.free || 'N/A'}</span>`;
                     } else {
-                        // For Discounted: Parse JSON and Calculate Total DISCOUNT Amount per slab
                         let slabDetails = [];
                         try {
                             if (r.jsonFactory) {
@@ -515,7 +505,6 @@
                                 fInputs.forEach((row, idx) => {
                                     if(factoryData[idx]) {
                                         const dTotal = row.reduce((a,b)=>a+(parseFloat(b)||0),0);
-                                        // Only show if there is a discount
                                         let sName = factoryData[idx].slab.replace('(20) ','').replace('For ','');
                                         if (dTotal > 0) slabDetails.push(`${sName}: ₹${dTotal}`);
                                     }
@@ -532,16 +521,11 @@
                                 });
                             }
                         } catch(e) {}
-                        
-                        if(slabDetails.length > 0) {
-                            detailsHtml = `<span class="text-[10px] text-gray-600">${slabDetails.join(' | ')}</span>`;
-                        } else {
-                            detailsHtml = `<span class="text-gray-400">No Discount</span>`;
-                        }
+                        if(slabDetails.length > 0) detailsHtml = `<span class="text-[10px] text-gray-600">${slabDetails.join(' | ')}</span>`;
+                        else detailsHtml = `<span class="text-gray-400">No Discount</span>`;
                     }
 
                     const formattedDate = formatReportDate(endDateStr);
-
                     const div = document.createElement('div');
                     div.className = "flex justify-between items-center px-4 py-2 border-b border-gray-200 hover:bg-gray-50 text-xs text-gray-800";
                     div.innerHTML = `
@@ -551,7 +535,7 @@
                         <div class="w-1/12 text-center font-mono">${formattedDate}</div>
                         <div class="w-1/12 text-right"><span class="px-2 py-0.5 rounded ${statusClass} font-bold text-[10px] whitespace-nowrap">${status}</span></div>
                     `;
-                    div.onclick = () => { closeReports(); loadRecord(r); }; // Click to load
+                    div.onclick = () => { closeReports(); loadRecord(r); };
                     div.style.cursor = 'pointer';
                     area.appendChild(div);
                 });
@@ -559,67 +543,40 @@
             countLabel.innerText = `${filtered.length} Records found`;
         }
 
-        // --- EXCEL DOWNLOAD (CORRECTED: SEPARATE CELLS FOR DISCOUNTS) ---
         function downloadReportExcel() {
-            if (!currentReportData || currentReportData.length === 0) {
-                return alert("No data to download!");
-            }
-
-            // Define Fixed Headers for the Excel
-            // F = Factory, I = ICD
+            if (!currentReportData || currentReportData.length === 0) return alert("No data to download!");
             const headers = [
                 "Customer Name", "Version", "Mode", "End Date", "Status",
                 "Factory 0-27MT Disc", "Factory 27-30MT Disc", "Factory >31MT Disc", "Factory 40\" Disc",
                 "ICD 0-27MT Disc", "ICD 27-30MT Disc", "ICD >31MT Disc", "ICD 40\" Disc",
                 "Free Days"
             ];
-            
             let csvContent = headers.join(",") + "\n";
-
             currentReportData.forEach(r => {
                 const endDateStr = r.dates ? r.dates.split('to')[1]?.trim() : "N/A";
                 const formattedDate = formatReportDate(endDateStr);
-                
-                // Init Discount Slots
-                let fDisc = [0,0,0,0]; // Factory 4 slots
-                let iDisc = [0,0,0,0]; // ICD 4 slots
-                
-                // Parse Data
+                let fDisc = [0,0,0,0]; 
+                let iDisc = [0,0,0,0]; 
                 try {
                     if (r.jsonFactory) {
                         const fInputs = JSON.parse(r.jsonFactory);
-                        fInputs.forEach((row, idx) => {
-                            if(idx < 4) fDisc[idx] = row.reduce((a,b)=>a+(parseFloat(b)||0),0);
-                        });
+                        fInputs.forEach((row, idx) => { if(idx < 4) fDisc[idx] = row.reduce((a,b)=>a+(parseFloat(b)||0),0); });
                     }
                     if (r.jsonICD) {
                         const iInputs = JSON.parse(r.jsonICD);
-                        iInputs.forEach((row, idx) => {
-                             if(idx < 4) iDisc[idx] = row.reduce((a,b)=>a+(parseFloat(b)||0),0);
-                        });
+                        iInputs.forEach((row, idx) => { if(idx < 4) iDisc[idx] = row.reduce((a,b)=>a+(parseFloat(b)||0),0); });
                     }
                 } catch(e) {}
-
-                // Prepare Row
                 const safeName = `"${r.name.replace(/"/g, '""')}"`;
                 const freeDaysVal = r.mode === 'FreeDays' ? (r.free || "") : "";
-                
-                // Construct CSV Row
                 const row = [
-                    safeName,
-                    r.ver||'V1',
-                    r.mode,
-                    formattedDate,
-                    "Active", // Simplified for CSV
+                    safeName, r.ver||'V1', r.mode, formattedDate, "Active",
                     fDisc[0] || "", fDisc[1] || "", fDisc[2] || "", fDisc[3] || "",
                     iDisc[0] || "", iDisc[1] || "", iDisc[2] || "", iDisc[3] || "",
                     freeDaysVal
                 ];
-                
                 csvContent += row.join(",") + "\n";
             });
-
-            // Create Download Link
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             const url = URL.createObjectURL(blob);
@@ -630,7 +587,6 @@
             document.body.removeChild(link);
         }
 
-        // --- FILE UPLOAD ---
         function handleApproval(input) {
             const file = input.files[0];
             if (!file) return;
@@ -675,12 +631,10 @@
             document.getElementById('incentiveClaimedBy').value = name;
         }
 
-        // --- TOGGLE TABLES ---
         function toggleTariffTables() {
             const mode = document.getElementById('tariffMode').value;
             const type = document.getElementById('destuffType').value;
             const destuffSelect = document.getElementById('destuffType');
-            
             const factorySec = document.getElementById('factorySection');
             const icdSec = document.getElementById('icdSection');
             const promoBox = document.getElementById('prominentFreeDays');
@@ -708,12 +662,10 @@
 
         async function initiateSave() {
             calculateMonths(); 
-
             const cust = document.getElementById('customerName').value;
             const dFrom = document.getElementById('dateFrom').value;
             const dTo = document.getElementById('dateTo').value;
             const free = document.getElementById('freeDays').value;
-            // New Mandatory Fields
             const cType = document.getElementById('customerType').value;
             const vol = document.getElementById('volMonth').value;
 
@@ -739,32 +691,28 @@
 
             try {
                 const entryId = loadedRecordId || Date.now();
-
                 const factoryValues = [];
                 for(let i=0; i<factoryData.length; i++) {
                     const vals = [];
-                    for(let k=0; k<6; k++) vals.push(document.getElementById(`tableFactory_${i}_d${k}`).value || "0");
+                    for(let k=0; k<6; k++) vals.push(document.getElementById(`tableFactory_${i}_d${k}`).value || "");
                     factoryValues.push(vals);
                 }
-
                 const icdValues = [];
                 for(let i=0; i<icdData.length; i++) {
                     const vals = [];
-                    for(let k=0; k<7; k++) vals.push(document.getElementById(`tableICD_${i}_d${k}`).value || "0");
+                    for(let k=0; k<7; k++) vals.push(document.getElementById(`tableICD_${i}_d${k}`).value || "");
                     icdValues.push(vals);
                 }
-
                 const transValues = [];
                 document.querySelectorAll('#tbodyTransport tr').forEach(tr => {
                     const uid = tr.querySelector('select').id.split('_trans')[0];
                     transValues.push({
                         t: document.getElementById(`${uid}_trans`).value,
                         d: document.getElementById(`${uid}_dest`).value,
-                        b: document.getElementById(`${uid}_base`).value, // This is the textarea now
+                        b: document.getElementById(`${uid}_base`).value,
                         v: document.getElementById(`${uid}_disc`).value
                     });
                 });
-
                 const incValues = [];
                 document.querySelectorAll('#tbodyIncentive tr').forEach(tr => {
                     const uid = tr.querySelector('select').id.split('_line')[0];
@@ -772,7 +720,7 @@
                         l: document.getElementById(`${uid}_line`).value,
                         d20: document.getElementById(`${uid}_d20`).value,
                         d40: document.getElementById(`${uid}_d40`).value,
-                        rem: document.getElementById(`${uid}_rem`).value // Added Remarks
+                        rem: document.getElementById(`${uid}_rem`).value 
                     });
                 });
 
@@ -780,7 +728,6 @@
                 fd.append('Date', document.getElementById('dateToday').value);
                 fd.append('Name', `[MASTER] ${cust} [ID:${entryId}]`);
                 fd.append('Email', `Ref: ${document.getElementById('tariffNo').value} | Dates: ${dFrom} to ${dTo} | Mode: ${document.getElementById('tariffMode').value} | Type: ${document.getElementById('destuffType').value}`);
-                // Added CType and Vol to Phone storage string
                 fd.append('Phone', `Valid: ${document.getElementById('validity').value} | Free: ${free} | CType: ${cType} | Vol: ${vol}`);
                 fd.append('Department', `Sales: ${document.getElementById('salesPerson').value} | CHA: ${document.getElementById('chaName').value} | TC: ${document.getElementById('transportClaimedBy').value} | IC: ${document.getElementById('incentiveClaimedBy').value}`);
                 fd.append('City', `Ver: ${document.getElementById('version').value} | Rem: ${document.getElementById('remarks').value}`);
@@ -819,10 +766,8 @@
                         type: meta1.find(s=>s.includes('Type:'))?.split('Type:')[1]?.trim(),
                         valid: meta2[0]?.split('Valid:')[1]?.trim(),
                         free: meta2.find(s=>s.includes('Free:'))?.split('Free:')[1]?.trim(),
-                        // NEW PARSING
                         cType: meta2.find(s=>s.includes('CType:'))?.split('CType:')[1]?.trim(),
                         vol: meta2.find(s=>s.includes('Vol:'))?.split('Vol:')[1]?.trim(),
-                        
                         sales: meta3[0]?.split('Sales:')[1]?.trim(),
                         cha: meta3.find(s=>s.includes('CHA:'))?.split('CHA:')[1]?.trim(),
                         tc: meta3.find(s=>s.includes('TC:'))?.split('TC:')[1]?.trim(),
@@ -878,7 +823,6 @@
             document.getElementById('destuffType').value = rec.type || "";
             document.getElementById('transportClaimedBy').value = rec.tc || rec.name; 
             document.getElementById('incentiveClaimedBy').value = rec.ic || rec.name;
-            // LOAD NEW FIELDS
             document.getElementById('customerType').value = rec.cType || "";
             document.getElementById('volMonth').value = rec.vol || "";
             
@@ -897,7 +841,7 @@
                     fData.forEach((rowVals, rIdx) => {
                         rowVals.forEach((val, cIdx) => {
                             const el = document.getElementById(`tableFactory_${rIdx}_d${cIdx}`);
-                            if(el) el.value = val;
+                            if(el) el.value = val; 
                         });
                         calcRow(`tableFactory_${rIdx}`, 6);
                     });
@@ -923,12 +867,142 @@
                 if(rec.jsonInc) {
                     const iData = JSON.parse(rec.jsonInc);
                     iData.forEach(i => { 
-                        // Modified to load the new remarks field
                         addIncentiveRow({ line: i.l, d20: i.d20, d40: i.d40, rem: i.rem || '' }); 
                     });
                 } else { addIncentiveRow(); }
             } catch(e) { console.error("JSON Parse Error", e); alert("Data corrupted."); }
             toggleReadOnly(true);
+            renderHistory(rec); // Load history
+        }
+
+        // --- HISTORY LOGIC ---
+        function renderHistory(currentRec) {
+            const container = document.getElementById('historySection');
+            const content = document.getElementById('historyContent');
+            container.classList.remove('hidden');
+            content.innerHTML = '';
+
+            const currentVer = parseInt((currentRec.ver || "Version 1").replace(/\D/g, '')) || 1;
+            
+            // Filter versions for same customer with lower version number
+            const historyRecs = globalRecords.filter(r => 
+                r.name.toLowerCase() === currentRec.name.toLowerCase() &&
+                (parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1) < currentVer
+            ).sort((a, b) => {
+                const vA = parseInt((a.ver || "1").replace(/\D/g, ''));
+                const vB = parseInt((b.ver || "1").replace(/\D/g, ''));
+                return vB - vA; // Descending
+            });
+
+            if (historyRecs.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            function formatDateDDMMYYYY(isoDate) {
+                if(!isoDate) return '';
+                const parts = isoDate.split('-');
+                return `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+
+            historyRecs.forEach(rec => {
+                const card = document.createElement('div');
+                card.className = "bg-white border-2 border-gray-300 rounded p-4 shadow-lg";
+                
+                // Build Data Snapshots
+                let factoryHTML = '<p class="text-xs text-gray-400 italic">No Factory Data</p>';
+                let icdHTML = '<p class="text-xs text-gray-400 italic">No ICD Data</p>';
+                
+                if (rec.jsonFactory) {
+                    const fData = JSON.parse(rec.jsonFactory);
+                    let rows = '';
+                    fData.forEach((vals, idx) => {
+                        if(factoryData[idx]) {
+                            const disc = vals.slice(0,6).reduce((a,b) => a + (parseFloat(b)||0), 0);
+                            const pubTotal = factoryData[idx].p.reduce((a,b) => a + b, 0);
+                            if(disc > 0) {
+                                // DISC AND NET RED
+                                rows += `<tr><td class="text-left">${factoryData[idx].slab}</td><td>${pubTotal}</td><td class="text-red-600 font-bold">${disc}</td><td class="text-red-600 font-bold">${pubTotal-disc}</td></tr>`;
+                            }
+                        }
+                    });
+                    if(rows) factoryHTML = `<table class="history-table"><thead><tr><th>Slab</th><th>Public</th><th>Disc</th><th>Net</th></tr></thead><tbody>${rows}</tbody></table>`;
+                }
+
+                if (rec.jsonICD) {
+                    const iData = JSON.parse(rec.jsonICD);
+                    let rows = '';
+                    iData.forEach((vals, idx) => {
+                        if(icdData[idx]) {
+                            const disc = vals.slice(0,7).reduce((a,b) => a + (parseFloat(b)||0), 0);
+                            const pubTotal = icdData[idx].p.reduce((a,b) => a + b, 0);
+                            if(disc > 0) {
+                                // DISC AND NET RED
+                                rows += `<tr><td class="text-left">${icdData[idx].slab}</td><td>${pubTotal}</td><td class="text-red-600 font-bold">${disc}</td><td class="text-red-600 font-bold">${pubTotal-disc}</td></tr>`;
+                            }
+                        }
+                    });
+                    if(rows) icdHTML = `<table class="history-table"><thead><tr><th>Slab</th><th>Public</th><th>Disc</th><th>Net</th></tr></thead><tbody>${rows}</tbody></table>`;
+                }
+
+                // Transport: Navy Bold, Remove Negative Sign
+                let transHTML = '';
+                if(rec.jsonTrans) {
+                    const tData = JSON.parse(rec.jsonTrans);
+                    tData.forEach(t => {
+                        if(t.v > 0) transHTML += `<div class="text-[10px] border-b border-gray-200 py-1 flex justify-between"><span class="text-blue-900 font-bold">${t.d} (${t.t})</span><span class="text-blue-900 font-bold">${t.v}</span></div>`;
+                    });
+                }
+
+                // Incentive: Blue Bold
+                let incHTML = '';
+                if(rec.jsonInc) {
+                    const iData = JSON.parse(rec.jsonInc);
+                    iData.forEach(i => {
+                        if(i.d20 > 0 || i.d40 > 0) incHTML += `<div class="text-[10px] border-b border-gray-200 py-1 flex justify-between"><span class="text-blue-900 font-bold">${i.l}</span><span class="text-blue-900 font-bold">20': ${i.d20} / 40': ${i.d40}</span></div>`;
+                    });
+                }
+
+                let dateRangeDisplay = 'No Dates';
+                if(rec.dates && rec.dates.includes('to')) {
+                    const parts = rec.dates.split('to');
+                    const d1 = formatDateDDMMYYYY(parts[0].trim());
+                    const d2 = formatDateDDMMYYYY(parts[1].trim());
+                    dateRangeDisplay = `${d1} to ${d2}`;
+                }
+
+                // Header: Name - Version (Dates) in Dark Navy
+                card.innerHTML = `
+                    <div class="flex justify-between items-center border-b border-gray-300 pb-2 mb-2">
+                        <h4 class="font-bold text-lg text-blue-900">${rec.name} - ${rec.ver || 'V1'} <span class="text-sm font-bold ml-2">(${dateRangeDisplay})</span></h4>
+                        <span class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase">History View</span>
+                    </div>
+                    <div class="grid grid-cols-4 gap-4">
+                        <div class="col-span-1">
+                            <h5 class="text-[10px] font-bold uppercase text-blue-800 mb-1">Factory Tariff</h5>
+                            ${factoryHTML}
+                        </div>
+                        <div class="col-span-1">
+                            <h5 class="text-[10px] font-bold uppercase text-purple-800 mb-1">ICD Tariff</h5>
+                            ${icdHTML}
+                        </div>
+                        <div class="col-span-1">
+                            <h5 class="text-[10px] font-bold uppercase text-yellow-800 mb-1">Transport</h5>
+                            ${transHTML || '<span class="text-xs text-gray-400">None</span>'}
+                        </div>
+                        <div class="col-span-1">
+                            <h5 class="text-[10px] font-bold uppercase text-teal-800 mb-1">Incentive</h5>
+                            ${incHTML || '<span class="text-xs text-gray-400">None</span>'}
+                        </div>
+                    </div>
+                    <div class="mt-2 pt-2 border-t border-gray-100 text-[10px] text-gray-500 flex gap-4 items-center">
+                       <span class="font-bold text-blue-900 underline text-xs">Free Days: ${rec.free || '-'}</span>
+                       <span>Sales: <b>${rec.sales || '-'}</b></span>
+                       <span class="font-bold text-gray-700 truncate max-w-xs">Rem: ${rec.rem || '-'}</span>
+                    </div>
+                `;
+                content.appendChild(card);
+            });
         }
 
         function toggleReadOnly(state) {
@@ -1006,15 +1080,16 @@
                 const uid = `${tableId}_${rIdx}`;
                 let html = `<td class="font-bold text-gray-700 whitespace-nowrap text-left px-2 bg-gray-50">${row.slab}</td>`;
                 let pTotal = 0;
-                // ADDED tabindex="-1" and visual styling for Public Tariff Read-Only
+                // Public Tariff
                 row.p.forEach((val, cIdx) => { pTotal += val; html += `<td><input type="number" id="${uid}_p${cIdx}" value="${val}" readonly tabindex="-1" class="text-blue-900 font-bold bg-gray-100 pointer-events-none"></td>`; });
                 html += `<td class="bg-blue-100 font-extrabold text-blue-900" id="${uid}_ptotal">${pTotal.toLocaleString()}</td>`;
-                for(let i=0; i<colCount; i++) { html += `<td><input type="number" id="${uid}_d${i}" value="0" oninput="calcRow('${uid}', ${colCount})" class="text-green-700 font-bold border-b border-green-100 focus:bg-green-50"></td>`; }
-                html += `<td class="bg-green-100 font-bold text-green-800" id="${uid}_dtotal">0</td>`;
-                html += `<td class="bg-black text-white font-bold text-sm" id="${uid}_final">0</td>`;
+                // Discounted Tariff (BLANK DEFAULT)
+                for(let i=0; i<colCount; i++) { html += `<td><input type="number" id="${uid}_d${i}" value="" oninput="calcRow('${uid}', ${colCount})" class="text-green-700 font-bold border-b border-green-100 focus:bg-green-50"></td>`; }
+                // TOTAL DISCOUNT CELL - FORCED RED/BOLD
+                html += `<td class="bg-green-100" style="color: red !important; font-weight: 900 !important; font-size: 1rem;" id="${uid}_dtotal">0</td>`;
+                html += `<td class="bg-black text-white font-bold text-sm" id="${uid}_final">${pTotal.toLocaleString()}</td>`;
                 tr.innerHTML = html;
                 tbody.appendChild(tr);
-                calcRow(uid, colCount);
             });
         }
         function calcRow(uid, colCount) {
@@ -1084,7 +1159,6 @@
             const transOpts = ['HCPL','PCS','OTHER','SELF'].map(o => `<option ${data.trans===o?'selected':''}>${o}</option>`).join('');
             const dests = ['Ludhiana','Mandi Gobindgarh','Malerkotla','Sangrur','Dhuri','Sunam'];
             const destOpts = dests.map(o => `<option ${data.dest===o?'selected':''}>${o}</option>`).join('');
-            // CHANGED: Remarks is now a textarea
             tr.innerHTML = `<td><select id="${uid}_trans" class="text-blue-900 font-bold"><option value="">-- Select --</option>${transOpts}</select></td><td><input type="text" value="Kilaraipur" id="${uid}_org" class="w-full text-center uppercase font-bold text-gray-600" readonly></td><td><select id="${uid}_dest" onchange="updateDiscount('${uid}')" class="uppercase font-bold"><option value="">--</option>${destOpts}</select></td><td><input type="text" value="${data.ret||'Empty Yard'}" id="${uid}_ret" class="w-full text-center uppercase font-bold"></td><td><input type="number" value="${data.disc||''}" id="${uid}_disc" class="bg-yellow-50 text-red-600 font-bold"></td><td><textarea id="${uid}_base" class="w-full text-xs bg-yellow-50 font-bold p-1 border-none focus:outline-none resize-none overflow-hidden" rows="2" style="min-height:30px;">${data.base||''}</textarea></td><td class="no-print"><button onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button></td>`;
             tbody.appendChild(tr); 
             if(data.trans) document.getElementById(`${uid}_trans`).value = data.trans;
@@ -1102,10 +1176,31 @@
 
         function addIncentiveRow(data={}) {
             const tbody = document.getElementById('tbodyIncentive'); const tr = document.createElement('tr'); const uid = `inc_${Date.now()}`;
-            // CHANGED: Added Remarks Textarea Column
-            tr.innerHTML = `<td><select id="${uid}_line" class="text-teal-900 font-bold w-full bg-transparent"><option>MSC</option><option>NON MSC</option></select></td><td><input type="number" value="${data.d20||''}" id="${uid}_d20" class="w-full bg-teal-50 text-center font-bold"></td><td><input type="number" value="${data.d40||''}" id="${uid}_d40" class="w-full bg-teal-50 text-center font-bold"></td><td><textarea id="${uid}_rem" class="w-full text-xs bg-teal-50 font-bold p-1 border-none focus:outline-none resize-none overflow-hidden" rows="2" style="min-height:30px;">${data.rem||''}</textarea></td><td class="no-print"><button onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button></td>`;
+            // Keep values if data provided (loading), else default to empty
+            const d20Val = data.d20 !== undefined ? data.d20 : "";
+            const d40Val = data.d40 !== undefined ? data.d40 : "";
+            
+            tr.innerHTML = `<td><select id="${uid}_line" onchange="updateIncentiveValues('${uid}')" class="text-teal-900 font-bold w-full bg-transparent"><option value="">-- Select --</option><option value="MSC">MSC</option><option value="NON MSC">NON MSC</option></select></td><td><input type="number" value="${d20Val}" id="${uid}_d20" class="w-full bg-teal-50 text-center font-bold"></td><td><input type="number" value="${d40Val}" id="${uid}_d40" class="w-full bg-teal-50 text-center font-bold"></td><td><textarea id="${uid}_rem" class="w-full text-xs bg-teal-50 font-bold p-1 border-none focus:outline-none resize-none overflow-hidden" rows="2" style="min-height:30px;">${data.rem||''}</textarea></td><td class="no-print"><button onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700"><i class="fas fa-times"></i></button></td>`;
             tbody.appendChild(tr);
-            if(data.line) document.getElementById(`${uid}_line`).value = data.line;
+            if(data.line) {
+                document.getElementById(`${uid}_line`).value = data.line;
+            }
+        }
+
+        function updateIncentiveValues(uid) {
+            const line = document.getElementById(`${uid}_line`).value;
+            const d20 = document.getElementById(`${uid}_d20`);
+            const d40 = document.getElementById(`${uid}_d40`);
+            if(line === 'MSC') {
+                d20.value = 300;
+                d40.value = 300;
+            } else if (line === 'NON MSC') {
+                d20.value = 600;
+                d40.value = 600;
+            } else {
+                d20.value = "";
+                d40.value = "";
+            }
         }
 
         function resetForm() { window.location.reload(); }
