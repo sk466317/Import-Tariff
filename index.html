@@ -8,7 +8,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
         /* --- DESIGN LOGIC --- */
         body { background-color: #1f2937; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #e5e7eb; zoom: 90%; }
@@ -185,7 +184,8 @@
 
                 <div class="w-px h-6 bg-gray-300 mx-1"></div>
                 
-                <button onclick="initiateSave()" class="btn-uniform bg-green-600 hover:bg-green-700 text-white animate-pulse"><i class="fas fa-save mr-2"></i> SAVE / UPDATE</button>
+                <!-- ID added to btnSave for point 1 -->
+                <button id="btnSave" onclick="initiateSave()" class="btn-uniform bg-green-600 hover:bg-green-700 text-white animate-pulse"><i class="fas fa-save mr-2"></i> SAVE / UPDATE</button>
                 <button onclick="window.print()" class="btn-uniform bg-blue-600 hover:bg-blue-700 text-white w-10 !px-0"><i class="fas fa-print"></i></button>
                 <button type="button" onclick="resetForm()" class="btn-uniform bg-red-500 hover:bg-red-600 text-white"><i class="fas fa-plus mr-2"></i> Add New Tariff Sheet</button>
             </div>
@@ -194,10 +194,14 @@
             <div class="flex flex-col md:flex-row gap-2 w-full items-center">
                 <div id="syncStatus" class="text-[10px] font-bold text-gray-500 mr-2 whitespace-nowrap"><i class="fas fa-circle-notch fa-spin mr-1"></i> Connecting...</div>
                 <div class="flex gap-2 items-center flex-1 w-full">
-                    <select id="cloudHistory" class="border border-gray-400 rounded px-2 py-1 text-xs flex-1 text-blue-900 font-bold bg-blue-50 h-8" onchange="loadFromDropdown(this.value)">
+                    <!-- Point 2: Removed onchange event from select -->
+                    <select id="cloudHistory" class="border border-gray-400 rounded px-2 py-1 text-xs flex-1 text-blue-900 font-bold bg-blue-50 h-8">
                         <option value="">-- Select Customer (A-Z) --</option>
                     </select>
-                    <input type="text" class="border border-gray-400 rounded px-2 py-1 text-xs w-48 text-black font-bold h-8" placeholder="Filter..." onkeyup="filterDropdown(this.value)">
+                    <!-- Point 2: Show Record Button -->
+                    <button onclick="loadFromDropdown(document.getElementById('cloudHistory').value)" class="btn-uniform bg-indigo-800 hover:bg-indigo-900 text-white w-16 shadow-md border border-indigo-900" title="Show Selected Record">SHOW</button>
+                    <!-- ID added to filterInput for point 6 -->
+                    <input type="text" id="filterInput" class="border border-gray-400 rounded px-2 py-1 text-xs w-48 text-black font-bold h-8" placeholder="Filter..." onkeyup="filterDropdown(this.value)">
                     <button onclick="startSync()" class="btn-uniform bg-gray-600 hover:bg-gray-700 text-white w-10 !px-0" title="Refresh Data"><i class="fas fa-sync-alt"></i></button>
                 </div>
             </div>
@@ -225,7 +229,8 @@
             </div>
             <div class="col-span-1">
                 <label class="block text-[10px] font-bold text-blue-700 uppercase">Destuffing Type</label>
-                <select id="destuffType" onchange="toggleTariffTables()" class="input-field h-8 bg-blue-50 border-blue-300 text-blue-900"><option value="">-- Select --</option><option value="Both">Both (Factory & ICD)</option><option value="Factory">Factory Destuffing</option><option value="ICD">ICD Destuffing</option></select>
+                <!-- Point 3: Dedicated handler for Destuffing changes -->
+                <select id="destuffType" onchange="handleDestuffChange()" class="input-field h-8 bg-blue-50 border-blue-300 text-blue-900"><option value="">-- Select --</option><option value="Both">Both (Factory & ICD)</option><option value="Factory">Factory Destuffing</option><option value="ICD">ICD Destuffing</option></select>
             </div>
             <div class="col-span-2"><label class="block text-[10px] font-bold text-gray-600 uppercase">Customer Name <span class="text-red-600">*</span></label><input type="text" id="customerName" class="input-field font-bold text-blue-900 h-8 bg-white uppercase border-l-4 border-blue-600" placeholder="ENTER NAME"></div>
             <div class="col-span-1">
@@ -233,7 +238,8 @@
                 <select id="customerType" class="input-field h-8 bg-white uppercase"><option value="">-- Select --</option><option>Importer</option><option>CHA</option><option>Forwarder</option><option>Shipping Line</option><option>Transporter</option></select>
             </div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Vol / Month <span class="text-red-600">*</span></label><input type="text" id="volMonth" class="input-field h-8 bg-white uppercase" placeholder="TEUs"></div>
-            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">CHA / Forwarder</label><input type="text" id="chaName" class="input-field h-8 bg-white uppercase"></div>
+            <!-- Point 4: CHA Default Various -->
+            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">CHA / Forwarder</label><input type="text" id="chaName" class="input-field h-8 bg-white uppercase" value="Various"></div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Version</label><input type="text" id="version" value="Version 1" class="input-field h-8 bg-white text-center"></div>
             <div class="col-span-1">
                 <label class="block text-[10px] font-bold text-gray-600 uppercase">Sales Person</label>
@@ -241,7 +247,8 @@
             </div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Effective From</label><input type="date" id="dateFrom" onchange="calculateMonths()" class="input-field h-8 bg-white"></div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">End Date</label><input type="date" id="dateTo" onchange="calculateMonths()" class="input-field h-8 bg-white"></div>
-            <div class="col-span-1"><label class="block text-[10px] font-bold text-green-700 uppercase">Free Days</label><input type="text" id="freeDays" oninput="updateFooter(this.value); toggleTariffTables();" placeholder="" class="input-field h-8 bg-yellow-300 text-black border-yellow-500 font-extrabold"></div>
+            <!-- Point 5: Free Days oninput triggers calculateMonths -->
+            <div class="col-span-1"><label class="block text-[10px] font-bold text-green-700 uppercase">Free Days</label><input type="text" id="freeDays" oninput="updateFooter(this.value); toggleTariffTables(); calculateMonths();" placeholder="" class="input-field h-8 bg-yellow-300 text-black border-yellow-500 font-extrabold"></div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Valid For</label><input type="text" id="validity" readonly class="input-field bg-transparent border-none text-red-700 font-bold text-xs h-8"></div>
             <div class="col-span-1">
                 <label class="block text-[10px] font-bold text-gray-600 uppercase">Tariff Status</label>
@@ -382,6 +389,7 @@
                 initApp();
             } else { alert("Wrong Password"); }
         }
+
         function initApp() {
             document.getElementById('dateToday').valueAsDate = new Date();
             document.getElementById('tariffNo').value = `TS-${new Date().getFullYear()}${Math.floor(1000+Math.random()*9000)}`;
@@ -411,7 +419,7 @@
             const oldZoom = document.body.style.zoom;
             document.body.style.zoom = "100%";
             
-            html2pdf().set(opt).from(element).save().then(() => {
+            html2pdf().set(opt).from(element).save().then(() => { 
                  document.body.style.zoom = oldZoom || "90%";
                  element.classList.remove('pdf-mode'); // Remove B/W mode
             });
@@ -444,6 +452,7 @@
                         div.style.padding = '2px 0';
                         if(input.type !== 'hidden') input.parentNode.replaceChild(div, input);
                     });
+
                     const textareas = clonedElement.querySelectorAll('textarea');
                     textareas.forEach(ta => {
                         const val = ta.value;
@@ -455,6 +464,7 @@
                         div.style.whiteSpace = 'pre-wrap';
                         ta.parentNode.replaceChild(div, ta);
                     });
+
                     const selects = clonedElement.querySelectorAll('select');
                     selects.forEach(sel => {
                         const val = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : "";
@@ -465,6 +475,7 @@
                         div.style.appearance = 'none';
                         sel.parentNode.replaceChild(div, sel);
                     });
+
                     // Hide buttons
                     const btns = clonedElement.querySelectorAll('button, .no-print, .no-pdf');
                     btns.forEach(b => b.style.display = 'none');
@@ -488,8 +499,8 @@
                         navigator.clipboard.write([item]).then(() => {
                             alert("✅ Color Image Copied (Size Reduced)! Paste in Outlook (Ctrl+V)");
                         });
-                    } catch (err) {
-                         alert("Clipboard Error: " + err);
+                    } catch (err) { 
+                        alert("Clipboard Error: " + err);
                     }
                 }, 'image/png', 0.9);
             });
@@ -523,6 +534,8 @@
             document.getElementById('destuffType').value = ""; 
             document.getElementById('transportClaimedBy').value = "TRANSPORTER";
             document.getElementById('incentiveClaimedBy').value = "CHA";
+            // Point 4: Reset CHA to Various
+            document.getElementById('chaName').value = "Various"; 
             document.getElementById('tariffNo').value = `TS-${new Date().getFullYear()}${Math.floor(1000+Math.random()*9000)}`;
             document.getElementById('dateToday').valueAsDate = new Date();
 
@@ -546,8 +559,14 @@
             toggleReadOnly(false);
             document.getElementById('historySection').classList.add('hidden');
             toggleTariffTables(); 
+
+            // Point 1: Re-enable save button on Reset
+            const saveBtn = document.getElementById('btnSave');
+            saveBtn.disabled = false;
+            saveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            saveBtn.classList.add('animate-pulse');
         }
-        
+
         // --- UPDATED CALCULATE MONTHS (Uses inline styles for reliable color capture) ---
         function calculateMonths() { 
             const d1 = new Date(document.getElementById('dateFrom').value); 
@@ -584,7 +603,7 @@
                 let m = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth()); 
                 if(d2.getDate() < d1.getDate()) m--; 
                 const days = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24));
-                document.getElementById('validity').value = `${m} Months (${days} Days)`; 
+                document.getElementById('validity').value = `${m} Months (${days} Days)`;
                 
                 // Force inline styles for colors so html2canvas picks them up correctly
                 if (today > d2) {
@@ -613,28 +632,262 @@
         function closeReports() { document.getElementById('reportsModal').style.display = 'none'; }
         function formatReportDate(isoDate) { if(!isoDate || isoDate === 'N/A') return 'N/A'; return isoDate.split('-').reverse().join('-'); }
         function showReport(type) { /* ... Same as previous ... */ 
-            const area = document.getElementById('reportsArea'); const countLabel = document.getElementById('reportCount'); const btns = document.querySelectorAll('#reportsModal button[id^="btnRep"]'); btns.forEach(b => b.classList.remove('bg-indigo-600')); if(type === 'Discounted') document.getElementById('btnRepDisc').classList.add('bg-indigo-600'); if(type === 'FreeDays') document.getElementById('btnRepFree').classList.add('bg-indigo-600'); if(type === 'Expired') document.getElementById('btnRepExp').classList.add('bg-indigo-600'); area.innerHTML = ''; const latestVersions = {}; globalRecords.forEach(r => { const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1; if (!latestVersions[r.name] || vNum > latestVersions[r.name]) { latestVersions[r.name] = vNum; } }); let filtered = []; const today = new Date(); today.setHours(0,0,0,0); if (type === 'Expired') { filtered = globalRecords.filter(r => { let isExpiredDate = false; if (r.dates) { const end = new Date(r.dates.split('to')[1]?.trim()); if(end < today) isExpiredDate = true; } const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1; const isSuperseded = vNum < latestVersions[r.name]; return isExpiredDate || isSuperseded; }); } else { filtered = globalRecords.filter(r => { if (r.mode !== type) return false; const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1; const isOldVer = vNum < latestVersions[r.name]; return !isOldVer; }); } currentReportData = filtered; if (filtered.length === 0) { area.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">No records found for this category.</div>'; } else { filtered.sort((a,b) => a.name.localeCompare(b.name)); filtered.forEach(r => { const endDateStr = r.dates ? r.dates.split('to')[1]?.trim() : "N/A"; let status = "Active"; let statusClass = "text-green-600 bg-green-100"; if (endDateStr !== "N/A") { const end = new Date(endDateStr); if (end < today) { status = "Expired"; statusClass = "text-red-600 bg-red-100"; } } const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1; if (vNum < latestVersions[r.name]) { status = "Old Ver"; statusClass = "text-gray-600 bg-gray-200"; } let detailsHtml = ""; if (type === 'FreeDays') { detailsHtml = `<span class="text-green-700 font-extrabold">${r.free || 'N/A'}</span>`; } else { let slabDetails = []; try { if (r.jsonFactory) { const fInputs = JSON.parse(r.jsonFactory); fInputs.forEach((row, idx) => { if(factoryData[idx]) { const dTotal = row.reduce((a,b)=>a+(parseFloat(b)||0),0); let sName = factoryData[idx].slab.replace('(20) ','').replace('For ',''); if (dTotal > 0) slabDetails.push(`${sName}: ₹${dTotal}`); } }); } if (r.jsonICD) { const iInputs = JSON.parse(r.jsonICD); iInputs.forEach((row, idx) => { if(icdData[idx]) { const dTotal = row.reduce((a,b)=>a+(parseFloat(b)||0),0); let sName = icdData[idx].slab.replace('(20) ','').replace('For ',''); if (dTotal > 0) slabDetails.push(`ICD ${sName}: ₹${dTotal}`); } }); } } catch(e) {} if(slabDetails.length > 0) detailsHtml = `<span class="text-[10px] text-gray-600">${slabDetails.join(' | ')}</span>`; else detailsHtml = `<span class="text-gray-400">No Discount</span>`; } const formattedDate = formatReportDate(endDateStr); const div = document.createElement('div'); div.className = "flex justify-between items-center px-4 py-2 border-b border-gray-200 hover:bg-gray-50 text-xs text-gray-800"; div.innerHTML = ` <div class="w-1/5 font-bold text-blue-900">${r.name} <span class="text-[10px] text-gray-400 font-normal">(${r.ver || 'V1'})</span></div> <div class="w-1/12">${r.mode || '-'}</div> <div class="w-1/2 overflow-hidden text-ellipsis whitespace-nowrap">${detailsHtml}</div> <div class="w-1/12 text-center font-mono">${formattedDate}</div> <div class="w-1/12 text-right"><span class="px-2 py-0.5 rounded ${statusClass} font-bold text-[10px] whitespace-nowrap">${status}</span></div> `; div.onclick = () => { closeReports(); loadRecord(r); }; div.style.cursor = 'pointer'; area.appendChild(div); }); } countLabel.innerText = `${filtered.length} Records found`;
-        }
+            const area = document.getElementById('reportsArea'); const countLabel = document.getElementById('reportCount'); const btns = document.querySelectorAll('#reportsModal button[id^="btnRep"]'); btns.forEach(b => b.classList.remove('bg-indigo-600')); if(type === 'Discounted') document.getElementById('btnRepDisc').classList.add('bg-indigo-600'); if(type === 'FreeDays') document.getElementById('btnRepFree').classList.add('bg-indigo-600'); if(type === 'Expired') document.getElementById('btnRepExp').classList.add('bg-indigo-600'); area.innerHTML = ''; const latestVersions = {}; globalRecords.forEach(r => { const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1; if (!latestVersions[r.name] || vNum > latestVersions[r.name]) { latestVersions[r.name] = vNum; } }); let filtered = []; const today = new Date(); today.setHours(0,0,0,0); if (type === 'Expired') { filtered = globalRecords.filter(r => { let isExpiredDate = false; if (r.dates) { const end = new Date(r.dates.split('to')[1]?.trim()); if(end < today) isExpiredDate = true; } const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1; const isSuperseded = vNum < latestVersions[r.name]; return isExpiredDate || isSuperseded; }); } else { filtered = globalRecords.filter(r => { if (r.mode !== type) return false; const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1; const isOldVer = vNum < latestVersions[r.name]; return !isOldVer; }); } currentReportData = filtered; if (filtered.length === 0) { area.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">No records found for this category.</div>'; } else { filtered.sort((a,b) => a.name.localeCompare(b.name)); filtered.forEach(r => { const endDateStr = r.dates ? r.dates.split('to')[1]?.trim() : "N/A"; let status = "Active"; let statusClass = "text-green-600 bg-green-100"; if (endDateStr !== "N/A") { const end = new Date(endDateStr); if (end < today) { status = "Expired"; statusClass = "text-red-600 bg-red-100"; } } const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1; if (vNum < latestVersions[r.name]) { status = "Old Ver"; statusClass = "text-gray-600 bg-gray-200"; } let detailsHtml = ""; if (type === 'FreeDays') { detailsHtml = `<span class="text-green-700 font-extrabold">${r.free || 'N/A'}</span>`; } else { let slabDetails = []; try { if (r.jsonFactory) { const fInputs = JSON.parse(r.jsonFactory); fInputs.forEach((row, idx) => { if(factoryData[idx]) { const dTotal = row.reduce((a,b)=>a+(parseFloat(b)||0),0); let sName = factoryData[idx].slab.replace('(20) ','').replace('For ',''); if (dTotal > 0) slabDetails.push(`${sName}: ₹${dTotal}`); } }); } if (r.jsonICD) { const iInputs = JSON.parse(r.jsonICD); iInputs.forEach((row, idx) => { if(icdData[idx]) { const dTotal = row.reduce((a,b)=>a+(parseFloat(b)||0),0); let sName = icdData[idx].slab.replace('(20) ','').replace('For ',''); if (dTotal > 0) slabDetails.push(`ICD ${sName}: ₹${dTotal}`); } }); } } catch(e) {} if(slabDetails.length > 0) detailsHtml = `<span class="text-[10px] text-gray-600">${slabDetails.join(' | ')}</span>`; else detailsHtml = `<span class="text-gray-400">No Discount</span>`; } const formattedDate = formatReportDate(endDateStr); const div = document.createElement('div'); div.className = "flex justify-between items-center px-4 py-2 border-b border-gray-200 hover:bg-gray-50 text-xs text-gray-800"; div.innerHTML = ` <div class="w-1/5 font-bold text-blue-900">${r.name} <span class="text-[10px] text-gray-400 font-normal">(${r.ver || 'V1'})</span></div> <div class="w-1/12">${r.mode || '-'}</div> <div class="w-1/2 overflow-hidden text-ellipsis whitespace-nowrap">${detailsHtml}</div> <div class="w-1/12 text-center font-mono">${formattedDate}</div> <div class="w-1/12 text-right"><span class="px-2 py-0.5 rounded ${statusClass} font-bold text-[10px] whitespace-nowrap">${status}</span></div> `; div.onclick = () => { closeReports(); loadRecord(r); }; div.style.cursor = 'pointer'; area.appendChild(div); }); } countLabel.innerText = `${filtered.length} Records found`;        }
         function downloadReportExcel() { /* ... */ if (!currentReportData || currentReportData.length === 0) return alert("No data to download!"); const headers = [ "Customer Name", "Version", "Mode", "End Date", "Status", "Factory 0-27MT Disc", "Factory 27-30MT Disc", "Factory >31MT Disc", "Factory 40\" Disc", "ICD 0-27MT Disc", "ICD 27-30MT Disc", "ICD >31MT Disc", "ICD 40\" Disc", "Free Days" ]; let csvContent = headers.join(",") + "\n"; currentReportData.forEach(r => { const endDateStr = r.dates ? r.dates.split('to')[1]?.trim() : "N/A"; const formattedDate = formatReportDate(endDateStr); let fDisc = [0,0,0,0]; let iDisc = [0,0,0,0]; try { if (r.jsonFactory) { const fInputs = JSON.parse(r.jsonFactory); fInputs.forEach((row, idx) => { if(idx < 4) fDisc[idx] = row.reduce((a,b)=>a+(parseFloat(b)||0),0); }); } if (r.jsonICD) { const iInputs = JSON.parse(r.jsonICD); iInputs.forEach((row, idx) => { if(idx < 4) iDisc[idx] = row.reduce((a,b)=>a+(parseFloat(b)||0),0); }); } } catch(e) {} const safeName = `"${r.name.replace(/"/g, '""')}"`; const freeDaysVal = r.mode === 'FreeDays' ? (r.free || "") : ""; const row = [ safeName, r.ver||'V1', r.mode, formattedDate, "Active", fDisc[0] || "", fDisc[1] || "", fDisc[2] || "", fDisc[3] || "", iDisc[0] || "", iDisc[1] || "", iDisc[2] || "", iDisc[3] || "", freeDaysVal ]; csvContent += row.join(",") + "\n"; }); const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); const url = URL.createObjectURL(blob); link.setAttribute("href", url); link.setAttribute("download", "Tariff_Report.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
         function handleApproval(input) { /* ... */ const file = input.files[0]; if (!file) return; const custName = document.getElementById('customerName').value || "Unknown"; const version = document.getElementById('version').value || "V1"; const ext = file.name.split('.').pop(); const newFileName = `${custName.replace(/[^a-z0-9]/gi, '_')}_${version}.${ext}`; const link = document.createElement('a'); link.href = URL.createObjectURL(file); link.download = newFileName; document.body.appendChild(link); link.click(); document.body.removeChild(link); const previewSection = document.getElementById('approvalPreviewSection'); const container = document.getElementById('previewContainer'); const nameLabel = document.getElementById('approvalFileName'); previewSection.classList.remove('hidden'); nameLabel.innerText = `Attached: ${newFileName}`; container.innerHTML = ''; if (ext.toLowerCase() === 'pdf') { const iframe = document.createElement('iframe'); iframe.src = URL.createObjectURL(file); iframe.className = "w-full h-full"; container.appendChild(iframe); } else if (['jpg', 'jpeg', 'png'].includes(ext.toLowerCase())) { const img = document.createElement('img'); img.src = URL.createObjectURL(file); img.className = "max-h-full max-w-full object-contain"; container.appendChild(img); } else { container.innerHTML = `<p class="text-red-500 font-bold">Preview not available for .${ext} files. (Saved to PC)</p>`; } alert(`File prepared as: ${newFileName}\nPlease save it to D:\\Tariff_Approvals`); }
         function syncCustomerName() { const name = document.getElementById('customerName').value; document.getElementById('transportClaimedBy').value = name; document.getElementById('incentiveClaimedBy').value = name; }
-        function toggleTariffTables() { /* ... */ const mode = document.getElementById('tariffMode').value; const type = document.getElementById('destuffType').value; const destuffSelect = document.getElementById('destuffType'); const factorySec = document.getElementById('factorySection'); const icdSec = document.getElementById('icdSection'); const promoBox = document.getElementById('prominentFreeDays'); const promoText = document.getElementById('prominentFreeDaysText'); const freeVal = document.getElementById('freeDays').value || "03 DAYS"; factorySec.style.display = 'none'; icdSec.style.display = 'none'; promoBox.style.display = 'none'; destuffSelect.disabled = false; destuffSelect.classList.remove('bg-gray-200'); if (mode === 'FreeDays') { promoBox.style.display = 'block'; promoText.innerText = freeVal.toUpperCase(); destuffSelect.disabled = true; destuffSelect.value = ""; destuffSelect.classList.add('bg-gray-200'); } else { if (type === 'Factory') factorySec.style.display = 'block'; else if (type === 'ICD') icdSec.style.display = 'block'; else if (type === 'Both') { factorySec.style.display = 'block'; icdSec.style.display = 'block'; } } }
-        function closeLoading() { document.getElementById('loadingOverlay').style.display = 'none'; document.getElementById('progressSection').classList.remove('hidden'); document.getElementById('successSection').classList.add('hidden'); document.getElementById('progressBar').style.width = '0%'; document.getElementById('progressText').innerText = '0%'; }
-        async function initiateSave() { /* ... */ calculateMonths(); const cust = document.getElementById('customerName').value; const dFrom = document.getElementById('dateFrom').value; const dTo = document.getElementById('dateTo').value; const free = document.getElementById('freeDays').value; const cType = document.getElementById('customerType').value; const vol = document.getElementById('volMonth').value; if(!cust) return alert("Error: Customer Name is Required"); if(!cType) return alert("Error: Customer Type is Mandatory"); if(!vol) return alert("Error: Volume per Month is Mandatory"); if(!dFrom || !dTo) return alert("Error: Effective From & End Date are Required"); if(!free) return alert("Error: Free Days are Required"); let transError = false; document.querySelectorAll('#tbodyTransport tr').forEach(tr => { const sel = tr.querySelector('select[id*="_trans"]'); if (sel && sel.value === "") transError = true; }); if(transError) return alert("Error: Select Transporter in Transport Table"); if(loadedRecordId) { const pass = prompt("To Save Changes, Enter Password:"); if(pass !== "Honey@143143") return alert("Incorrect Password! Save Cancelled."); } document.getElementById('loadingOverlay').style.display = 'flex'; 
+        
+        // Point 3: New Function to handle Destuffing Logic Separately
+        function handleDestuffChange() {
+            const destuffVal = document.getElementById('destuffType').value;
+            if (destuffVal === 'Factory' || destuffVal === 'ICD' || destuffVal === 'Both') {
+                document.getElementById('tariffMode').value = 'Discounted';
+            }
+            toggleTariffTables();
+        }
+
+        function toggleTariffTables() { 
+            const mode = document.getElementById('tariffMode').value;
+            const destuffSelect = document.getElementById('destuffType');
+            const type = destuffSelect.value;
+            const factorySec = document.getElementById('factorySection');
+            const icdSec = document.getElementById('icdSection');
+            const promoBox = document.getElementById('prominentFreeDays');
+            const promoText = document.getElementById('prominentFreeDaysText');
+            const freeVal = document.getElementById('freeDays').value || "03 DAYS";
             
+            factorySec.style.display = 'none';
+            icdSec.style.display = 'none';
+            promoBox.style.display = 'none';
+            
+            // Re-enable destuffSelect if not free days
+            destuffSelect.disabled = false;
+            destuffSelect.classList.remove('bg-gray-200');
+
+            if (mode === 'FreeDays') {
+                promoBox.style.display = 'block';
+                promoText.innerText = freeVal.toUpperCase();
+                destuffSelect.disabled = true;
+                destuffSelect.value = "";
+                destuffSelect.classList.add('bg-gray-200');
+            } else {
+                if (type === 'Factory') factorySec.style.display = 'block';
+                else if (type === 'ICD') icdSec.style.display = 'block';
+                else if (type === 'Both') { factorySec.style.display = 'block'; icdSec.style.display = 'block'; }
+            }
+        }
+        
+        function closeLoading() { document.getElementById('loadingOverlay').style.display = 'none'; document.getElementById('progressSection').classList.remove('hidden'); document.getElementById('successSection').classList.add('hidden'); document.getElementById('progressBar').style.width = '0%'; document.getElementById('progressText').innerText = '0%'; }
+        
+        async function initiateSave() { 
+            calculateMonths();
+            const cust = document.getElementById('customerName').value;
+            const dFrom = document.getElementById('dateFrom').value;
+            const dTo = document.getElementById('dateTo').value;
+            const free = document.getElementById('freeDays').value;
+            const cType = document.getElementById('customerType').value;
+            const vol = document.getElementById('volMonth').value;
+
+            if(!cust) return alert("Error: Customer Name is Required");
+            if(!cType) return alert("Error: Customer Type is Mandatory");
+            if(!vol) return alert("Error: Volume per Month is Mandatory");
+            if(!dFrom || !dTo) return alert("Error: Effective From & End Date are Required");
+            if(!free) return alert("Error: Free Days are Required");
+            
+            let transError = false;
+            document.querySelectorAll('#tbodyTransport tr').forEach(tr => {
+                const sel = tr.querySelector('select[id*="_trans"]');
+                if (sel && sel.value === "") transError = true;
+            });
+            if(transError) return alert("Error: Select Transporter in Transport Table");
+            
+            if(loadedRecordId) {
+                const pass = prompt("To Save Changes, Enter Password:");
+                if(pass !== "Honey@143143") return alert("Incorrect Password! Save Cancelled.");
+            }
+
+            document.getElementById('loadingOverlay').style.display = 'flex';
+             
             // UPDATE: Check if updating or new
             const isUpdate = !!loadedRecordId;
             document.getElementById('loadingText').innerText = isUpdate ? "Updating Record..." : "Saving Tariff Sheet...";
 
-            const progressBar = document.getElementById('progressBar'); const progressText = document.getElementById('progressText'); let progress = 0; const interval = setInterval(() => { progress += 5; if(progress > 90) clearInterval(interval); progressBar.style.width = progress + '%'; progressText.innerText = progress + '%'; }, 100); try { const entryId = loadedRecordId || Date.now(); const factoryValues = []; for(let i=0; i<factoryData.length; i++) { const vals = []; for(let k=0; k<6; k++) vals.push(document.getElementById(`tableFactory_${i}_d${k}`).value || ""); factoryValues.push(vals); } const icdValues = []; for(let i=0; i<icdData.length; i++) { const vals = []; for(let k=0; k<7; k++) vals.push(document.getElementById(`tableICD_${i}_d${k}`).value || ""); icdValues.push(vals); } const transValues = []; document.querySelectorAll('#tbodyTransport tr').forEach(tr => { const uid = tr.querySelector('select').id.split('_trans')[0]; transValues.push({ t: document.getElementById(`${uid}_trans`).value, d: document.getElementById(`${uid}_dest`).value, b: document.getElementById(`${uid}_base`).value, v: document.getElementById(`${uid}_disc`).value }); }); const incValues = []; document.querySelectorAll('#tbodyIncentive tr').forEach(tr => { const uid = tr.querySelector('select').id.split('_line')[0]; incValues.push({ l: document.getElementById(`${uid}_line`).value, d20: document.getElementById(`${uid}_d20`).value, d40: document.getElementById(`${uid}_d40`).value, rem: document.getElementById(`${uid}_rem`).value }); }); const fd = new FormData(); fd.append('Date', document.getElementById('dateToday').value); fd.append('Name', `[MASTER] ${cust} [ID:${entryId}]`); fd.append('Email', `Ref: ${document.getElementById('tariffNo').value} | Dates: ${dFrom} to ${dTo} | Mode: ${document.getElementById('tariffMode').value} | Type: ${document.getElementById('destuffType').value}`); fd.append('Phone', `Valid: ${document.getElementById('validity').value} | Free: ${free} | CType: ${cType} | Vol: ${vol}`); fd.append('Department', `Sales: ${document.getElementById('salesPerson').value} | CHA: ${document.getElementById('chaName').value} | TC: ${document.getElementById('transportClaimedBy').value} | IC: ${document.getElementById('incentiveClaimedBy').value}`); fd.append('City', `Ver: ${document.getElementById('version').value} | Rem: ${document.getElementById('remarks').value}`); fd.append('Data1', JSON.stringify(factoryValues)); fd.append('Data2', JSON.stringify(icdValues)); fd.append('Data3', JSON.stringify(transValues)); fd.append('Data4', JSON.stringify(incValues)); await fetch(SCRIPT_SAVE_URL, { method: 'POST', body: fd, mode: 'no-cors' }); clearInterval(interval); progressBar.style.width = '100%'; progressText.innerText = '100%'; await new Promise(r => setTimeout(r, 500)); document.getElementById('progressSection').classList.add('hidden'); document.getElementById('successSection').classList.remove('hidden'); toggleReadOnly(true); startSync(); } catch(e) { alert("Error: " + e.message); document.getElementById('loadingOverlay').style.display = 'none'; } }
+            // Point 1: Disable Button immediately
+            const saveBtn = document.getElementById('btnSave');
+            saveBtn.disabled = true;
+
+            const progressBar = document.getElementById('progressBar'); const progressText = document.getElementById('progressText'); let progress = 0; const interval = setInterval(() => { progress += 5; if(progress > 90) clearInterval(interval); progressBar.style.width = progress + '%'; progressText.innerText = progress + '%'; }, 100); try { const entryId = loadedRecordId || Date.now(); const factoryValues = []; for(let i=0; i<factoryData.length; i++) { const vals = []; for(let k=0; k<6; k++) vals.push(document.getElementById(`tableFactory_${i}_d${k}`).value || ""); factoryValues.push(vals); } const icdValues = []; for(let i=0; i<icdData.length; i++) { const vals = []; for(let k=0; k<7; k++) vals.push(document.getElementById(`tableICD_${i}_d${k}`).value || ""); icdValues.push(vals); } const transValues = []; document.querySelectorAll('#tbodyTransport tr').forEach(tr => { const uid = tr.querySelector('select').id.split('_trans')[0]; transValues.push({ t: document.getElementById(`${uid}_trans`).value, d: document.getElementById(`${uid}_dest`).value, b: document.getElementById(`${uid}_base`).value, v: document.getElementById(`${uid}_disc`).value }); }); const incValues = []; document.querySelectorAll('#tbodyIncentive tr').forEach(tr => { const uid = tr.querySelector('select').id.split('_line')[0]; incValues.push({ l: document.getElementById(`${uid}_line`).value, d20: document.getElementById(`${uid}_d20`).value, d40: document.getElementById(`${uid}_d40`).value, rem: document.getElementById(`${uid}_rem`).value }); }); const fd = new FormData(); fd.append('Date', document.getElementById('dateToday').value); fd.append('Name', `[MASTER] ${cust} [ID:${entryId}]`); fd.append('Email', `Ref: ${document.getElementById('tariffNo').value} | Dates: ${dFrom} to ${dTo} | Mode: ${document.getElementById('tariffMode').value} | Type: ${document.getElementById('destuffType').value}`); fd.append('Phone', `Valid: ${document.getElementById('validity').value} | Free: ${free} | CType: ${cType} | Vol: ${vol}`); fd.append('Department', `Sales: ${document.getElementById('salesPerson').value} | CHA: ${document.getElementById('chaName').value} | TC: ${document.getElementById('transportClaimedBy').value} | IC: ${document.getElementById('incentiveClaimedBy').value}`); fd.append('City', `Ver: ${document.getElementById('version').value} | Rem: ${document.getElementById('remarks').value}`); fd.append('Data1', JSON.stringify(factoryValues)); fd.append('Data2', JSON.stringify(icdValues)); fd.append('Data3', JSON.stringify(transValues)); fd.append('Data4', JSON.stringify(incValues)); await fetch(SCRIPT_SAVE_URL, { method: 'POST', body: fd, mode: 'no-cors' }); clearInterval(interval); progressBar.style.width = '100%'; progressText.innerText = '100%'; await new Promise(r => setTimeout(r, 500)); document.getElementById('progressSection').classList.add('hidden'); document.getElementById('successSection').classList.remove('hidden'); toggleReadOnly(true); startSync(); 
+            
+            // Point 1: Keep disabled on success, show UI indication
+            saveBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            saveBtn.classList.remove('animate-pulse');
+            
+            } catch(e) { 
+                alert("Error: " + e.message); 
+                document.getElementById('loadingOverlay').style.display = 'none'; 
+                // Re-enable if error occurs
+                saveBtn.disabled = false; 
+            } 
+        }
+
         function processCloudData(rows) { /* ... */ const recordMap = new Map(); rows.forEach(r => { if(r[1] && r[1].includes('[MASTER]')) { const rawName = r[1].replace('[MASTER]','').trim(); const idMatch = rawName.match(/\[ID:(.*?)\]/); const realID = idMatch ? idMatch[1] : rawName; const realName = rawName.split('[ID')[0].trim(); const meta1 = (r[2]||"").split('|'); const meta2 = (r[3]||"").split('|'); const meta3 = (r[4]||"").split('|'); const meta4 = (r[5]||"").split('|'); recordMap.set(realID, { id: realID, date: r[0], name: realName, ref: meta1[0]?.split('Ref:')[1]?.trim(), dates: meta1.find(s=>s.includes('Dates:'))?.split('Dates:')[1]?.trim(), mode: meta1.find(s=>s.includes('Mode:'))?.split('Mode:')[1]?.trim(), type: meta1.find(s=>s.includes('Type:'))?.split('Type:')[1]?.trim(), valid: meta2[0]?.split('Valid:')[1]?.trim(), free: meta2.find(s=>s.includes('Free:'))?.split('Free:')[1]?.trim(), cType: meta2.find(s=>s.includes('CType:'))?.split('CType:')[1]?.trim(), vol: meta2.find(s=>s.includes('Vol:'))?.split('Vol:')[1]?.trim(), sales: meta3[0]?.split('Sales:')[1]?.trim(), cha: meta3.find(s=>s.includes('CHA:'))?.split('CHA:')[1]?.trim(), tc: meta3.find(s=>s.includes('TC:'))?.split('TC:')[1]?.trim(), ic: meta3.find(s=>s.includes('IC:'))?.split('IC:')[1]?.trim(), ver: meta4[0]?.split('Ver:')[1]?.trim(), rem: meta4.find(s=>s.includes('Rem:'))?.split('Rem:')[1]?.trim(), jsonFactory: r[6], jsonICD: r[7], jsonTrans: r[8], jsonInc: r[9] }); } }); globalRecords = Array.from(recordMap.values()); populateDropdown(); }
-        function populateDropdown() { /* ... */ const dd = document.getElementById('cloudHistory'); dd.innerHTML = '<option value="">-- Select Customer (A-Z) --</option>'; const sorted = [...globalRecords].sort((a,b) => a.name.localeCompare(b.name)); sorted.forEach(rec => { const opt = document.createElement('option'); opt.value = rec.id; opt.text = `${rec.name} - ${rec.ver || 'V1'} (${rec.mode || '-'})`; dd.appendChild(opt); }); }
-        function filterDropdown(val) { /* ... */ const dd = document.getElementById('cloudHistory'); const opts = dd.options; val = val.toLowerCase(); for(let i=1; i<opts.length; i++) { opts[i].style.display = opts[i].text.toLowerCase().includes(val) ? 'block' : 'none'; } }
-        function loadFromDropdown(id) { /* ... */ const rec = globalRecords.find(r => r.id === id); if(rec) loadRecord(rec); }
-        function loadRecord(rec) { /* ... */ if(!confirm("Load " + rec.name + "?")) return; loadedRecordId = rec.id; document.getElementById('customerName').value = rec.name; document.getElementById('tariffNo').value = rec.ref || ""; document.getElementById('chaName').value = rec.cha || ""; document.getElementById('salesPerson').value = rec.sales || ""; document.getElementById('validity').value = rec.valid || ""; document.getElementById('freeDays').value = rec.free || ""; document.getElementById('version').value = rec.ver || "Version 1"; document.getElementById('remarks').value = rec.rem || ""; document.getElementById('tariffMode').value = rec.mode || ""; document.getElementById('destuffType').value = rec.type || ""; document.getElementById('transportClaimedBy').value = rec.tc || rec.name; document.getElementById('incentiveClaimedBy').value = rec.ic || rec.name; document.getElementById('customerType').value = rec.cType || ""; document.getElementById('volMonth').value = rec.vol || ""; if(rec.dates && rec.dates.includes('to')) { const parts = rec.dates.split('to'); document.getElementById('dateFrom').value = parts[0].trim(); document.getElementById('dateTo').value = parts[1].trim(); } calculateMonths(); updateFooter(rec.free); toggleTariffTables(); try { if(rec.jsonFactory) { const fData = JSON.parse(rec.jsonFactory); fData.forEach((rowVals, rIdx) => { rowVals.forEach((val, cIdx) => { const el = document.getElementById(`tableFactory_${rIdx}_d${cIdx}`); if(el) el.value = val; }); calcRow(`tableFactory_${rIdx}`, 6); }); } if(rec.jsonICD) { const iData = JSON.parse(rec.jsonICD); iData.forEach((rowVals, rIdx) => { rowVals.forEach((val, cIdx) => { const el = document.getElementById(`tableICD_${rIdx}_d${cIdx}`); if(el) el.value = val; }); calcRow(`tableICD_${rIdx}`, 7); }); } document.getElementById('tbodyTransport').innerHTML = ''; if(rec.jsonTrans) { const tData = JSON.parse(rec.jsonTrans); tData.forEach(t => { addTransportRow({ trans: t.t, dest: t.d, base: t.b, disc: t.v }); }); } else { addTransportRow(); } document.getElementById('tbodyIncentive').innerHTML = ''; if(rec.jsonInc) { const iData = JSON.parse(rec.jsonInc); iData.forEach(i => { addIncentiveRow({ line: i.l, d20: i.d20, d40: i.d40, rem: i.rem || '' }); }); } else { addIncentiveRow(); } } catch(e) { console.error("JSON Parse Error", e); alert("Data corrupted."); } toggleReadOnly(true); renderHistory(rec); }
+        
+        // Point 3: Modified populateDropdown to include End Date
+        function populateDropdown() { 
+            const dd = document.getElementById('cloudHistory'); 
+            dd.innerHTML = '<option value="">-- Select Customer (A-Z) --</option>'; 
+            const sorted = [...globalRecords].sort((a,b) => a.name.localeCompare(b.name)); 
+            sorted.forEach(rec => { 
+                const opt = document.createElement('option'); 
+                opt.value = rec.id; 
+                
+                // Format End Date
+                let endDateStr = "";
+                if(rec.dates && rec.dates.includes('to')) {
+                    const parts = rec.dates.split('to');
+                    if(parts.length > 1) {
+                        const dStr = parts[1].trim(); // yyyy-mm-dd
+                        const dParts = dStr.split('-');
+                        if(dParts.length === 3) {
+                            endDateStr = ` [Valid till ${dParts[2]}-${dParts[1]}-${dParts[0]}]`;
+                        }
+                    }
+                }
+
+                opt.text = `${rec.name} - ${rec.ver || 'V1'} (${rec.mode || '-'})` + endDateStr; 
+                dd.appendChild(opt); 
+            }); 
+        }
+
+        function filterDropdown(val) { 
+            const dd = document.getElementById('cloudHistory'); 
+            const opts = dd.options; 
+            val = val.toLowerCase(); 
+            for(let i=1; i<opts.length; i++) { 
+                opts[i].style.display = opts[i].text.toLowerCase().includes(val) ? 'block' : 'none'; 
+            } 
+        }
+        
+        function loadFromDropdown(id) { 
+            if(!id) return;
+            const rec = globalRecords.find(r => r.id === id); 
+            if(rec) loadRecord(rec); 
+        }
+        
+        function loadRecord(rec) { 
+            if(!confirm("Load " + rec.name + "?")) return; 
+            loadedRecordId = rec.id; 
+            document.getElementById('customerName').value = rec.name; 
+            document.getElementById('tariffNo').value = rec.ref || ""; 
+            document.getElementById('chaName').value = rec.cha || ""; 
+            document.getElementById('salesPerson').value = rec.sales || ""; 
+            document.getElementById('validity').value = rec.valid || ""; 
+            document.getElementById('freeDays').value = rec.free || ""; 
+            document.getElementById('version').value = rec.ver || "Version 1"; 
+            document.getElementById('remarks').value = rec.rem || ""; 
+            document.getElementById('tariffMode').value = rec.mode || ""; 
+            document.getElementById('destuffType').value = rec.type || ""; 
+            document.getElementById('transportClaimedBy').value = rec.tc || rec.name; 
+            document.getElementById('incentiveClaimedBy').value = rec.ic || rec.name; 
+            document.getElementById('customerType').value = rec.cType || ""; 
+            document.getElementById('volMonth').value = rec.vol || ""; 
+            
+            if(rec.dates && rec.dates.includes('to')) { 
+                const parts = rec.dates.split('to'); 
+                document.getElementById('dateFrom').value = parts[0].trim(); 
+                document.getElementById('dateTo').value = parts[1].trim(); 
+            } 
+            
+            calculateMonths(); 
+            updateFooter(rec.free); 
+            toggleTariffTables(); 
+            
+            try { 
+                if(rec.jsonFactory) { 
+                    const fData = JSON.parse(rec.jsonFactory); 
+                    fData.forEach((rowVals, rIdx) => { 
+                        rowVals.forEach((val, cIdx) => { 
+                            const el = document.getElementById(`tableFactory_${rIdx}_d${cIdx}`); 
+                            if(el) el.value = val; 
+                        }); 
+                        calcRow(`tableFactory_${rIdx}`, 6); 
+                    }); 
+                } 
+                if(rec.jsonICD) { 
+                    const iData = JSON.parse(rec.jsonICD); 
+                    iData.forEach((rowVals, rIdx) => { 
+                        rowVals.forEach((val, cIdx) => { 
+                            const el = document.getElementById(`tableICD_${rIdx}_d${cIdx}`); 
+                            if(el) el.value = val; 
+                        }); 
+                        calcRow(`tableICD_${rIdx}`, 7); 
+                    }); 
+                } 
+                document.getElementById('tbodyTransport').innerHTML = ''; 
+                if(rec.jsonTrans) { 
+                    const tData = JSON.parse(rec.jsonTrans); 
+                    tData.forEach(t => { 
+                        addTransportRow({ trans: t.t, dest: t.d, base: t.b, disc: t.v }); 
+                    }); 
+                } else { addTransportRow(); } 
+                
+                document.getElementById('tbodyIncentive').innerHTML = ''; 
+                if(rec.jsonInc) { 
+                    const iData = JSON.parse(rec.jsonInc); 
+                    iData.forEach(i => { 
+                        addIncentiveRow({ line: i.l, d20: i.d20, d40: i.d40, rem: i.rem || '' }); 
+                    }); 
+                } else { addIncentiveRow(); } 
+            } catch(e) { console.error("JSON Parse Error", e); alert("Data corrupted."); } 
+            toggleReadOnly(true); 
+            renderHistory(rec); 
+        }
+        
         function renderHistory(currentRec) { /* ... */ const container = document.getElementById('historySection'); const content = document.getElementById('historyContent'); container.classList.remove('hidden'); content.innerHTML = ''; const currentVer = parseInt((currentRec.ver || "Version 1").replace(/\D/g, '')) || 1; const historyRecs = globalRecords.filter(r => r.name.toLowerCase() === currentRec.name.toLowerCase() && (parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1) < currentVer ).sort((a, b) => { const vA = parseInt((a.ver || "1").replace(/\D/g, '')); const vB = parseInt((b.ver || "1").replace(/\D/g, '')); return vB - vA; }); if (historyRecs.length === 0) { container.classList.add('hidden'); return; } function formatDateDDMMYYYY(isoDate) { if(!isoDate) return ''; const parts = isoDate.split('-'); return `${parts[2]}-${parts[1]}-${parts[0]}`; } historyRecs.forEach(rec => { const card = document.createElement('div'); card.className = "bg-white border-2 border-gray-300 rounded p-4 shadow-lg"; let factoryHTML = '<p class="text-xs text-gray-400 italic">No Factory Data</p>'; let icdHTML = '<p class="text-xs text-gray-400 italic">No ICD Data</p>'; if (rec.jsonFactory) { const fData = JSON.parse(rec.jsonFactory); let rows = ''; fData.forEach((vals, idx) => { if(factoryData[idx]) { const disc = vals.slice(0,6).reduce((a,b) => a + (parseFloat(b)||0), 0); const pubTotal = factoryData[idx].p.reduce((a,b) => a + b, 0); if(disc > 0) { rows += `<tr><td class="text-left">${factoryData[idx].slab}</td><td>${pubTotal}</td><td class="text-red-600 font-bold">${disc}</td><td class="text-red-600 font-bold">${pubTotal-disc}</td></tr>`; } } }); if(rows) factoryHTML = `<table class="history-table"><thead><tr><th>Slab</th><th>Public</th><th>Disc</th><th>Net</th></tr></thead><tbody>${rows}</tbody></table>`; } if (rec.jsonICD) { const iData = JSON.parse(rec.jsonICD); let rows = ''; iData.forEach((vals, idx) => { if(icdData[idx]) { const disc = vals.slice(0,7).reduce((a,b) => a + (parseFloat(b)||0), 0); const pubTotal = icdData[idx].p.reduce((a,b) => a + b, 0); if(disc > 0) { rows += `<tr><td class="text-left">${icdData[idx].slab}</td><td>${pubTotal}</td><td class="text-red-600 font-bold">${disc}</td><td class="text-red-600 font-bold">${pubTotal-disc}</td></tr>`; } } }); if(rows) icdHTML = `<table class="history-table"><thead><tr><th>Slab</th><th>Public</th><th>Disc</th><th>Net</th></tr></thead><tbody>${rows}</tbody></table>`; } let transHTML = ''; if(rec.jsonTrans) { const tData = JSON.parse(rec.jsonTrans); tData.forEach(t => { if(t.v > 0) transHTML += `<div class="text-[10px] border-b border-gray-200 py-1 flex justify-between"><span class="text-blue-900 font-bold">${t.d} (${t.t})</span><span class="text-blue-900 font-bold">${t.v}</span></div>`; }); } let incHTML = ''; if(rec.jsonInc) { const iData = JSON.parse(rec.jsonInc); iData.forEach(i => { if(i.d20 > 0 || i.d40 > 0) incHTML += `<div class="text-[10px] border-b border-gray-200 py-1 flex justify-between"><span class="text-blue-900 font-bold">${i.l}</span><span class="text-blue-900 font-bold">20': ${i.d20} / 40': ${i.d40}</span></div>`; }); } let dateRangeDisplay = 'No Dates'; if(rec.dates && rec.dates.includes('to')) { const parts = rec.dates.split('to'); const d1 = formatDateDDMMYYYY(parts[0].trim()); const d2 = formatDateDDMMYYYY(parts[1].trim()); dateRangeDisplay = `${d1} to ${d2}`; } card.innerHTML = ` <div class="flex justify-between items-center border-b border-gray-300 pb-2 mb-2"> <h4 class="font-bold text-lg text-blue-900">${rec.name} - ${rec.ver || 'V1'} <span class="text-sm font-bold ml-2">(${dateRangeDisplay})</span></h4> <span class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase">History View</span> </div> <div class="grid grid-cols-4 gap-4"> <div class="col-span-1"> <h5 class="text-[10px] font-bold uppercase text-blue-800 mb-1">Factory Tariff</h5> ${factoryHTML} </div> <div class="col-span-1"> <h5 class="text-[10px] font-bold uppercase text-purple-800 mb-1">ICD Tariff</h5> ${icdHTML} </div> <div class="col-span-1"> <h5 class="text-[10px] font-bold uppercase text-yellow-800 mb-1">Transport</h5> ${transHTML || '<span class="text-xs text-gray-400">None</span>'} </div> <div class="col-span-1"> <h5 class="text-[10px] font-bold uppercase text-teal-800 mb-1">Incentive</h5> ${incHTML || '<span class="text-xs text-gray-400">None</span>'} </div> </div> <div class="mt-2 pt-2 border-t border-gray-100 text-[10px] text-gray-500 flex gap-4 items-center"> <span class="font-bold text-blue-900 underline text-xs">Free Days: ${rec.free || '-'}</span> <span>Sales: <b>${rec.sales || '-'}</b></span> <span class="font-bold text-gray-700 truncate max-w-xs">Rem: ${rec.rem || '-'}</span> </div> `; content.appendChild(card); }); }
-        function toggleReadOnly(state) { /* ... */ const container = document.getElementById('printArea'); const badge = document.getElementById('modeBadge'); const btnEdit = document.getElementById('btnEdit'); const btnRevalid = document.getElementById('btnRevalid'); if(state) { container.classList.add('view-mode'); badge.classList.remove('hidden'); btnEdit.classList.remove('hidden'); btnRevalid.classList.remove('hidden'); } else { container.classList.remove('view-mode'); badge.classList.add('hidden'); btnEdit.classList.add('hidden'); btnRevalid.classList.add('hidden'); } }
-        function enableEdit() { if(confirm("Enable Editing?")) toggleReadOnly(false); }
+        
+        function toggleReadOnly(state) { 
+            const container = document.getElementById('printArea'); 
+            const badge = document.getElementById('modeBadge'); 
+            const btnEdit = document.getElementById('btnEdit'); 
+            const btnRevalid = document.getElementById('btnRevalid'); 
+            const btnSave = document.getElementById('btnSave'); // Save Button Select
+
+            if(state) { 
+                // READ ONLY MODE:
+                container.classList.add('view-mode'); 
+                badge.classList.remove('hidden'); 
+                btnEdit.classList.remove('hidden'); 
+                btnRevalid.classList.remove('hidden'); 
+                
+                // Disable Save Button
+                btnSave.disabled = true;
+                btnSave.classList.add('opacity-50', 'cursor-not-allowed');
+                btnSave.classList.remove('animate-pulse');
+            } else { 
+                // EDIT MODE:
+                container.classList.remove('view-mode'); 
+                badge.classList.add('hidden'); 
+                btnEdit.classList.add('hidden'); 
+                btnRevalid.classList.add('hidden'); 
+                
+                // Enable Save Button
+                btnSave.disabled = false;
+                btnSave.classList.remove('opacity-50', 'cursor-not-allowed');
+                btnSave.classList.add('animate-pulse');
+            } 
+        }
+        
+        // Point 1: Updated enableEdit to enable Save button
+        function enableEdit() { 
+            if(confirm("Enable Editing?")) {
+                toggleReadOnly(false); 
+                // Enable Save Button
+                const saveBtn = document.getElementById('btnSave');
+                saveBtn.disabled = false;
+                saveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                saveBtn.classList.add('animate-pulse');
+            }
+        }
         
         // --- UPDATED REVALIDATE RECORD FUNCTION ---
         function revalidateRecord() {
@@ -647,7 +900,7 @@
             document.getElementById('dateToday').valueAsDate = new Date();
             
             // Generate NEW ID (handled by setting loadedRecordId to null)
-            loadedRecordId = null;
+            loadedRecordId = null; 
             
             // Generate NEW Ref No
             document.getElementById('tariffNo').value = `TS-${new Date().getFullYear()}${Math.floor(1000+Math.random()*9000)}`;
@@ -655,7 +908,26 @@
             alert("Ready! Check dates and Save.");
         }
         
-        async function startSync() { /* ... */ const statusEl = document.getElementById('syncStatus'); statusEl.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1"></i> Loading...'; try { const response = await fetch(DIRECT_CSV_URL + '&t=' + Date.now()); if (!response.ok) throw new Error("Blocked"); const text = await response.text(); const rows = parseCSV(text); if (rows.length > 0) { statusEl.innerHTML = `<i class="fas fa-circle text-green-500 mr-1" style="font-size: 8px;"></i> System Online`; processCloudData(rows); } } catch (e) { syncWithVizApi(); } }
+        async function startSync() { 
+            const statusEl = document.getElementById('syncStatus'); 
+            statusEl.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1"></i> Loading...'; 
+
+            // Point 6: Clear Filter on Refresh
+            document.getElementById('filterInput').value = "";
+            filterDropdown("");
+
+            try { 
+                const response = await fetch(DIRECT_CSV_URL + '&t=' + Date.now()); 
+                if (!response.ok) throw new Error("Blocked"); 
+                const text = await response.text(); 
+                const rows = parseCSV(text); 
+                if (rows.length > 0) { 
+                    statusEl.innerHTML = `<i class="fas fa-circle text-green-500 mr-1" style="font-size: 8px;"></i> System Online`; 
+                    processCloudData(rows); 
+                } 
+            } catch (e) { syncWithVizApi(); } 
+        }
+
         function syncWithVizApi() { /* ... */ const callbackName = 'jsonp_' + Date.now(); window[callbackName] = function(response) { if (response.status === 'error') return; const rows = response.table.rows.map(r => { const row = []; for(let i=0; i<26; i++) row.push(r.c[i]?.v || ""); return row; }); document.getElementById('syncStatus').innerHTML = `<i class="fas fa-circle text-green-500 mr-1" style="font-size: 8px;"></i> System Online`; processCloudData(rows); document.getElementById(callbackName).remove(); delete window[callbackName]; }; const script = document.createElement('script'); script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${TARGET_GID}&tqx=responseHandler:${callbackName}&tq=SELECT%20*`; script.id = callbackName; document.body.appendChild(script); }
         function parseCSV(str) { /* ... */ const arr = []; let q = false, c = 0, r = 0; for (let i = 0; i < str.length; i++) { let cc = str[i], nc = str[i + 1]; arr[r] = arr[r] || []; arr[r][c] = arr[r][c] || ''; if (cc == '"' && q && nc == '"') { arr[r][c] += '"'; ++i; } else if (cc == '"') { q = !q; } else if (cc == ',' && !q) { ++c; } else if (cc == '\r' && !q && nc == '\n') { ++r; c = 0; ++i; } else if (cc == '\n' && !q) { ++r; c = 0; } else { arr[r][c] += cc; } } return arr; }
         function renderTable(tableId, data, colCount) { /* ... */ const tbody = document.getElementById(tableId).querySelector('tbody'); tbody.innerHTML = ''; data.forEach((row, rIdx) => { const tr = document.createElement('tr'); const uid = `${tableId}_${rIdx}`; let html = `<td class="font-bold text-gray-700 whitespace-nowrap text-left px-2 bg-gray-50">${row.slab}</td>`; let pTotal = 0; row.p.forEach((val, cIdx) => { pTotal += val; html += `<td><input type="number" id="${uid}_p${cIdx}" value="${val}" readonly tabindex="-1" class="text-blue-900 font-bold bg-gray-100 pointer-events-none"></td>`; }); html += `<td class="bg-blue-100 font-extrabold text-blue-900" id="${uid}_ptotal">${pTotal.toLocaleString()}</td>`; for(let i=0; i<colCount; i++) { html += `<td><input type="number" id="${uid}_d${i}" value="" oninput="calcRow('${uid}', ${colCount})" class="text-green-700 font-bold border-b border-green-100 focus:bg-green-50"></td>`; } html += `<td class="bg-green-100" style="color: red !important; font-weight: 900 !important; font-size: 1rem;" id="${uid}_dtotal">0</td>`; html += `<td class="bg-black text-white font-bold text-sm" id="${uid}_final">${pTotal.toLocaleString()}</td>`; tr.innerHTML = html; tbody.appendChild(tr); }); }
