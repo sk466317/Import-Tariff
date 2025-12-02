@@ -513,7 +513,7 @@
             const to = "aman.sharma@hindterminals.com;sourav.thakur@hindterminals.com;sukhwinder.singh@hindterminals.com";
             const cc = "rajesh.kumar@hindterminals.com;rajeev.sharma@hindterminals.com;dinesh.negi@hindterminals.com;ekta@hindterminals.com";
             const subject = `Import Tariff Sheet of "${cust}" ${mode}`;
-            const body = `Dear Accounts Team,%0D%0A%0D%0APlease find attached Tariff Sheet of "${cust}"%0D%0ADISCOUNTED TARIFF%0D%0A%0D%0AThanks and Regards,%0D%0AVikram Singh%0D%0AHind Terminals Pvt Ltd.`;
+            const body = `Dear Accounts Team,%0D%0A%0D%0APlease find attached Tariff Sheet of "${cust}"%0D%0A"${mode}"%0D%0A%0D%0AThanks and Regards,%0D%0AVikram Singh%0D%0AHind Terminals Pvt Ltd.`;
             window.location.href = `mailto:${to}?cc=${cc}&subject=${subject}&body=${body}`;
         }
 
@@ -688,12 +688,20 @@
             const cType = document.getElementById('customerType').value;
             const vol = document.getElementById('volMonth').value;
 
+            // --- YE LINE ADD KAREIN (Mode ki value lene ke liye) ---
+            const mode = document.getElementById('tariffMode').value; 
+
+            // --- VALIDATION CHECKS ---
             if(!cust) return alert("Error: Customer Name is Required");
+            
+            // --- YE CHECK ADD KAREIN (Agar Mode select nahi hai to error dega) ---
+            if(!mode) return alert("Error: Tariff Mode (Discounted ya Free Days) select!");
+
             if(!cType) return alert("Error: Customer Type is Mandatory");
             if(!vol) return alert("Error: Volume per Month is Mandatory");
             if(!dFrom || !dTo) return alert("Error: Effective From & End Date are Required");
-            if(!free) return alert("Error: Free Days are Required");
-            
+            if(!free) return alert("Error: Free Days are Required");         
+                     
             let transError = false;
             document.querySelectorAll('#tbodyTransport tr').forEach(tr => {
                 const sel = tr.querySelector('select[id*="_trans"]');
