@@ -9,131 +9,71 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* --- DESIGN LOGIC --- */
-        body { background-color: #1f2937; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #e5e7eb; zoom: 90%; }
-        
+        body { background-color: #1f2937; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #e9d5ac; zoom: 90%; }
         @media print {
             @page { size: A4 landscape; margin: 5mm; }
-            body { background-color: white !important; color: black !important; -webkit-print-color-adjust: exact; zoom: 100%; }
-            .page-container { background-color: white !important; box-shadow: none !important; border: none !important; width: 100% !important; margin: 0 !important; max-width: 100% !important; }
+            body { background-color: white !important; color: black !important; zoom: 100%; }
+            .page-container { box-shadow: none !important; border: none !important; width: 100% !important; margin: 0 !important; max-width: 100% !important; }
             .no-print { display: none !important; }
             input, select, textarea { border: none !important; background: transparent !important; padding: 0 !important; resize: none; color: black !important; appearance: none; }
-            
             .bg-header-public { background-color: #1e40af !important; color: white !important; }
             .bg-header-discount { background-color: #15803d !important; color: white !important; }
-            .bg-purple-header { background-color: #581c87 !important; color: white !important; }
-            .bg-yellow-100 { background-color: #fef9c3 !important; }
-            
-            .hide-on-freedays { display: none !important; }
         }
-
-        /* --- PDF SPECIFIC STYLES (STRICT B/W) --- */
-        .pdf-mode .no-pdf { display: none !important; } 
-        .pdf-mode button { display: none !important; }
-        
-        .pdf-mode, .pdf-mode * {
-            color: #000 !important; 
-            background-color: transparent !important; /* Ensures B/W PDF has no bg colors */
-            border-color: #000 !important;
-            box-shadow: none !important;
-        }
-        /* Important: Override inline styles for PDF mode */
-        .pdf-mode #statusBox {
-            background-color: transparent !important;
-            color: #000 !important;
-            border: 2px solid #000 !important;
-        }
+        .pdf-mode .no-pdf, .pdf-mode button { display: none !important; } 
+        .pdf-mode, .pdf-mode * { color: #000 !important; background-color: transparent !important; border-color: #000 !important; box-shadow: none !important; }
         .pdf-mode th, .pdf-mode td { border: 1px solid #000 !important; }
-
-        /* PREVENT TABLE CUTTING */
-        tr { page-break-inside: avoid !important; }
-        table { page-break-inside: auto !important; }
-
-        /* Inputs & Tables */
+        tr { page-break-inside: avoid !important; } table { page-break-inside: auto !important; }
         .input-field { border: 1px solid #6b7280; border-radius: 4px; padding: 4px 8px; width: 100%; font-size: 0.75rem; background-color: #f3f4f6; color: #111827; font-weight: 700; transition: 0.2s; }
         .input-field:focus { outline: none; border-color: #2563eb; background-color: #ffffff; }
-        .input-field:disabled { background-color: #e5e7eb; color: #9ca3af; cursor: not-allowed; } 
-        
         .tariff-table { width: 100%; border-collapse: collapse; font-size: 0.65rem; table-layout: fixed; } 
-        .tariff-table th { border: 1px solid #fff; padding: 5px 2px; text-align: center; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; overflow: hidden; text-overflow: ellipsis; }
-        .tariff-table td { border: 1px solid #9ca3af; padding: 2px; text-align: center; background-color: white; color: black; overflow: hidden; }
-        .tariff-table input { width: 100%; text-align: center; background: transparent; border: none; font-size: 0.7rem; font-weight: 700; color: #111827; }
-        .tariff-table select { width: 100%; text-align: center; background: transparent; border: none; font-size: 0.7rem; font-weight: 700; color: #111827; outline: none; }
+        .tariff-table th { border: 1px solid #fff; padding: 5px 2px; text-align: center; font-weight: 800; text-transform: uppercase; overflow: hidden; }
+        .tariff-table td { border: 1px solid #9ca3af; padding: 2px; text-align: center; background-color: white; color: black; }
+        .tariff-table input, .tariff-table select { width: 100%; text-align: center; background: transparent; border: none; font-size: 0.7rem; font-weight: 700; color: #111827; outline: none; }
         .tariff-table textarea { width: 100%; text-align: left; background: transparent; border: none; font-size: 0.7rem; font-weight: 700; color: #111827; resize: none; padding: 2px; line-height: 1.1; }
-        .tariff-table input:focus, .tariff-table select:focus, .tariff-table textarea:focus { background-color: #eff6ff; }
-
-        .view-mode .input-field, .view-mode input, .view-mode select, .view-mode textarea { 
-            pointer-events: none; background-color: #e5e7eb !important; color: #4b5563 !important; border-color: transparent; 
-        }
-        
-        /* Default Status Box Style (Base styles, colors handled by JS inline styling now) */
-        #statusBox {
-            transition: all 0.3s ease;
-        }
-
-        .view-mode #freeDays { background-color: #fde047 !important; color: #000 !important; font-weight: 800 !important; border: 2px solid #eab308 !important; }
-
-        .history-table { width: 100%; border-collapse: collapse; font-size: 0.6rem; margin-bottom: 8px; }
-        .history-table th { background-color: #374151; color: white; padding: 4px; text-align: center; border: 1px solid #4b5563; }
-        .history-table td { background-color: #f9fafb; color: black; padding: 3px; text-align: center; border: 1px solid #d1d5db; font-weight: bold; }
-
+        .view-mode .input-field, .view-mode input, .view-mode select, .view-mode textarea { pointer-events: none; background-color: #e5e7eb !important; color: #4b5563 !important; border-color: transparent; }
+        .view-mode #freeDays { background-color: #fde047 !important; color: #000 !important; border: 2px solid #eab308 !important; }
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
         #loadingOverlay { background: rgba(0,0,0,0.8); display: none; z-index: 1000; } 
         #accessOverlay { background: #111827; }
         #reportsModal { background: rgba(0,0,0,0.8); display: none; z-index: 3000; align-items: flex-start; padding-top: 50px; }
-        
-        /* UNIFORM BUTTON STYLE */
-        .btn-uniform {
-            height: 34px;
-            padding: 0 16px;
-            font-size: 0.75rem; /* text-xs */
-            font-weight: 700;
-            border-radius: 0.25rem;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            white-space: nowrap;
-            transition: all 0.2s;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-        }
+        .btn-uniform { height: 34px; padding: 0 16px; font-size: 0.75rem; font-weight: 700; border-radius: 0.25rem; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .btn-uniform:hover { transform: translateY(-1px); }
-        .btn-uniform:active { transform: translateY(0); }
     </style>
 </head>
 <body class="p-2 md:p-4 overflow-hidden" id="mainBody">
 
+    <!-- PASSWORD OVERLAY -->
     <div id="accessOverlay" class="overlay">
         <div class="bg-gray-800 p-8 rounded-xl shadow-2xl text-center w-80 md:w-96 border border-gray-700">
-            <div class="mb-6 flex justify-center">
-                <img src="https://www.hindterminals.com/adminAssets/img/siteSetting/1754228093_footer.png" alt="Hind Terminals Logo" class="h-20 object-contain bg-white p-2 rounded">
-            </div>
+            <div class="mb-6 flex justify-center"><img src="https://www.hindterminals.com/adminAssets/img/siteSetting/1754228093_footer.png" alt="Hind Terminals Logo" class="h-20 object-contain bg-white p-2 rounded"></div>
             <h2 class="text-xl font-bold text-white mb-1">Import Tariff Sheet Generator</h2>
             <p class="text-gray-400 text-xs mb-6">Hind Terminals Pvt Ltd</p>
-            <input type="password" id="accessPass" class="w-full border-2 border-gray-600 rounded-lg p-3 text-center text-lg mb-4 bg-gray-700 text-white focus:border-blue-500 outline-none" placeholder="Enter Password">
+            <input type="password" id="accessPass" class="w-full border-2 border-gray-600 rounded-lg p-3 text-center text-lg mb-4 bg-gray-700 text-white outline-none" placeholder="Enter Password">
             <button onclick="checkAccess()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition">UNLOCK</button>
         </div>
     </div>
 
+    <!-- REPORTS MODAL -->
     <div id="reportsModal" class="overlay" onclick="if(event.target===this)closeReports()">
         <div class="bg-white w-11/12 max-w-7xl rounded-lg shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
             <div class="bg-indigo-900 p-4 flex justify-between items-center text-white">
                 <div class="flex gap-4 items-center">
                     <h3 class="font-bold text-lg"><i class="fas fa-chart-bar mr-2"></i> Tariff Reports</h3>
                     <div class="flex bg-indigo-800 rounded p-1 gap-1">
-                        <button onclick="showReport('Discounted')" class="px-3 py-1 text-xs font-bold rounded hover:bg-indigo-600 bg-indigo-600" id="btnRepDisc">Discounted Tariffs</button>
-                        <button onclick="showReport('FreeDays')" class="px-3 py-1 text-xs font-bold rounded hover:bg-indigo-600" id="btnRepFree">Free Days Only</button>
-                        <button onclick="showReport('Expired')" class="px-3 py-1 text-xs font-bold rounded hover:bg-indigo-600 text-red-200" id="btnRepExp">Expired List</button>
+                        <button onclick="showReport('Discounted')" class="px-3 py-1 text-xs font-bold rounded hover:bg-indigo-600 bg-indigo-600" id="btnRepDisc">Discounted</button>
+                        <button onclick="showReport('FreeDays')" class="px-3 py-1 text-xs font-bold rounded hover:bg-indigo-600" id="btnRepFree">Free Days</button>
+                        <button onclick="showReport('Expired')" class="px-3 py-1 text-xs font-bold rounded hover:bg-indigo-600 text-red-200" id="btnRepExp">Expired</button>
                     </div>
                 </div>
                 <div class="flex gap-2">
-                    <button onclick="downloadReportExcel()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-bold shadow"><i class="fas fa-file-excel mr-1"></i> Download Excel</button>
+                    <button onclick="downloadReportExcel()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-xs font-bold shadow"><i class="fas fa-file-excel mr-1"></i> Excel</button>
                     <button onclick="closeReports()" class="hover:text-red-400 ml-2"><i class="fas fa-times text-xl"></i></button>
                 </div>
             </div>
             <div class="bg-gray-100 px-4 py-2 border-b border-gray-300 font-bold text-xs flex justify-between text-gray-700">
-                <div class="w-1/5">Customer Name</div>
+                <div class="w-1/5">Customer</div>
                 <div class="w-1/12">Mode</div>
-                <div class="w-1/2">Tariff Details / Slabs (Discount Value)</div>
+                <div class="w-1/2">Discount Details (Head Wise)</div>
                 <div class="w-1/12 text-center">End Date</div>
                 <div class="w-1/12 text-right">Status</div>
             </div>
@@ -142,80 +82,60 @@
         </div>
     </div>
 
+    <!-- LOADING OVERLAY -->
     <div id="loadingOverlay" class="overlay">
-        <div class="bg-white p-6 rounded-lg shadow-2xl text-center w-96 border border-gray-200 relative">
+        <div class="bg-white p-6 rounded-lg shadow-2xl text-center w-96 border border-gray-200">
             <div id="progressSection">
-                <div class="mb-4">
-                    <div class="animate-spin rounded-full h-10 w-10 border-b-4 border-blue-600 mx-auto"></div>
-                </div>
-                <h2 class="text-lg font-bold text-blue-900 mb-2" id="loadingText">Saving Tariff Sheet.....</h2>
-                <div class="w-full bg-gray-200 rounded-full h-3 mb-1 overflow-hidden">
-                    <div id="progressBar" class="bg-blue-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
-                </div>
-                <p class="text-xs text-gray-500 font-mono" id="progressText">0%</p>
+                <div class="animate-spin rounded-full h-10 w-10 border-b-4 border-blue-600 mx-auto mb-4"></div>
+                <h2 class="text-lg font-bold text-blue-900" id="loadingText">Saving Tariff Sheet...</h2>
+                <div class="w-full bg-gray-200 rounded-full h-3 mb-1 overflow-hidden"><div id="progressBar" class="bg-blue-600 h-3 rounded-full transition-all duration-300" style="width: 0%"></div></div>
             </div>
             <div id="successSection" class="hidden">
                 <div class="mb-3 text-green-500 text-6xl animate-bounce"><i class="fas fa-check-circle"></i></div>
-                <h2 class="text-xl font-extrabold text-gray-800 mb-4">Tariff Sheet Saved Successfully!</h2>
-                <button onclick="closeLoading()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full shadow transition transform hover:scale-105 outline-none">OK</button>
+                <h2 class="text-xl font-extrabold text-gray-800 mb-4">Saved Successfully!</h2>
+                <button onclick="closeLoading()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-full shadow">OK</button>
             </div>
         </div>
     </div>
 
+    <!-- TOP CONTROLS -->
     <div class="sticky top-0 z-50 max-w-[1400px] mx-auto mb-4 no-print opacity-0 transition-opacity duration-500" id="topControls">
         <div class="bg-white border-l-4 border-blue-600 p-3 rounded shadow-md flex flex-col justify-between gap-3">
-            
-            <!-- BUTTONS ROW (Top Horizontal) -->
             <div class="flex flex-wrap gap-2 items-center justify-end w-full border-b border-gray-200 pb-2">
                 <span id="modeBadge" class="hidden bg-gray-200 text-gray-600 px-3 py-1 rounded text-xs font-extrabold uppercase border border-gray-400 mr-auto">READ ONLY</span>
-                
-                <button onclick="openReports()" class="btn-uniform bg-indigo-600 hover:bg-indigo-700 text-white"><i class="fas fa-chart-pie mr-2"></i> Tariff Reports</button>
-                <button onclick="sendEmail()" class="btn-uniform bg-blue-500 hover:bg-blue-600 text-white"><i class="fas fa-envelope mr-2"></i> Send Email</button>
-                <button onclick="copyToClipboard()" class="btn-uniform bg-teal-600 hover:bg-teal-700 text-white border border-teal-500"><i class="fas fa-copy mr-2"></i> SchreenShoot</button>
-                <button onclick="downloadPDF()" class="btn-uniform bg-red-600 hover:bg-red-700 text-white"><i class="fas fa-file-pdf mr-2"></i> Generate PDF</button>
-                
+                <button onclick="openReports()" class="btn-uniform bg-indigo-600 hover:bg-indigo-700 text-white"><i class="fas fa-chart-pie mr-2"></i> Reports</button>
+                <button onclick="sendEmail()" class="btn-uniform bg-blue-500 hover:bg-blue-600 text-white"><i class="fas fa-envelope mr-2"></i> Email</button>
+                <button onclick="copyToClipboard()" class="btn-uniform bg-teal-600 hover:bg-teal-700 text-white"><i class="fas fa-copy mr-2"></i> Screenshot</button>
+                <button onclick="downloadPDF()" class="btn-uniform bg-red-600 hover:bg-red-700 text-white"><i class="fas fa-file-pdf mr-2"></i> PDF</button>
                 <div class="relative inline-block">
                     <input type="file" id="approvalUpload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" onchange="handleApproval(this)">
-                    <button onclick="document.getElementById('approvalUpload').click()" class="btn-uniform bg-yellow-600 hover:bg-yellow-700 text-white border border-yellow-500"><i class="fas fa-file-upload mr-2"></i> Upload Approval Mail</button>
+                    <button onclick="document.getElementById('approvalUpload').click()" class="btn-uniform bg-yellow-600 hover:bg-yellow-700 text-white border border-yellow-500"><i class="fas fa-file-upload mr-2"></i> Upload Approval</button>
                 </div>
-
                 <button onclick="enableEdit()" id="btnEdit" class="hidden btn-uniform bg-orange-500 hover:bg-orange-600 text-white"><i class="fas fa-edit mr-2"></i> Edit</button>
-                <button onclick="revalidateRecord()" id="btnRevalid" class="hidden btn-uniform bg-purple-600 hover:bg-purple-700 text-white"><i class="fas fa-copy mr-2"></i> Revalid Tariff Sheet</button>
-
+                <button onclick="revalidateRecord()" id="btnRevalid" class="hidden btn-uniform bg-purple-600 hover:bg-purple-700 text-white"><i class="fas fa-copy mr-2"></i> Revalid</button>
                 <div class="w-px h-6 bg-gray-300 mx-1"></div>
-                
-                <!-- ID added to btnSave for point 1 -->
                 <button id="btnSave" onclick="initiateSave()" class="btn-uniform bg-green-600 hover:bg-green-700 text-white animate-pulse"><i class="fas fa-save mr-2"></i> SAVE / UPDATE</button>
                 <button onclick="window.print()" class="btn-uniform bg-blue-600 hover:bg-blue-700 text-white w-10 !px-0"><i class="fas fa-print"></i></button>
-                <button type="button" onclick="resetForm()" class="btn-uniform bg-red-500 hover:bg-red-600 text-white"><i class="fas fa-plus mr-2"></i> Add New Tariff Sheet</button>
+                <button type="button" onclick="resetForm()" class="btn-uniform bg-red-500 hover:bg-red-600 text-white"><i class="fas fa-plus mr-2"></i> New</button>
             </div>
-
-            <!-- FILTERS ROW (Bottom) -->
             <div class="flex flex-col md:flex-row gap-2 w-full items-center">
                 <div id="syncStatus" class="text-[10px] font-bold text-gray-500 mr-2 whitespace-nowrap"><i class="fas fa-circle-notch fa-spin mr-1"></i> Connecting...</div>
                 <div class="flex gap-2 items-center flex-1 w-full">
-                    <!-- Point 2: Removed onchange event from select -->
-                    <select id="cloudHistory" class="border border-gray-400 rounded px-2 py-1 text-xs flex-1 text-blue-900 font-bold bg-blue-50 h-8">
-                        <option value="">-- Select Customer (A-Z) --</option>
-                    </select>
-                    <!-- Point 2: Show Record Button -->
-                    <button onclick="loadFromDropdown(document.getElementById('cloudHistory').value)" class="btn-uniform bg-indigo-800 hover:bg-indigo-900 text-white w-16 shadow-md border border-indigo-900" title="Show Selected Record">SHOW</button>
-                    <!-- ID added to filterInput for point 6 -->
+                    <select id="cloudHistory" class="border border-gray-400 rounded px-2 py-1 text-xs flex-1 text-blue-900 font-bold bg-blue-50 h-8"><option value="">-- Select Customer (A-Z) --</option></select>
+                    <button onclick="loadFromDropdown(document.getElementById('cloudHistory').value)" class="btn-uniform bg-indigo-800 hover:bg-indigo-900 text-white w-16 shadow-md border border-indigo-900">SHOW</button>
                     <input type="text" id="filterInput" class="border border-gray-400 rounded px-2 py-1 text-xs w-48 text-black font-bold h-8" placeholder="Filter..." onkeyup="filterDropdown(this.value)">
-                    <button onclick="startSync()" class="btn-uniform bg-gray-600 hover:bg-gray-700 text-white w-10 !px-0" title="Refresh Data"><i class="fas fa-sync-alt"></i></button>
+                    <button onclick="startSync()" class="btn-uniform bg-gray-600 hover:bg-gray-700 text-white w-10 !px-0"><i class="fas fa-sync-alt"></i></button>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- MAIN FORM AREA -->
     <div id="printArea" class="page-container max-w-[1350px] mx-auto bg-gray-300 shadow-2xl p-6 rounded-lg border border-gray-400 opacity-0 transition-opacity duration-500 text-black min-h-[800px] bg-white">
+        <input type="hidden" id="recordIdStore" value="">
         <div class="mb-2"><img src="https://www.hindterminals.com/adminAssets/img/siteSetting/1754228093_footer.png" alt="Hind Terminals Logo" class="h-16 object-contain"></div>
         <div class="border-b-4 border-blue-900 pb-2 mb-4 flex justify-between items-start">
-            <div>
-                <h2 class="text-3xl font-extrabold text-blue-900 uppercase tracking-wide">Tariff Sheet</h2>
-                <p class="text-gray-700 text-sm font-bold uppercase tracking-widest">(Imports THC/Free days)</p>
-                <p class="text-blue-800 text-lg font-bold uppercase tracking-wide mt-1">Hind Terminals Pvt Ltd</p>
-            </div>
+            <div><h2 class="text-3xl font-extrabold text-blue-900 uppercase tracking-wide">Tariff Sheet</h2><p class="text-gray-700 text-sm font-bold uppercase">(Imports THC/Free days)</p><p class="text-blue-800 text-lg font-bold uppercase tracking-wide mt-1">Hind Terminals Pvt Ltd</p></div>
             <div class="text-right">
                 <div class="flex items-center justify-end mb-1"><span class="text-xs font-bold text-gray-800 mr-2 uppercase">Ref No:</span><input type="text" id="tariffNo" readonly class="text-right font-mono font-bold text-blue-900 border-none w-32 bg-transparent"></div>
                 <div class="flex items-center justify-end"><span class="text-xs font-bold text-gray-800 mr-2 uppercase">Date:</span><input type="date" id="dateToday" readonly class="text-right text-xs bg-transparent border-none w-32 font-bold"></div>
@@ -223,132 +143,46 @@
         </div>
 
         <div class="grid grid-cols-6 gap-3 mb-4 bg-gray-100 p-4 rounded border border-gray-300 shadow-sm">
-            <div class="col-span-1">
-                <label class="block text-[10px] font-bold text-purple-700 uppercase">Tariff Mode <span class="text-red-600">*</span></label>
-                <select id="tariffMode" onchange="toggleTariffTables()" class="input-field h-8 bg-purple-50 border-purple-300 text-purple-900"><option value="">-- Select Mode --</option><option value="Discounted">Discounted Tariff</option><option value="FreeDays">Free Days Only</option></select>
-            </div>
-            <div class="col-span-1">
-                <label class="block text-[10px] font-bold text-blue-700 uppercase">Destuffing Type</label>
-                <!-- Point 3: Dedicated handler for Destuffing changes -->
-                <select id="destuffType" onchange="handleDestuffChange()" class="input-field h-8 bg-blue-50 border-blue-300 text-blue-900"><option value="">-- Select --</option><option value="Both">Both (Factory & ICD)</option><option value="Factory">Factory Destuffing</option><option value="ICD">ICD Destuffing</option></select>
-            </div>
+            <div class="col-span-1"><label class="block text-[10px] font-bold text-purple-700 uppercase">Tariff Mode <span class="text-red-600">*</span></label><select id="tariffMode" onchange="toggleTariffTables()" class="input-field h-8 bg-purple-50 border-purple-300 text-purple-900"><option value="">-- Select Mode --</option><option value="Discounted">Discounted Tariff</option><option value="FreeDays">Free Days Only</option></select></div>
+            <div class="col-span-1"><label class="block text-[10px] font-bold text-blue-700 uppercase">Destuffing Type</label><select id="destuffType" onchange="handleDestuffChange()" class="input-field h-8 bg-blue-50 border-blue-300 text-blue-900"><option value="">-- Select --</option><option value="Both">Both (Factory & ICD)</option><option value="Factory">Factory Destuffing</option><option value="ICD">ICD Destuffing</option></select></div>
             <div class="col-span-2"><label class="block text-[10px] font-bold text-gray-600 uppercase">Customer Name <span class="text-red-600">*</span></label><input type="text" id="customerName" class="input-field font-bold text-blue-900 h-8 bg-white uppercase border-l-4 border-blue-600" placeholder="ENTER NAME"></div>
-            <div class="col-span-1">
-                <label class="block text-[10px] font-bold text-gray-600 uppercase">Customer Type <span class="text-red-600">*</span></label>
-                <select id="customerType" class="input-field h-8 bg-white uppercase"><option value="">-- Select --</option><option>Importer</option><option>CHA</option><option>Forwarder</option><option>Shipping Line</option><option>Transporter</option></select>
-            </div>
+            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Customer Type <span class="text-red-600">*</span></label><select id="customerType" class="input-field h-8 bg-white uppercase"><option value="">-- Select --</option><option>Importer</option><option>CHA</option><option>Forwarder</option><option>Shipping Line</option><option>Transporter</option></select></div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Vol / Month <span class="text-red-600">*</span></label><input type="text" id="volMonth" class="input-field h-8 bg-white uppercase" placeholder="TEUs"></div>
-            <!-- Point 4: CHA Default Various -->
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">CHA / Forwarder</label><input type="text" id="chaName" class="input-field h-8 bg-white uppercase" value="Various"></div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Version</label><input type="text" id="version" value="Version 1" class="input-field h-8 bg-white text-center"></div>
-            <div class="col-span-1">
-                <label class="block text-[10px] font-bold text-gray-600 uppercase">Sales Person</label>
-                <select id="salesPerson" class="input-field h-8 bg-white uppercase"><option value="">-- Select --</option><option>Rajesh Kumar</option><option>Kunal Sahi</option><option>Anurag Pandey</option><option>Damanjit Singh</option><option>Chirag Rana</option><option>Mohik Sharma</option></select>
-            </div>
+            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Sales Person</label><select id="salesPerson" class="input-field h-8 bg-white uppercase"><option value="">-- Select --</option><option>Rajesh Kumar</option><option>Kunal Sahi</option><option>Anurag Pandey</option><option>Damanjit Singh</option><option>Chirag Rana</option><option>Mohik Sharma</option></select></div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Effective From</label><input type="date" id="dateFrom" onchange="calculateMonths()" class="input-field h-8 bg-white"></div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">End Date</label><input type="date" id="dateTo" onchange="calculateMonths()" class="input-field h-8 bg-white"></div>
-            <!-- Point 5: Free Days oninput triggers calculateMonths -->
             <div class="col-span-1"><label class="block text-[10px] font-bold text-green-700 uppercase">Free Days</label><input type="text" id="freeDays" oninput="updateFooter(this.value); toggleTariffTables(); calculateMonths();" placeholder="" class="input-field h-8 bg-yellow-300 text-black border-yellow-500 font-extrabold"></div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Valid For</label><input type="text" id="validity" readonly class="input-field bg-transparent border-none text-red-700 font-bold text-xs h-8"></div>
-            <div class="col-span-1">
-                <label class="block text-[10px] font-bold text-gray-600 uppercase">Tariff Status</label>
-                <div id="statusBox" class="input-field h-8 flex items-center justify-center font-bold text-[10px] uppercase rounded border text-center" style="background-color: #bbf7d0; color: #14532d; border-color: #15803d;">Approved & Valid</div>
-            </div>
+            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Tariff Status</label><div id="statusBox" class="input-field h-8 flex items-center justify-center font-bold text-[10px] uppercase rounded border text-center" style="background-color: #bbf7d0; color: #14532d; border-color: #15803d;">Approved & Valid</div></div>
         </div>
 
-        <div id="prominentFreeDays" class="hidden mb-6 bg-green-50 border-2 border-green-500 p-6 rounded text-center shadow-lg">
-            <h3 class="text-green-800 text-lg font-bold uppercase mb-2">Free Days Allocation</h3>
-            <p id="prominentFreeDaysText" class="text-4xl font-extrabold text-green-600">03 DAYS</p>
-        </div>
+        <div id="prominentFreeDays" class="hidden mb-6 bg-green-50 border-2 border-green-500 p-6 rounded text-center shadow-lg"><h3 class="text-green-800 text-lg font-bold uppercase mb-2">Free Days Allocation</h3><p id="prominentFreeDaysText" class="text-4xl font-extrabold text-green-600">03 DAYS</p></div>
 
         <div id="tariffsContainer">
-            <div id="factorySection" class="mb-6" style="display:none;">
-                <div class="bg-blue-900 text-white text-xs font-bold px-3 py-1.5 uppercase mb-0 rounded-t flex justify-between items-center shadow"><span><i class="fas fa-industry mr-2"></i>1. Factory Destuffing Tariff</span><span class="text-[10px] text-yellow-300 bg-blue-800 px-2 py-0.5 rounded">Details Head Wise</span></div>
-                <table class="tariff-table border-2 border-blue-900" id="tableFactory">
-                    <thead>
-                        <tr>
-                            <th class="bg-gray-700 text-white w-[10%]" rowspan="2">Weight Slab</th>
-                            <th class="bg-header-public" colspan="7">PUBLIC TARIFF (INR)</th>
-                            <th class="bg-header-discount" colspan="7">DISCOUNTED TARIFF (INR)</th>
-                            <th class="bg-black text-white w-[8%]" rowspan="2">Total Billing<br><span class="text-[9px] font-normal">(Public - Disc)</span></th>
-                        </tr>
-                        <tr class="text-[9px]">
-                            <th class="bg-blue-800 text-white w-[5.8%]">Terminal Handing</th> <th class="bg-blue-800 text-white w-[5.8%]">Infra.</th> <th class="bg-blue-800 text-white w-[5.8%]">Weighment</th> <th class="bg-blue-800 text-white w-[5.8%]">Energy Surcharge</th> <th class="bg-blue-800 text-white w-[5.8%]">EIC AND Congesion</th> <th class="bg-blue-800 text-white w-[5.8%]">Port SSR</th> <th class="bg-blue-900 border-l border-white text-white w-[5.8%]">Total</th>
-                            <th class="bg-green-700 text-white w-[5.8%]">Terminal Handing</th> <th class="bg-green-700 text-white w-[5.8%]">Infra.</th> <th class="bg-green-700 text-white w-[5.8%]">Weighment</th> <th class="bg-green-700 text-white w-[5.8%]">Energy Surcharge</th> <th class="bg-green-700 text-white w-[5.8%]">EIC AND Congesion</th> <th class="bg-green-700 text-white w-[5.8%]">Port SSR</th> <th class="bg-green-900 border-l border-white text-white w-[5.8%]">Total Disc</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-            </div>
-            <div id="icdSection" class="mb-6" style="display:none;">
-                <div class="bg-purple-900 text-white text-xs font-bold px-3 py-1.5 uppercase mb-0 rounded-t shadow"><i class="fas fa-warehouse mr-2"></i>2. ICD Destuffing Weight Slab</div>
-                <table class="tariff-table border-2 border-purple-900" id="tableICD">
-                    <thead>
-                        <tr>
-                            <th class="bg-gray-700 text-white w-[10%]" rowspan="2">Weight Slab</th>
-                            <th class="bg-header-public" colspan="8">PUBLIC TARIFF (INR)</th>
-                            <th class="bg-header-discount" colspan="8">DISCOUNTED TARIFF (INR)</th>
-                            <th class="bg-black text-white w-[8%]" rowspan="2">Total Billing<br><span class="text-[9px] font-normal">(Public - Disc)</span></th>
-                        </tr>
-                        <tr class="text-[9px]">
-                            <th class="bg-purple-800 text-white w-[5.1%]">Destuff</th> <th class="bg-purple-800 text-white w-[5.1%]">THC</th> <th class="bg-purple-800 text-white w-[5.1%]">Infra</th> <th class="bg-purple-800 text-white w-[5.1%]">Weight</th> <th class="bg-purple-800 text-white w-[5.1%]">Energy</th> <th class="bg-purple-800 text-white w-[5.1%]">EIC/Cong</th> <th class="bg-purple-800 text-white w-[5.1%]">Port SSR</th> <th class="bg-purple-900 border-l border-white text-white w-[5.1%]">Total</th>
-                            <th class="bg-green-700 text-white w-[5.1%]">Destuff</th> <th class="bg-green-700 text-white w-[5.1%]">THC</th> <th class="bg-green-700 text-white w-[5.1%]">Infra</th> <th class="bg-green-700 text-white w-[5.1%]">Weight</th> <th class="bg-green-700 text-white w-[5.1%]">Energy</th> <th class="bg-green-700 text-white w-[5.1%]">EIC/Cong</th> <th class="bg-green-700 text-white w-[5.1%]">Port SSR</th> <th class="bg-green-900 border-l border-white text-white w-[5.1%]">Total Disc</th>
-                        </tr>
-                    </thead>
-                    <tbody></tbody>
-                </table>
-                <div class="mt-0 bg-green-50 border-x-2 border-b-2 border-green-600 p-2 text-center"><p class="text-xs font-extrabold text-green-900" id="freeDaysDisplay">DISCOUNTED: ARRIVAL + 03 DAYS FREE TIME ONLY</p></div>
-            </div>
+            <div id="factorySection" class="mb-6" style="display:none;"><div class="bg-blue-900 text-white text-xs font-bold px-3 py-1.5 uppercase mb-0 rounded-t flex justify-between items-center shadow"><span><i class="fas fa-industry mr-2"></i>1. Factory Destuffing Tariff</span><span class="text-[10px] text-yellow-300 bg-blue-800 px-2 py-0.5 rounded">Details Head Wise</span></div><table class="tariff-table border-2 border-blue-900" id="tableFactory"><thead><tr><th class="bg-gray-700 text-white w-[10%]" rowspan="2">Weight Slab</th><th class="bg-header-public" colspan="7">PUBLIC TARIFF (INR)</th><th class="bg-header-discount" colspan="7">DISCOUNTED TARIFF (INR)</th><th class="bg-black text-white w-[8%]" rowspan="2">Total Billing<br><span class="text-[9px] font-normal">(Public - Disc)</span></th></tr><tr class="text-[9px]"><th class="bg-blue-800 text-white w-[5.8%]">Terminal Handing</th> <th class="bg-blue-800 text-white w-[5.8%]">Infra.</th> <th class="bg-blue-800 text-white w-[5.8%]">Weighment</th> <th class="bg-blue-800 text-white w-[5.8%]">Energy Surcharge</th> <th class="bg-blue-800 text-white w-[5.8%]">EIC AND Congesion</th> <th class="bg-blue-800 text-white w-[5.8%]">Port SSR</th> <th class="bg-blue-900 border-l border-white text-white w-[5.8%]">Total</th><th class="bg-green-700 text-white w-[5.8%]">Terminal Handing</th> <th class="bg-green-700 text-white w-[5.8%]">Infra.</th> <th class="bg-green-700 text-white w-[5.8%]">Weighment</th> <th class="bg-green-700 text-white w-[5.8%]">Energy Surcharge</th> <th class="bg-green-700 text-white w-[5.8%]">EIC AND Congesion</th> <th class="bg-green-700 text-white w-[5.8%]">Port SSR</th> <th class="bg-green-900 border-l border-white text-white w-[5.8%]">Total Disc</th></tr></thead><tbody></tbody></table></div>
+            <div id="icdSection" class="mb-6" style="display:none;"><div class="bg-purple-900 text-white text-xs font-bold px-3 py-1.5 uppercase mb-0 rounded-t shadow"><i class="fas fa-warehouse mr-2"></i>2. ICD Destuffing Weight Slab</div><table class="tariff-table border-2 border-purple-900" id="tableICD"><thead><tr><th class="bg-gray-700 text-white w-[10%]" rowspan="2">Weight Slab</th><th class="bg-header-public" colspan="8">PUBLIC TARIFF (INR)</th><th class="bg-header-discount" colspan="8">DISCOUNTED TARIFF (INR)</th><th class="bg-black text-white w-[8%]" rowspan="2">Total Billing<br><span class="text-[9px] font-normal">(Public - Disc)</span></th></tr><tr class="text-[9px]"><th class="bg-purple-800 text-white w-[5.1%]">Destuff</th> <th class="bg-purple-800 text-white w-[5.1%]">THC</th> <th class="bg-purple-800 text-white w-[5.1%]">Infra</th> <th class="bg-purple-800 text-white w-[5.1%]">Weight</th> <th class="bg-purple-800 text-white w-[5.1%]">Energy</th> <th class="bg-purple-800 text-white w-[5.1%]">EIC/Cong</th> <th class="bg-purple-800 text-white w-[5.1%]">Port SSR</th> <th class="bg-purple-900 border-l border-white text-white w-[5.1%]">Total</th><th class="bg-green-700 text-white w-[5.1%]">Destuff</th> <th class="bg-green-700 text-white w-[5.1%]">THC</th> <th class="bg-green-700 text-white w-[5.1%]">Infra</th> <th class="bg-green-700 text-white w-[5.1%]">Weight</th> <th class="bg-green-700 text-white w-[5.1%]">Energy</th> <th class="bg-green-700 text-white w-[5.1%]">EIC/Cong</th> <th class="bg-green-700 text-white w-[5.1%]">Port SSR</th> <th class="bg-green-900 border-l border-white text-white w-[5.1%]">Total Disc</th></tr></thead><tbody></tbody></table><div class="mt-0 bg-green-50 border-x-2 border-b-2 border-green-600 p-2 text-center"><p class="text-xs font-extrabold text-green-900" id="freeDaysDisplay">DISCOUNTED: ARRIVAL + 03 DAYS FREE TIME ONLY</p></div></div>
         </div>
 
         <div class="mb-4 pt-4">
             <div class="flex justify-between items-end mb-1">
                 <div class="bg-yellow-600 text-white px-3 py-1.5 rounded-t font-bold text-xs uppercase"><i class="fas fa-truck mr-2"></i> 3. Transport Tariff</div>
-                <div class="mb-1 flex items-center gap-2">
-                    <label class="text-[10px] font-bold text-gray-700 uppercase">Claimed By:</label>
-                    <input type="text" id="transportClaimedBy" class="border border-gray-400 rounded px-2 py-0.5 text-xs font-bold w-80 bg-white uppercase" value="TRANSPORTER">
-                    <button onclick="addTransportRow()" class="bg-white text-yellow-700 hover:bg-gray-100 text-[10px] font-bold px-2 py-0.5 rounded no-print shadow uppercase border border-yellow-600 no-pdf">Add Location</button>
-                </div>
+                <div class="mb-1 flex items-center gap-2"><label class="text-[10px] font-bold text-gray-700 uppercase">Claimed By:</label><input type="text" id="transportClaimedBy" class="border border-gray-400 rounded px-2 py-0.5 text-xs font-bold w-80 bg-white uppercase" value="TRANSPORTER"><button onclick="addTransportRow()" class="bg-white text-yellow-700 hover:bg-gray-100 text-[10px] font-bold px-2 py-0.5 rounded no-print shadow uppercase border border-yellow-600 no-pdf">Add Location</button></div>
             </div>
-            <table class="tariff-table border-2 border-yellow-600" id="tableTransport">
-                <thead>
-                    <tr class="bg-yellow-700 text-white">
-                        <th class="w-32">Transporter <span class="text-red-200">*</span></th> 
-                        <th class="w-32">Origin</th> 
-                        <th class="w-32">Destination</th> 
-                        <th class="w-32">Return Empty</th> 
-                        <th class="w-20">Discount (₹)</th> 
-                        <th class="w-64">Remarks</th> 
-                        <th class="bg-white border-none w-6 no-print"></th>
-                    </tr>
-                </thead>
-                <tbody id="tbodyTransport"></tbody>
-            </table>
+            <table class="tariff-table border-2 border-yellow-600" id="tableTransport"><thead><tr class="bg-yellow-700 text-white"><th class="w-32">Transporter <span class="text-red-200">*</span></th> <th class="w-32">Origin</th> <th class="w-32">Destination</th> <th class="w-32">Return Empty</th> <th class="w-20">Discount (₹)</th> <th class="w-64">Remarks</th> <th class="bg-white border-none w-6 no-print"></th></tr></thead><tbody id="tbodyTransport"></tbody></table>
         </div>
 
         <div class="mb-4 pt-2">
             <div class="flex justify-between items-end mb-1">
                 <div class="bg-teal-700 text-white px-3 py-1.5 rounded-t font-bold text-xs uppercase"><i class="fas fa-gift mr-2"></i> 4. Incentive Details</div>
-                <div class="mb-1 flex items-center gap-2">
-                    <label class="text-[10px] font-bold text-gray-700 uppercase">Claimed By:</label>
-                    <input type="text" id="incentiveClaimedBy" class="border border-gray-400 rounded px-2 py-0.5 text-xs font-bold w-80 bg-white uppercase" value="CHA">
-                    <button onclick="addIncentiveRow()" class="bg-white text-teal-800 hover:bg-gray-100 text-[10px] font-bold px-2 py-0.5 rounded no-print shadow uppercase border border-teal-700 no-pdf">Add Row</button>
-                </div>
+                <div class="mb-1 flex items-center gap-2"><label class="text-[10px] font-bold text-gray-700 uppercase">Claimed By:</label><input type="text" id="incentiveClaimedBy" class="border border-gray-400 rounded px-2 py-0.5 text-xs font-bold w-80 bg-white uppercase" value="CHA"><button onclick="addIncentiveRow()" class="bg-white text-teal-800 hover:bg-gray-100 text-[10px] font-bold px-2 py-0.5 rounded no-print shadow uppercase border border-teal-700 no-pdf">Add Row</button></div>
             </div>
-            <table class="tariff-table border-2 border-teal-700">
-                <thead>
-                    <tr class="bg-teal-800 text-white">
-                        <th class="w-48">Line (MSC / NON MSC)</th> <th>Discount 20"</th> <th>Discount 40"</th> 
-                        <th class="w-64">Remarks</th> 
-                        <th class="bg-white border-none w-6 no-print"></th>
-                    </tr>
-                </thead>
-                <tbody id="tbodyIncentive"></tbody>
-            </table>
+            <table class="tariff-table border-2 border-teal-700"><thead><tr class="bg-teal-800 text-white"><th class="w-48">Line (MSC / NON MSC)</th> <th>Discount 20"</th> <th>Discount 40"</th> <th class="w-64">Remarks</th> <th class="bg-white border-none w-6 no-print"></th></tr></thead><tbody id="tbodyIncentive"></tbody></table>
         </div>
 
         <div class="bg-yellow-50 p-2 rounded border border-yellow-400 mb-4"><label class="block text-[10px] font-bold text-yellow-900 mb-1 uppercase">Remarks / Special Notes</label><textarea id="remarks" class="w-full border border-yellow-300 rounded p-1 text-xs bg-white focus:outline-none text-gray-700 font-bold" rows="2"></textarea></div>
-        
+
         <div id="approvalPreviewSection" class="hidden mt-6 border-2 border-dashed border-gray-400 rounded p-4 bg-gray-50 break-inside-avoid">
             <div class="flex justify-between items-center mb-2 border-b border-gray-300 pb-1">
                 <h3 class="text-sm font-bold text-gray-700 uppercase"><i class="fas fa-paperclip mr-1"></i> Approval Reference</h3>
@@ -363,22 +197,17 @@
         </div>
     </div>
 
-    <div id="historySection" class="max-w-[1350px] mx-auto mt-8 no-print hidden">
-        <h3 class="text-2xl font-bold text-gray-400 mb-4 border-b border-gray-600 pb-2"><i class="fas fa-history mr-2"></i> Version History</h3>
-        <div id="historyContent" class="space-y-6"></div>
-    </div>
-
     <script>
-        const SCRIPT_SAVE_URL = 'https://script.google.com/macros/s/AKfycbzsxcINub9C_8CMshJvHZ-TGR4kUWSeOUqgRtL7vToLtnIHwIy-OhKXwXqbOl7NOE0p/exec';
+        const SCRIPT_SAVE_URL = 'https://script.google.com/macros/s/AKfycbxXE8V02fHhcNWbPzUEhPREj9KbnRJiPzIjJFnNkF5HtCGOCB1cqActpBg1LgWpZTMJ/exec';
         const SHEET_ID = '11LsDU-tfxh8vJ4RK_JYcF5AYJQBzLSMZDmOvfKcPE5s';
-        const TARGET_GID = '0'; 
-        const DIRECT_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${TARGET_GID}`;
+        const DIRECT_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
 
         const factoryData = [{slab:"(20) 0 - 27MT",p:[3595,2300,200,337,2500,150]},{slab:"(20) 27 - 30MT",p:[4494,2300,200,337,2500,150]},{slab:"(20) > 31MT",p:[7190,2300,200,337,2500,150]},{slab:"For 40\"",p:[6790,4500,200,509,3500,300]}];
         const icdData = [{slab:"(20) 0 - 27MT",p:[900,4345,2300,200,337,2500,150]},{slab:"(20) 27 - 30MT",p:[900,5431,2300,200,337,2500,150]},{slab:"(20) > 31MT",p:[900,8690,2300,200,337,2500,150]},{slab:"For 40\"",p:[1800,8240,4500,200,509,3500,300]}];
 
         let globalRecords = [];
-        let loadedRecordId = null; 
+        let loadedRecordId = null;
+        let currentReportData = []; 
 
         function checkAccess() {
             if (document.getElementById('accessPass').value === "16111980") {
@@ -401,111 +230,7 @@
             toggleTariffTables();
         }
 
-        // --- 1. PDF DOWNLOAD (STRICT B/W) ---
-        function downloadPDF() {
-            const element = document.getElementById('printArea');
-            const custName = document.getElementById('customerName').value || 'Tariff_Sheet';
-            
-            element.classList.add('pdf-mode'); // Forces Black & White
-
-            const opt = {
-                margin: [5, 5, 5, 5],
-                filename: `${custName}_Tariff.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-            };
-            
-            const oldZoom = document.body.style.zoom;
-            document.body.style.zoom = "100%";
-            
-            html2pdf().set(opt).from(element).save().then(() => { 
-                 document.body.style.zoom = oldZoom || "90%";
-                 element.classList.remove('pdf-mode'); // Remove B/W mode
-            });
-        }
-
-        // --- 2. COPY IMAGE (COLOR, DATA FIX, & 60% SIZE) ---
-        function copyToClipboard() {
-            const element = document.getElementById('printArea');
-            const originalZoom = document.body.style.zoom;
-            document.body.style.zoom = "100%"; 
-
-            // 1. Capture high quality canvas first
-            html2canvas(element, {
-                scale: 2, 
-                useCORS: true,
-                backgroundColor: '#ffffff',
-                onclone: (clonedDoc) => {
-                    const clonedElement = clonedDoc.getElementById('printArea');
-                    clonedElement.classList.add('image-capture-mode');
-                    
-                    // --- DATA FIX: Replace Inputs with Text Divs ---
-                    const inputs = clonedElement.querySelectorAll('input');
-                    inputs.forEach(input => {
-                        const val = input.value;
-                        const div = clonedDoc.createElement('div');
-                        div.innerText = val;
-                        div.style.cssText = window.getComputedStyle(input).cssText;
-                        div.style.border = 'none';
-                        div.style.background = 'transparent';
-                        div.style.padding = '2px 0';
-                        if(input.type !== 'hidden') input.parentNode.replaceChild(div, input);
-                    });
-
-                    const textareas = clonedElement.querySelectorAll('textarea');
-                    textareas.forEach(ta => {
-                        const val = ta.value;
-                        const div = clonedDoc.createElement('div');
-                        div.innerText = val;
-                        div.style.cssText = window.getComputedStyle(ta).cssText;
-                        div.style.border = 'none';
-                        div.style.resize = 'none';
-                        div.style.whiteSpace = 'pre-wrap';
-                        ta.parentNode.replaceChild(div, ta);
-                    });
-
-                    const selects = clonedElement.querySelectorAll('select');
-                    selects.forEach(sel => {
-                        const val = sel.options[sel.selectedIndex] ? sel.options[sel.selectedIndex].text : "";
-                        const div = clonedDoc.createElement('div');
-                        div.innerText = val;
-                        div.style.cssText = window.getComputedStyle(sel).cssText;
-                        div.style.border = 'none';
-                        div.style.appearance = 'none';
-                        sel.parentNode.replaceChild(div, sel);
-                    });
-
-                    // Hide buttons
-                    const btns = clonedElement.querySelectorAll('button, .no-print, .no-pdf');
-                    btns.forEach(b => b.style.display = 'none');
-                }
-            }).then(originalCanvas => {
-                // 2. Resize to 60%
-                const targetWidth = originalCanvas.width * 0.6;
-                const targetHeight = originalCanvas.height * 0.6;
-                const scaledCanvas = document.createElement('canvas');
-                scaledCanvas.width = targetWidth;
-                scaledCanvas.height = targetHeight;
-                const ctx = scaledCanvas.getContext('2d');
-                ctx.drawImage(originalCanvas, 0, 0, targetWidth, targetHeight);
-
-                document.body.style.zoom = originalZoom || "90%";
-
-                // 3. Copy smaller image to clipboard
-                scaledCanvas.toBlob(blob => {
-                    try {
-                        const item = new ClipboardItem({ "image/png": blob });
-                        navigator.clipboard.write([item]).then(() => {
-                            alert("✅ Color Image Copied (Size Reduced)! Paste in Outlook (Ctrl+V)");
-                        });
-                    } catch (err) { 
-                        alert("Clipboard Error: " + err);
-                    }
-                }, 'image/png', 0.9);
-            });
-        }
-
+        // --- CORE FUNCTIONS ---
         function sendEmail() {
             const cust = document.getElementById('customerName').value;
             const mode = document.getElementById('tariffMode').value;
@@ -517,434 +242,521 @@
             window.location.href = `mailto:${to}?cc=${cc}&subject=${subject}&body=${body}`;
         }
 
-        // ADD NEW TARIFF BUTTON FIX
-        function resetForm() {
-            if(!confirm("Clear form to add new tariff?")) return;
-            
-            loadedRecordId = null;
-            
-            const ids = ['customerName', 'customerType', 'volMonth', 'chaName', 'salesPerson', 'dateFrom', 'dateTo', 'freeDays', 'remarks', 'validity'];
-            ids.forEach(id => {
-                const el = document.getElementById(id);
-                if(el) el.value = "";
-            });
-            
-            document.getElementById('version').value = "Version 1";
-            document.getElementById('tariffMode').value = ""; 
-            document.getElementById('destuffType').value = ""; 
-            document.getElementById('transportClaimedBy').value = "TRANSPORTER";
-            document.getElementById('incentiveClaimedBy').value = "CHA";
-            // Point 4: Reset CHA to Various
-            document.getElementById('chaName').value = "Various"; 
-            document.getElementById('tariffNo').value = `TS-${new Date().getFullYear()}${Math.floor(1000+Math.random()*9000)}`;
-            document.getElementById('dateToday').valueAsDate = new Date();
-
-            // Reset Status Box Styles
-            const statusBox = document.getElementById('statusBox');
-            statusBox.innerText = "Approved & Valid";
-            statusBox.style.backgroundColor = "#bbf7d0"; 
-            statusBox.style.color = "#14532d";
-            statusBox.style.borderColor = "#15803d";
-            statusBox.className = "input-field h-8 flex items-center justify-center font-bold text-[10px] uppercase rounded border text-center";
-
-            document.querySelectorAll('#tableFactory input[id*="_d"], #tableICD input[id*="_d"]').forEach(el => el.value = "");
-            for(let i=0; i<factoryData.length; i++) calcRow(`tableFactory_${i}`, 6);
-            for(let i=0; i<icdData.length; i++) calcRow(`tableICD_${i}`, 7);
-
-            document.getElementById('tbodyTransport').innerHTML = '';
-            addTransportRow();
-            document.getElementById('tbodyIncentive').innerHTML = '';
-            addIncentiveRow();
-
-            toggleReadOnly(false);
-            document.getElementById('historySection').classList.add('hidden');
-            toggleTariffTables(); 
-
-            // Point 1: Re-enable save button on Reset
-            const saveBtn = document.getElementById('btnSave');
-            saveBtn.disabled = false;
-            saveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-            saveBtn.classList.add('animate-pulse');
-        }
-
-        // --- UPDATED CALCULATE MONTHS (Uses inline styles for reliable color capture) ---
-        function calculateMonths() { 
-            const d1 = new Date(document.getElementById('dateFrom').value); 
-            const d2 = new Date(document.getElementById('dateTo').value);
-            const today = new Date();
-            today.setHours(0,0,0,0);
-
-            const statusBox = document.getElementById('statusBox');
-            const currentName = document.getElementById('customerName').value.trim();
-            
-            // Reset styles initially
-            statusBox.style.backgroundColor = ''; statusBox.style.color = ''; statusBox.style.borderColor = '';
-            statusBox.className = "input-field h-8 flex items-center justify-center font-bold text-[10px] uppercase rounded border text-center";
-
-            // VERSION EXPIRY CHECK
-            if(currentName) {
-                const currentVerStr = document.getElementById('version').value; 
-                const currentVer = parseInt(currentVerStr.replace(/\D/g,'')) || 0;
-                let maxVer = 0;
-                globalRecords.forEach(r => {
-                    if(r.name.toLowerCase() === currentName.toLowerCase()) {
-                        const v = parseInt((r.ver || "Version 1").replace(/\D/g,'')) || 1;
-                        if(v > maxVer) maxVer = v;
-                    }
-                });
-                if (maxVer > currentVer) {
-                    statusBox.innerText = `EXPIRED (Old Version)`;
-                    statusBox.style.backgroundColor = "#e5e7eb"; statusBox.style.color = "#374151"; statusBox.style.borderColor = "#d1d5db";
-                    return;
-                }
-            }
-
-            if(d1 && d2 && d2 > d1){ 
-                let m = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth()); 
-                if(d2.getDate() < d1.getDate()) m--; 
-                const days = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24));
-                document.getElementById('validity').value = `${m} Months (${days} Days)`;
-                
-                // Force inline styles for colors so html2canvas picks them up correctly
-                if (today > d2) {
-                    statusBox.innerText = `EXPIRED`;
-                    statusBox.style.backgroundColor = "#fbcfe8"; // Red/Pink
-                    statusBox.style.color = "#831843";
-                    statusBox.style.borderColor = "#db2777";
-                    statusBox.classList.add('font-extrabold', 'text-lg', 'tracking-widest');
-                } else {
-                    statusBox.innerText = "ACTIVE";
-                    statusBox.style.backgroundColor = "#bbf7d0"; // Green
-                    statusBox.style.color = "#14532d";
-                    statusBox.style.borderColor = "#15803d";
-                    statusBox.classList.add('font-extrabold', 'text-lg', 'tracking-widest');
-                }
-            } else {
-                if(!statusBox.innerText.includes('EXPIRED')) {
-                   statusBox.innerText = "Approved & Valid";
-                   statusBox.style.backgroundColor = "#bbf7d0"; statusBox.style.color = "#14532d"; statusBox.style.borderColor = "#15803d";
-                }
-            }
-        }
-        
-        // FUNCTIONS PLACEHOLDER FOR FULL CODE CONTEXT (These are same as previous working block)
-        function openReports() { document.getElementById('reportsModal').style.display = 'flex'; showReport('Discounted'); }
-        function closeReports() { document.getElementById('reportsModal').style.display = 'none'; }
-        function formatReportDate(isoDate) { if(!isoDate || isoDate === 'N/A') return 'N/A'; return isoDate.split('-').reverse().join('-'); }
-        function showReport(type) { /* ... Same as previous ... */ 
-            const area = document.getElementById('reportsArea'); const countLabel = document.getElementById('reportCount'); const btns = document.querySelectorAll('#reportsModal button[id^="btnRep"]'); btns.forEach(b => b.classList.remove('bg-indigo-600')); if(type === 'Discounted') document.getElementById('btnRepDisc').classList.add('bg-indigo-600'); if(type === 'FreeDays') document.getElementById('btnRepFree').classList.add('bg-indigo-600'); if(type === 'Expired') document.getElementById('btnRepExp').classList.add('bg-indigo-600'); area.innerHTML = ''; const latestVersions = {}; globalRecords.forEach(r => { const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1; if (!latestVersions[r.name] || vNum > latestVersions[r.name]) { latestVersions[r.name] = vNum; } }); let filtered = []; const today = new Date(); today.setHours(0,0,0,0); if (type === 'Expired') { filtered = globalRecords.filter(r => { let isExpiredDate = false; if (r.dates) { const end = new Date(r.dates.split('to')[1]?.trim()); if(end < today) isExpiredDate = true; } const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1; const isSuperseded = vNum < latestVersions[r.name]; return isExpiredDate || isSuperseded; }); } else { filtered = globalRecords.filter(r => { if (r.mode !== type) return false; const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1; const isOldVer = vNum < latestVersions[r.name]; return !isOldVer; }); } currentReportData = filtered; if (filtered.length === 0) { area.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">No records found for this category.</div>'; } else { filtered.sort((a,b) => a.name.localeCompare(b.name)); filtered.forEach(r => { const endDateStr = r.dates ? r.dates.split('to')[1]?.trim() : "N/A"; let status = "Active"; let statusClass = "text-green-600 bg-green-100"; if (endDateStr !== "N/A") { const end = new Date(endDateStr); if (end < today) { status = "Expired"; statusClass = "text-red-600 bg-red-100"; } } const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1; if (vNum < latestVersions[r.name]) { status = "Old Ver"; statusClass = "text-gray-600 bg-gray-200"; } let detailsHtml = ""; if (type === 'FreeDays') { detailsHtml = `<span class="text-green-700 font-extrabold">${r.free || 'N/A'}</span>`; } else { let slabDetails = []; try { if (r.jsonFactory) { const fInputs = JSON.parse(r.jsonFactory); fInputs.forEach((row, idx) => { if(factoryData[idx]) { const dTotal = row.reduce((a,b)=>a+(parseFloat(b)||0),0); let sName = factoryData[idx].slab.replace('(20) ','').replace('For ',''); if (dTotal > 0) slabDetails.push(`${sName}: ₹${dTotal}`); } }); } if (r.jsonICD) { const iInputs = JSON.parse(r.jsonICD); iInputs.forEach((row, idx) => { if(icdData[idx]) { const dTotal = row.reduce((a,b)=>a+(parseFloat(b)||0),0); let sName = icdData[idx].slab.replace('(20) ','').replace('For ',''); if (dTotal > 0) slabDetails.push(`ICD ${sName}: ₹${dTotal}`); } }); } } catch(e) {} if(slabDetails.length > 0) detailsHtml = `<span class="text-[10px] text-gray-600">${slabDetails.join(' | ')}</span>`; else detailsHtml = `<span class="text-gray-400">No Discount</span>`; } const formattedDate = formatReportDate(endDateStr); const div = document.createElement('div'); div.className = "flex justify-between items-center px-4 py-2 border-b border-gray-200 hover:bg-gray-50 text-xs text-gray-800"; div.innerHTML = ` <div class="w-1/5 font-bold text-blue-900">${r.name} <span class="text-[10px] text-gray-400 font-normal">(${r.ver || 'V1'})</span></div> <div class="w-1/12">${r.mode || '-'}</div> <div class="w-1/2 overflow-hidden text-ellipsis whitespace-nowrap">${detailsHtml}</div> <div class="w-1/12 text-center font-mono">${formattedDate}</div> <div class="w-1/12 text-right"><span class="px-2 py-0.5 rounded ${statusClass} font-bold text-[10px] whitespace-nowrap">${status}</span></div> `; div.onclick = () => { closeReports(); loadRecord(r); }; div.style.cursor = 'pointer'; area.appendChild(div); }); } countLabel.innerText = `${filtered.length} Records found`;        }
-        function downloadReportExcel() { /* ... */ if (!currentReportData || currentReportData.length === 0) return alert("No data to download!"); const headers = [ "Customer Name", "Version", "Mode", "End Date", "Status", "Factory 0-27MT Disc", "Factory 27-30MT Disc", "Factory >31MT Disc", "Factory 40\" Disc", "ICD 0-27MT Disc", "ICD 27-30MT Disc", "ICD >31MT Disc", "ICD 40\" Disc", "Free Days" ]; let csvContent = headers.join(",") + "\n"; currentReportData.forEach(r => { const endDateStr = r.dates ? r.dates.split('to')[1]?.trim() : "N/A"; const formattedDate = formatReportDate(endDateStr); let fDisc = [0,0,0,0]; let iDisc = [0,0,0,0]; try { if (r.jsonFactory) { const fInputs = JSON.parse(r.jsonFactory); fInputs.forEach((row, idx) => { if(idx < 4) fDisc[idx] = row.reduce((a,b)=>a+(parseFloat(b)||0),0); }); } if (r.jsonICD) { const iInputs = JSON.parse(r.jsonICD); iInputs.forEach((row, idx) => { if(idx < 4) iDisc[idx] = row.reduce((a,b)=>a+(parseFloat(b)||0),0); }); } } catch(e) {} const safeName = `"${r.name.replace(/"/g, '""')}"`; const freeDaysVal = r.mode === 'FreeDays' ? (r.free || "") : ""; const row = [ safeName, r.ver||'V1', r.mode, formattedDate, "Active", fDisc[0] || "", fDisc[1] || "", fDisc[2] || "", fDisc[3] || "", iDisc[0] || "", iDisc[1] || "", iDisc[2] || "", iDisc[3] || "", freeDaysVal ]; csvContent += row.join(",") + "\n"; }); const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement("a"); const url = URL.createObjectURL(blob); link.setAttribute("href", url); link.setAttribute("download", "Tariff_Report.csv"); document.body.appendChild(link); link.click(); document.body.removeChild(link); }
-        function handleApproval(input) { /* ... */ const file = input.files[0]; if (!file) return; const custName = document.getElementById('customerName').value || "Unknown"; const version = document.getElementById('version').value || "V1"; const ext = file.name.split('.').pop(); const newFileName = `${custName.replace(/[^a-z0-9]/gi, '_')}_${version}.${ext}`; const link = document.createElement('a'); link.href = URL.createObjectURL(file); link.download = newFileName; document.body.appendChild(link); link.click(); document.body.removeChild(link); const previewSection = document.getElementById('approvalPreviewSection'); const container = document.getElementById('previewContainer'); const nameLabel = document.getElementById('approvalFileName'); previewSection.classList.remove('hidden'); nameLabel.innerText = `Attached: ${newFileName}`; container.innerHTML = ''; if (ext.toLowerCase() === 'pdf') { const iframe = document.createElement('iframe'); iframe.src = URL.createObjectURL(file); iframe.className = "w-full h-full"; container.appendChild(iframe); } else if (['jpg', 'jpeg', 'png'].includes(ext.toLowerCase())) { const img = document.createElement('img'); img.src = URL.createObjectURL(file); img.className = "max-h-full max-w-full object-contain"; container.appendChild(img); } else { container.innerHTML = `<p class="text-red-500 font-bold">Preview not available for .${ext} files. (Saved to PC)</p>`; } alert(`File prepared as: ${newFileName}\nPlease save it to D:\\Tariff_Approvals`); }
-        function syncCustomerName() { const name = document.getElementById('customerName').value; document.getElementById('transportClaimedBy').value = name; document.getElementById('incentiveClaimedBy').value = name; }
-        
-        // Point 3: New Function to handle Destuffing Logic Separately
-        function handleDestuffChange() {
-            const destuffVal = document.getElementById('destuffType').value;
-            if (destuffVal === 'Factory' || destuffVal === 'ICD' || destuffVal === 'Both') {
-                document.getElementById('tariffMode').value = 'Discounted';
-            }
-            toggleTariffTables();
-        }
-
-        function toggleTariffTables() { 
-            const mode = document.getElementById('tariffMode').value;
-            const destuffSelect = document.getElementById('destuffType');
-            const type = destuffSelect.value;
-            const factorySec = document.getElementById('factorySection');
-            const icdSec = document.getElementById('icdSection');
-            const promoBox = document.getElementById('prominentFreeDays');
-            const promoText = document.getElementById('prominentFreeDaysText');
-            const freeVal = document.getElementById('freeDays').value || "03 DAYS";
-            
-            factorySec.style.display = 'none';
-            icdSec.style.display = 'none';
-            promoBox.style.display = 'none';
-            
-            // Re-enable destuffSelect if not free days
-            destuffSelect.disabled = false;
-            destuffSelect.classList.remove('bg-gray-200');
-
-            if (mode === 'FreeDays') {
-                promoBox.style.display = 'block';
-                promoText.innerText = freeVal.toUpperCase();
-                destuffSelect.disabled = true;
-                destuffSelect.value = "";
-                destuffSelect.classList.add('bg-gray-200');
-            } else {
-                if (type === 'Factory') factorySec.style.display = 'block';
-                else if (type === 'ICD') icdSec.style.display = 'block';
-                else if (type === 'Both') { factorySec.style.display = 'block'; icdSec.style.display = 'block'; }
-            }
-        }
-        
-        function closeLoading() { document.getElementById('loadingOverlay').style.display = 'none'; document.getElementById('progressSection').classList.remove('hidden'); document.getElementById('successSection').classList.add('hidden'); document.getElementById('progressBar').style.width = '0%'; document.getElementById('progressText').innerText = '0%'; }
-        
-        async function initiateSave() { 
-            calculateMonths();
-            const cust = document.getElementById('customerName').value;
-            const dFrom = document.getElementById('dateFrom').value;
-            const dTo = document.getElementById('dateTo').value;
-            const free = document.getElementById('freeDays').value;
-            const cType = document.getElementById('customerType').value;
-            const vol = document.getElementById('volMonth').value;
-
-            // --- YE LINE ADD KAREIN (Mode ki value lene ke liye) ---
-            const mode = document.getElementById('tariffMode').value; 
-
-            // --- VALIDATION CHECKS ---
-            if(!cust) return alert("Error: Customer Name is Required");
-            
-            // --- YE CHECK ADD KAREIN (Agar Mode select nahi hai to error dega) ---
-            if(!mode) return alert("Error: Tariff Mode (Discounted ya Free Days) select!");
-
-            if(!cType) return alert("Error: Customer Type is Mandatory");
-            if(!vol) return alert("Error: Volume per Month is Mandatory");
-            if(!dFrom || !dTo) return alert("Error: Effective From & End Date are Required");
-            if(!free) return alert("Error: Free Days are Required");         
-                     
-            let transError = false;
-            document.querySelectorAll('#tbodyTransport tr').forEach(tr => {
-                const sel = tr.querySelector('select[id*="_trans"]');
-                if (sel && sel.value === "") transError = true;
-            });
-            if(transError) return alert("Error: Select Transporter in Transport Table");
-            
-            if(loadedRecordId) {
-                const pass = prompt("To Save Changes, Enter Password:");
-                if(pass !== "Honey@143143") return alert("Incorrect Password! Save Cancelled.");
-            }
-
-            document.getElementById('loadingOverlay').style.display = 'flex';
-             
-            // UPDATE: Check if updating or new
-            const isUpdate = !!loadedRecordId;
-            document.getElementById('loadingText').innerText = isUpdate ? "Updating Record..." : "Saving Tariff Sheet...";
-
-            // Point 1: Disable Button immediately
-            const saveBtn = document.getElementById('btnSave');
-            saveBtn.disabled = true;
-
-            const progressBar = document.getElementById('progressBar'); const progressText = document.getElementById('progressText'); let progress = 0; const interval = setInterval(() => { progress += 5; if(progress > 90) clearInterval(interval); progressBar.style.width = progress + '%'; progressText.innerText = progress + '%'; }, 100); try { const entryId = loadedRecordId || Date.now(); const factoryValues = []; for(let i=0; i<factoryData.length; i++) { const vals = []; for(let k=0; k<6; k++) vals.push(document.getElementById(`tableFactory_${i}_d${k}`).value || ""); factoryValues.push(vals); } const icdValues = []; for(let i=0; i<icdData.length; i++) { const vals = []; for(let k=0; k<7; k++) vals.push(document.getElementById(`tableICD_${i}_d${k}`).value || ""); icdValues.push(vals); } const transValues = []; document.querySelectorAll('#tbodyTransport tr').forEach(tr => { const uid = tr.querySelector('select').id.split('_trans')[0]; transValues.push({ t: document.getElementById(`${uid}_trans`).value, d: document.getElementById(`${uid}_dest`).value, b: document.getElementById(`${uid}_base`).value, v: document.getElementById(`${uid}_disc`).value }); }); const incValues = []; document.querySelectorAll('#tbodyIncentive tr').forEach(tr => { const uid = tr.querySelector('select').id.split('_line')[0]; incValues.push({ l: document.getElementById(`${uid}_line`).value, d20: document.getElementById(`${uid}_d20`).value, d40: document.getElementById(`${uid}_d40`).value, rem: document.getElementById(`${uid}_rem`).value }); }); const fd = new FormData(); fd.append('Date', document.getElementById('dateToday').value); fd.append('Name', `[MASTER] ${cust} [ID:${entryId}]`); fd.append('Email', `Ref: ${document.getElementById('tariffNo').value} | Dates: ${dFrom} to ${dTo} | Mode: ${document.getElementById('tariffMode').value} | Type: ${document.getElementById('destuffType').value}`); fd.append('Phone', `Valid: ${document.getElementById('validity').value} | Free: ${free} | CType: ${cType} | Vol: ${vol}`); fd.append('Department', `Sales: ${document.getElementById('salesPerson').value} | CHA: ${document.getElementById('chaName').value} | TC: ${document.getElementById('transportClaimedBy').value} | IC: ${document.getElementById('incentiveClaimedBy').value}`); fd.append('City', `Ver: ${document.getElementById('version').value} | Rem: ${document.getElementById('remarks').value}`); fd.append('Data1', JSON.stringify(factoryValues)); fd.append('Data2', JSON.stringify(icdValues)); fd.append('Data3', JSON.stringify(transValues)); fd.append('Data4', JSON.stringify(incValues)); await fetch(SCRIPT_SAVE_URL, { method: 'POST', body: fd, mode: 'no-cors' }); clearInterval(interval); progressBar.style.width = '100%'; progressText.innerText = '100%'; await new Promise(r => setTimeout(r, 500)); document.getElementById('progressSection').classList.add('hidden'); document.getElementById('successSection').classList.remove('hidden'); toggleReadOnly(true); startSync(); 
-            
-            // Point 1: Keep disabled on success, show UI indication
-            saveBtn.classList.add('opacity-50', 'cursor-not-allowed');
-            saveBtn.classList.remove('animate-pulse');
-            
-            } catch(e) { 
-                alert("Error: " + e.message); 
-                document.getElementById('loadingOverlay').style.display = 'none'; 
-                // Re-enable if error occurs
-                saveBtn.disabled = false; 
-            } 
-        }
-
-        function processCloudData(rows) { /* ... */ const recordMap = new Map(); rows.forEach(r => { if(r[1] && r[1].includes('[MASTER]')) { const rawName = r[1].replace('[MASTER]','').trim(); const idMatch = rawName.match(/\[ID:(.*?)\]/); const realID = idMatch ? idMatch[1] : rawName; const realName = rawName.split('[ID')[0].trim(); const meta1 = (r[2]||"").split('|'); const meta2 = (r[3]||"").split('|'); const meta3 = (r[4]||"").split('|'); const meta4 = (r[5]||"").split('|'); recordMap.set(realID, { id: realID, date: r[0], name: realName, ref: meta1[0]?.split('Ref:')[1]?.trim(), dates: meta1.find(s=>s.includes('Dates:'))?.split('Dates:')[1]?.trim(), mode: meta1.find(s=>s.includes('Mode:'))?.split('Mode:')[1]?.trim(), type: meta1.find(s=>s.includes('Type:'))?.split('Type:')[1]?.trim(), valid: meta2[0]?.split('Valid:')[1]?.trim(), free: meta2.find(s=>s.includes('Free:'))?.split('Free:')[1]?.trim(), cType: meta2.find(s=>s.includes('CType:'))?.split('CType:')[1]?.trim(), vol: meta2.find(s=>s.includes('Vol:'))?.split('Vol:')[1]?.trim(), sales: meta3[0]?.split('Sales:')[1]?.trim(), cha: meta3.find(s=>s.includes('CHA:'))?.split('CHA:')[1]?.trim(), tc: meta3.find(s=>s.includes('TC:'))?.split('TC:')[1]?.trim(), ic: meta3.find(s=>s.includes('IC:'))?.split('IC:')[1]?.trim(), ver: meta4[0]?.split('Ver:')[1]?.trim(), rem: meta4.find(s=>s.includes('Rem:'))?.split('Rem:')[1]?.trim(), jsonFactory: r[6], jsonICD: r[7], jsonTrans: r[8], jsonInc: r[9] }); } }); globalRecords = Array.from(recordMap.values()); populateDropdown(); }
-        
-        // Point 3: Modified populateDropdown to include End Date
-        function populateDropdown() { 
-            const dd = document.getElementById('cloudHistory'); 
-            dd.innerHTML = '<option value="">-- Select Customer (A-Z) --</option>'; 
-            const sorted = [...globalRecords].sort((a,b) => a.name.localeCompare(b.name)); 
-            sorted.forEach(rec => { 
-                const opt = document.createElement('option'); 
-                opt.value = rec.id; 
-                
-                // Format End Date
-                let endDateStr = "";
-                if(rec.dates && rec.dates.includes('to')) {
-                    const parts = rec.dates.split('to');
-                    if(parts.length > 1) {
-                        const dStr = parts[1].trim(); // yyyy-mm-dd
-                        const dParts = dStr.split('-');
-                        if(dParts.length === 3) {
-                            endDateStr = ` [Valid till ${dParts[2]}-${dParts[1]}-${dParts[0]}]`;
-                        }
-                    }
-                }
-
-                opt.text = `${rec.name} - ${rec.ver || 'V1'} (${rec.mode || '-'})` + endDateStr; 
-                dd.appendChild(opt); 
-            }); 
-        }
-
-        function filterDropdown(val) { 
-            const dd = document.getElementById('cloudHistory'); 
-            const opts = dd.options; 
-            val = val.toLowerCase(); 
-            for(let i=1; i<opts.length; i++) { 
-                opts[i].style.display = opts[i].text.toLowerCase().includes(val) ? 'block' : 'none'; 
-            } 
-        }
-        
-        function loadFromDropdown(id) { 
-            if(!id) return;
-            const rec = globalRecords.find(r => r.id === id); 
-            if(rec) loadRecord(rec); 
-        }
-        
-        function loadRecord(rec) { 
-            if(!confirm("Load " + rec.name + "?")) return; 
-            loadedRecordId = rec.id; 
-            document.getElementById('customerName').value = rec.name; 
-            document.getElementById('tariffNo').value = rec.ref || ""; 
-            document.getElementById('chaName').value = rec.cha || ""; 
-            document.getElementById('salesPerson').value = rec.sales || ""; 
-            document.getElementById('validity').value = rec.valid || ""; 
-            document.getElementById('freeDays').value = rec.free || ""; 
-            document.getElementById('version').value = rec.ver || "Version 1"; 
-            document.getElementById('remarks').value = rec.rem || ""; 
-            document.getElementById('tariffMode').value = rec.mode || ""; 
-            document.getElementById('destuffType').value = rec.type || ""; 
-            document.getElementById('transportClaimedBy').value = rec.tc || rec.name; 
-            document.getElementById('incentiveClaimedBy').value = rec.ic || rec.name; 
-            document.getElementById('customerType').value = rec.cType || ""; 
-            document.getElementById('volMonth').value = rec.vol || ""; 
-            
-            if(rec.dates && rec.dates.includes('to')) { 
-                const parts = rec.dates.split('to'); 
-                document.getElementById('dateFrom').value = parts[0].trim(); 
-                document.getElementById('dateTo').value = parts[1].trim(); 
-            } 
-            
-            calculateMonths(); 
-            updateFooter(rec.free); 
-            toggleTariffTables(); 
-            
-            try { 
-                if(rec.jsonFactory) { 
-                    const fData = JSON.parse(rec.jsonFactory); 
-                    fData.forEach((rowVals, rIdx) => { 
-                        rowVals.forEach((val, cIdx) => { 
-                            const el = document.getElementById(`tableFactory_${rIdx}_d${cIdx}`); 
-                            if(el) el.value = val; 
-                        }); 
-                        calcRow(`tableFactory_${rIdx}`, 6); 
-                    }); 
-                } 
-                if(rec.jsonICD) { 
-                    const iData = JSON.parse(rec.jsonICD); 
-                    iData.forEach((rowVals, rIdx) => { 
-                        rowVals.forEach((val, cIdx) => { 
-                            const el = document.getElementById(`tableICD_${rIdx}_d${cIdx}`); 
-                            if(el) el.value = val; 
-                        }); 
-                        calcRow(`tableICD_${rIdx}`, 7); 
-                    }); 
-                } 
-                document.getElementById('tbodyTransport').innerHTML = ''; 
-                if(rec.jsonTrans) { 
-                    const tData = JSON.parse(rec.jsonTrans); 
-                    tData.forEach(t => { 
-                        addTransportRow({ trans: t.t, dest: t.d, base: t.b, disc: t.v }); 
-                    }); 
-                } else { addTransportRow(); } 
-                
-                document.getElementById('tbodyIncentive').innerHTML = ''; 
-                if(rec.jsonInc) { 
-                    const iData = JSON.parse(rec.jsonInc); 
-                    iData.forEach(i => { 
-                        addIncentiveRow({ line: i.l, d20: i.d20, d40: i.d40, rem: i.rem || '' }); 
-                    }); 
-                } else { addIncentiveRow(); } 
-            } catch(e) { console.error("JSON Parse Error", e); alert("Data corrupted."); } 
-            toggleReadOnly(true); 
-            renderHistory(rec); 
-        }
-        
-        function renderHistory(currentRec) { /* ... */ const container = document.getElementById('historySection'); const content = document.getElementById('historyContent'); container.classList.remove('hidden'); content.innerHTML = ''; const currentVer = parseInt((currentRec.ver || "Version 1").replace(/\D/g, '')) || 1; const historyRecs = globalRecords.filter(r => r.name.toLowerCase() === currentRec.name.toLowerCase() && (parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1) < currentVer ).sort((a, b) => { const vA = parseInt((a.ver || "1").replace(/\D/g, '')); const vB = parseInt((b.ver || "1").replace(/\D/g, '')); return vB - vA; }); if (historyRecs.length === 0) { container.classList.add('hidden'); return; } function formatDateDDMMYYYY(isoDate) { if(!isoDate) return ''; const parts = isoDate.split('-'); return `${parts[2]}-${parts[1]}-${parts[0]}`; } historyRecs.forEach(rec => { const card = document.createElement('div'); card.className = "bg-white border-2 border-gray-300 rounded p-4 shadow-lg"; let factoryHTML = '<p class="text-xs text-gray-400 italic">No Factory Data</p>'; let icdHTML = '<p class="text-xs text-gray-400 italic">No ICD Data</p>'; if (rec.jsonFactory) { const fData = JSON.parse(rec.jsonFactory); let rows = ''; fData.forEach((vals, idx) => { if(factoryData[idx]) { const disc = vals.slice(0,6).reduce((a,b) => a + (parseFloat(b)||0), 0); const pubTotal = factoryData[idx].p.reduce((a,b) => a + b, 0); if(disc > 0) { rows += `<tr><td class="text-left">${factoryData[idx].slab}</td><td>${pubTotal}</td><td class="text-red-600 font-bold">${disc}</td><td class="text-red-600 font-bold">${pubTotal-disc}</td></tr>`; } } }); if(rows) factoryHTML = `<table class="history-table"><thead><tr><th>Slab</th><th>Public</th><th>Disc</th><th>Net</th></tr></thead><tbody>${rows}</tbody></table>`; } if (rec.jsonICD) { const iData = JSON.parse(rec.jsonICD); let rows = ''; iData.forEach((vals, idx) => { if(icdData[idx]) { const disc = vals.slice(0,7).reduce((a,b) => a + (parseFloat(b)||0), 0); const pubTotal = icdData[idx].p.reduce((a,b) => a + b, 0); if(disc > 0) { rows += `<tr><td class="text-left">${icdData[idx].slab}</td><td>${pubTotal}</td><td class="text-red-600 font-bold">${disc}</td><td class="text-red-600 font-bold">${pubTotal-disc}</td></tr>`; } } }); if(rows) icdHTML = `<table class="history-table"><thead><tr><th>Slab</th><th>Public</th><th>Disc</th><th>Net</th></tr></thead><tbody>${rows}</tbody></table>`; } let transHTML = ''; if(rec.jsonTrans) { const tData = JSON.parse(rec.jsonTrans); tData.forEach(t => { if(t.v > 0) transHTML += `<div class="text-[10px] border-b border-gray-200 py-1 flex justify-between"><span class="text-blue-900 font-bold">${t.d} (${t.t})</span><span class="text-blue-900 font-bold">${t.v}</span></div>`; }); } let incHTML = ''; if(rec.jsonInc) { const iData = JSON.parse(rec.jsonInc); iData.forEach(i => { if(i.d20 > 0 || i.d40 > 0) incHTML += `<div class="text-[10px] border-b border-gray-200 py-1 flex justify-between"><span class="text-blue-900 font-bold">${i.l}</span><span class="text-blue-900 font-bold">20': ${i.d20} / 40': ${i.d40}</span></div>`; }); } let dateRangeDisplay = 'No Dates'; if(rec.dates && rec.dates.includes('to')) { const parts = rec.dates.split('to'); const d1 = formatDateDDMMYYYY(parts[0].trim()); const d2 = formatDateDDMMYYYY(parts[1].trim()); dateRangeDisplay = `${d1} to ${d2}`; } card.innerHTML = ` <div class="flex justify-between items-center border-b border-gray-300 pb-2 mb-2"> <h4 class="font-bold text-lg text-blue-900">${rec.name} - ${rec.ver || 'V1'} <span class="text-sm font-bold ml-2">(${dateRangeDisplay})</span></h4> <span class="bg-gray-200 text-gray-700 px-2 py-0.5 rounded text-[10px] font-bold uppercase">History View</span> </div> <div class="grid grid-cols-4 gap-4"> <div class="col-span-1"> <h5 class="text-[10px] font-bold uppercase text-blue-800 mb-1">Factory Tariff</h5> ${factoryHTML} </div> <div class="col-span-1"> <h5 class="text-[10px] font-bold uppercase text-purple-800 mb-1">ICD Tariff</h5> ${icdHTML} </div> <div class="col-span-1"> <h5 class="text-[10px] font-bold uppercase text-yellow-800 mb-1">Transport</h5> ${transHTML || '<span class="text-xs text-gray-400">None</span>'} </div> <div class="col-span-1"> <h5 class="text-[10px] font-bold uppercase text-teal-800 mb-1">Incentive</h5> ${incHTML || '<span class="text-xs text-gray-400">None</span>'} </div> </div> <div class="mt-2 pt-2 border-t border-gray-100 text-[10px] text-gray-500 flex gap-4 items-center"> <span class="font-bold text-blue-900 underline text-xs">Free Days: ${rec.free || '-'}</span> <span>Sales: <b>${rec.sales || '-'}</b></span> <span class="font-bold text-gray-700 truncate max-w-xs">Rem: ${rec.rem || '-'}</span> </div> `; content.appendChild(card); }); }
-        
-        function toggleReadOnly(state) { 
-            const container = document.getElementById('printArea'); 
-            const badge = document.getElementById('modeBadge'); 
-            const btnEdit = document.getElementById('btnEdit'); 
-            const btnRevalid = document.getElementById('btnRevalid'); 
-            const btnSave = document.getElementById('btnSave'); // Save Button Select
-
-            if(state) { 
-                // READ ONLY MODE:
-                container.classList.add('view-mode'); 
-                badge.classList.remove('hidden'); 
-                btnEdit.classList.remove('hidden'); 
-                btnRevalid.classList.remove('hidden'); 
-                
-                // Disable Save Button
+        function toggleReadOnly(state) {
+            const container = document.getElementById('printArea');
+            const badge = document.getElementById('modeBadge');
+            const btnEdit = document.getElementById('btnEdit');
+            const btnRevalid = document.getElementById('btnRevalid');
+            const btnSave = document.getElementById('btnSave');
+            if(state) {
+                container.classList.add('view-mode');
+                badge.classList.remove('hidden');
+                btnEdit.classList.remove('hidden');
+                btnRevalid.classList.remove('hidden');
                 btnSave.disabled = true;
                 btnSave.classList.add('opacity-50', 'cursor-not-allowed');
                 btnSave.classList.remove('animate-pulse');
-            } else { 
-                // EDIT MODE:
-                container.classList.remove('view-mode'); 
-                badge.classList.add('hidden'); 
-                btnEdit.classList.add('hidden'); 
-                btnRevalid.classList.add('hidden'); 
-                
-                // Enable Save Button
+            } else {
+                container.classList.remove('view-mode');
+                badge.classList.add('hidden');
+                btnEdit.classList.add('hidden');
+                btnRevalid.classList.add('hidden');
                 btnSave.disabled = false;
                 btnSave.classList.remove('opacity-50', 'cursor-not-allowed');
                 btnSave.classList.add('animate-pulse');
-            } 
-        }
-        
-        // Point 1: Updated enableEdit to enable Save button
-        function enableEdit() { 
-            if(confirm("Enable Editing?")) {
-                toggleReadOnly(false); 
-                // Enable Save Button
-                const saveBtn = document.getElementById('btnSave');
-                saveBtn.disabled = false;
-                saveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-                saveBtn.classList.add('animate-pulse');
             }
         }
-        
-        // --- UPDATED REVALIDATE RECORD FUNCTION ---
-        function revalidateRecord() {
-            const pass = prompt("Enter Password to Revalidate:");
-            if(pass !== "Honey@143143") return alert("Incorrect Password!");
-            toggleReadOnly(false);
-            const vField = document.getElementById('version');
-            let currentVer = parseInt(vField.value.replace(/\D/g,'')) || 1;
-            vField.value = "Version " + (currentVer + 1);
-            document.getElementById('dateToday').valueAsDate = new Date();
+        function enableEdit() {
+            if (prompt("Enter Password to Edit:") !== "Honey@143143") return alert("Wrong Password!");
+            if(confirm("Enable Editing? This will UPDATE the current record on Save.")) {
+                toggleReadOnly(false);
+            }
+        }
+
+        async function initiateSave() {
+            calculateMonths();
+            const cust = document.getElementById('customerName').value.trim();
+            const mode = document.getElementById('tariffMode').value;
+            if(!cust) return alert("Error: Customer Name is Required");
+            if(!mode) return alert("Error: Tariff Mode is Required");
+            if(!document.getElementById('dateFrom').value) return alert("Error: Dates are Required");
+
+            // CRITICAL CHANGE: Update vs New Logic
+            // If loadedRecordId exists, it's an EDIT/UPDATE of an existing record.
+            // If it's null (New or Revalid), we create a NEW timestamp ID.
             
-            // Generate NEW ID (handled by setting loadedRecordId to null)
+            let entryId = loadedRecordId || document.getElementById('recordIdStore').value;
+            
+            // REMOVED: The logic that searched by Name to find ID. 
+            // This prevents accidental overwriting when Revalidating (creating new copy) of a customer with same name.
+            
+            if (!entryId) {
+                entryId = Date.now().toString(); // Create New ID
+            }
+
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.getElementById('loadingText').innerText = loadedRecordId ? "Updating Record..." : "Saving Tariff Sheet...";
+            document.getElementById('btnSave').disabled = true;
+
+            const progressBar = document.getElementById('progressBar');
+            let progress = 0;
+            const interval = setInterval(() => { progress += 10; if(progress > 90) progress = 90; progressBar.style.width = progress + '%'; }, 200);
+
+            try {
+                const factoryValues = [];
+                for(let i=0; i<factoryData.length; i++) {
+                    const vals = [];
+                    for(let k=0; k<6; k++) vals.push(document.getElementById(`tableFactory_${i}_d${k}`).value || "");
+                    factoryValues.push(vals);
+                }
+                const icdValues = [];
+                for(let i=0; i<icdData.length; i++) {
+                    const vals = [];
+                    for(let k=0; k<7; k++) vals.push(document.getElementById(`tableICD_${i}_d${k}`).value || "");
+                    icdValues.push(vals);
+                }
+                const transValues = [];
+                document.querySelectorAll('#tbodyTransport tr').forEach(tr => {
+                    const uid = tr.querySelector('select').id.split('_trans')[0];
+                    transValues.push({
+                        t: document.getElementById(`${uid}_trans`).value,
+                        d: document.getElementById(`${uid}_dest`).value,
+                        b: document.getElementById(`${uid}_base`).value,
+                        v: document.getElementById(`${uid}_disc`).value
+                    });
+                });
+                const incValues = [];
+                document.querySelectorAll('#tbodyIncentive tr').forEach(tr => {
+                    const uid = tr.querySelector('select').id.split('_line')[0];
+                    incValues.push({
+                        l: document.getElementById(`${uid}_line`).value,
+                        d20: document.getElementById(`${uid}_d20`).value,
+                        d40: document.getElementById(`${uid}_d40`).value,
+                        rem: document.getElementById(`${uid}_rem`).value
+                    });
+                });
+
+                const fd = new FormData();
+                fd.append('Date', document.getElementById('dateToday').value);
+                // Send ID in name field for update logic
+                fd.append('Name', `[MASTER] ${cust} [ID:${entryId}]`);
+                fd.append('Email', `Ref: ${document.getElementById('tariffNo').value} | Dates: ${document.getElementById('dateFrom').value} to ${document.getElementById('dateTo').value} | Mode: ${mode} | Type: ${document.getElementById('destuffType').value}`);
+                fd.append('Phone', `Valid: ${document.getElementById('validity').value} | Free: ${document.getElementById('freeDays').value} | CType: ${document.getElementById('customerType').value} | Vol: ${document.getElementById('volMonth').value}`);
+                fd.append('Department', `Sales: ${document.getElementById('salesPerson').value} | CHA: ${document.getElementById('chaName').value} | TC: ${document.getElementById('transportClaimedBy').value} | IC: ${document.getElementById('incentiveClaimedBy').value}`);
+                fd.append('City', `Ver: ${document.getElementById('version').value} | Rem: ${document.getElementById('remarks').value}`);
+                fd.append('Data1', JSON.stringify(factoryValues));
+                fd.append('Data2', JSON.stringify(icdValues));
+                fd.append('Data3', JSON.stringify(transValues));
+                fd.append('Data4', JSON.stringify(incValues));
+
+                // ADDING CACHE BUSTER AND NO-CACHE HEADERS
+                await fetch(SCRIPT_SAVE_URL + '?t=' + Date.now(), { 
+                    method: 'POST', 
+                    body: fd, 
+                    mode: 'no-cors',
+                    cache: 'no-store',
+                    keepalive: true
+                });
+
+                clearInterval(interval);
+                progressBar.style.width = '100%';
+                setTimeout(() => {
+                    document.getElementById('progressSection').classList.add('hidden');
+                    document.getElementById('successSection').classList.remove('hidden');
+                    loadedRecordId = entryId;
+                    document.getElementById('recordIdStore').value = entryId;
+                    toggleReadOnly(true);
+                    startSync(); 
+                }, 500);
+
+            } catch(e) {
+                alert("Error: " + e.message);
+                document.getElementById('loadingOverlay').style.display = 'none';
+                document.getElementById('btnSave').disabled = false;
+            }
+        }
+
+        async function startSync() {
+            const statusEl = document.getElementById('syncStatus');
+            statusEl.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1"></i> Loading...';
+            try {
+                const response = await fetch(DIRECT_CSV_URL + '&t=' + Date.now());
+                if (!response.ok) throw new Error("Blocked");
+                const text = await response.text();
+                processCloudData(parseCSV(text));
+                statusEl.innerHTML = `<i class="fas fa-circle text-green-500 mr-1" style="font-size: 8px;"></i> Online`;
+            } catch (e) {
+                syncWithVizApi();
+            }
+        }
+        function syncWithVizApi() {
+            const callbackName = 'jsonp_' + Date.now();
+            window[callbackName] = function(response) {
+                if (response.status === 'error') return;
+                const rows = response.table.rows.map(r => r.c.map(c => c ? c.v : ""));
+                document.getElementById('syncStatus').innerHTML = `<i class="fas fa-circle text-green-500 mr-1" style="font-size: 8px;"></i> Online (API)`;
+                processCloudData(rows);
+                document.getElementById(callbackName).remove();
+                delete window[callbackName];
+            };
+            const script = document.createElement('script');
+            script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=0&tqx=responseHandler:${callbackName}`;
+            script.id = callbackName;
+            document.body.appendChild(script);
+        }
+
+        function parseCSV(str) { const arr = []; let q = false, c = 0, r = 0; for (let i = 0; i < str.length; i++) { let cc = str[i], nc = str[i + 1]; arr[r] = arr[r] || []; arr[r][c] = arr[r][c] || ''; if (cc == '"' && q && nc == '"') { arr[r][c] += '"'; ++i; } else if (cc == '"') { q = !q; } else if (cc == ',' && !q) { ++c; } else if (cc == '\r' && !q && nc == '\n') { ++r; c = 0; ++i; } else if (cc == '\n' && !q) { ++r; c = 0; } else { arr[r][c] += cc; } } return arr; }
+
+        function processCloudData(rows) {
+            const recordMap = new Map();
+            rows.forEach(r => {
+                if(r[1] && r[1].includes('[MASTER]')) {
+                    const rawName = r[1].replace('[MASTER]','').trim();
+                    const idMatch = rawName.match(/\[ID:(.*?)\]/);
+                    const realID = idMatch ? idMatch[1] : rawName;
+                    const realName = rawName.split('[ID')[0].trim();
+                    const m1 = (r[2]||"").split('|'), m2 = (r[3]||"").split('|'), m3 = (r[4]||"").split('|'), m4 = (r[5]||"").split('|');
+                    recordMap.set(realID, {
+                        id: realID, date: r[0], name: realName,
+                        ref: val(m1,'Ref:'), dates: val(m1,'Dates:'), mode: val(m1,'Mode:'), type: val(m1,'Type:'),
+                        valid: val(m2,'Valid:'), free: val(m2,'Free:'), cType: val(m2,'CType:'), vol: val(m2,'Vol:'),
+                        sales: val(m3,'Sales:'), cha: val(m3,'CHA:'), tc: val(m3,'TC:'), ic: val(m3,'IC:'),
+                        ver: val(m4,'Ver:'), rem: val(m4,'Rem:'),
+                        jF: r[6], jI: r[7], jT: r[8], jInc: r[9]
+                    });
+                }
+            });
+            globalRecords = Array.from(recordMap.values());
+            const dd = document.getElementById('cloudHistory');
+            dd.innerHTML = '<option value="">-- Select Customer (A-Z) --</option>';
+            globalRecords.sort((a,b) => a.name.localeCompare(b.name)).forEach(r => {
+                let dInfo = ""; if(r.dates && r.dates.includes('to')) { const p = r.dates.split('to'); if(p[1]) dInfo = ` [Till ${p[1].trim()}]`; }
+                const opt = document.createElement('option'); opt.value = r.id; opt.text = `${r.name} - ${r.ver} (${r.mode})${dInfo}`; dd.appendChild(opt);
+            });
+        }
+        function val(arr, key) { const f = arr.find(s => s.includes(key)); return f ? f.split(key)[1].trim() : ""; }
+
+        function loadFromDropdown(id) { const r = globalRecords.find(x => x.id == id); if(r) loadRecord(r); }
+        function loadRecord(rec) {
+            if(!confirm("Load " + rec.name + "?")) return;
+            loadedRecordId = rec.id; 
+            document.getElementById('recordIdStore').value = rec.id;
+            document.getElementById('customerName').value = rec.name;
+            document.getElementById('tariffNo').value = rec.ref;
+            if(rec.dates && rec.dates.includes('to')) { const p = rec.dates.split('to'); document.getElementById('dateFrom').value = p[0].trim(); document.getElementById('dateTo').value = p[1].trim(); }
+            
+            const map = {'tariffMode':'mode','destuffType':'type','customerType':'cType','volMonth':'vol','chaName':'cha','salesPerson':'sales','freeDays':'free','validity':'valid','version':'ver','remarks':'rem'};
+            for(let k in map) document.getElementById(k).value = rec[map[k]] || "";
+            document.getElementById('transportClaimedBy').value = rec.tc || rec.name;
+            document.getElementById('incentiveClaimedBy').value = rec.ic || rec.name;
+
+            fillT('tableFactory', rec.jF, 4, 6);
+            fillT('tableICD', rec.jI, 4, 7);
+            
+            document.getElementById('tbodyTransport').innerHTML = '';
+            (JSON.parse(rec.jT||'[]')).forEach(x => addTransportRow({trans:x.t, dest:x.d, base:x.b, disc:x.v}));
+            
+            document.getElementById('tbodyIncentive').innerHTML = '';
+            (JSON.parse(rec.jInc||'[]')).forEach(x => addIncentiveRow({line:x.l, d20:x.d20, d40:x.d40, rem:x.rem}));
+
+            calculateMonths(); updateFooter(rec.free); toggleTariffTables(); toggleReadOnly(true);
+        }
+        function fillT(tid, json, r, c) { try { const d = JSON.parse(json); d.forEach((rw, i) => { rw.forEach((v, j) => { const e = document.getElementById(`${tid}_${i}_d${j}`); if(e) e.value = v; }); calcRow(`${tid}_${i}`, c); }); } catch(e){} }
+
+        function renderTable(tableId, data, colCount) {
+            const tbody = document.getElementById(tableId).querySelector('tbody'); tbody.innerHTML = '';
+            data.forEach((row, rIdx) => {
+                const tr = document.createElement('tr'); const uid = `${tableId}_${rIdx}`;
+                let html = `<td class="font-bold text-left px-2 bg-gray-50">${row.slab}</td>`;
+                let pTotal = 0;
+                row.p.forEach((val, cIdx) => { pTotal += val; html += `<td><input type="number" id="${uid}_p${cIdx}" value="${val}" readonly tabindex="-1" class="text-blue-900 font-bold bg-gray-100 pointer-events-none"></td>`; });
+                html += `<td class="bg-blue-100 font-extrabold text-blue-900" id="${uid}_ptotal">${pTotal}</td>`;
+                for(let i=0; i<colCount; i++) html += `<td><input type="number" id="${uid}_d${i}" oninput="calcRow('${uid}', ${colCount})" class="text-green-700 font-bold border-b border-green-100"></td>`;
+                html += `<td class="bg-green-100 text-red-600 font-extrabold" id="${uid}_dtotal">0</td><td class="bg-black text-white font-bold" id="${uid}_final">${pTotal}</td>`;
+                tr.innerHTML = html; tbody.appendChild(tr);
+            });
+        }
+        function calcRow(uid, colCount) {
+            let pTotal = 0, dTotal = 0;
+            for(let i=0; i<colCount; i++) pTotal += parseFloat(document.getElementById(`${uid}_p${i}`).value)||0;
+            for(let i=0; i<colCount; i++) dTotal += parseFloat(document.getElementById(`${uid}_d${i}`).value)||0;
+            document.getElementById(`${uid}_dtotal`).innerText = dTotal;
+            document.getElementById(`${uid}_final`).innerText = (pTotal - dTotal);
+        }
+        
+        function addTransportRow(data={}) {
+            const tbody = document.getElementById('tbodyTransport'); const tr = document.createElement('tr'); const uid = `trans_${Date.now()}`;
+            tr.innerHTML = `<td><select id="${uid}_trans" class="text-blue-900 font-bold"><option value="">--</option><option>HCPL</option><option>PCS</option><option>OTHER</option><option>SELF</option></select></td><td><input value="Kilaraipur" readonly class="text-center font-bold"></td><td><select id="${uid}_dest" onchange="document.getElementById('${uid}_disc').value=this.value==='Ludhiana'?2000:(this.value==='Mandi Gobindgarh'?1500:0)" class="font-bold uppercase"><option value="">--</option><option>Ludhiana</option><option>Mandi Gobindgarh</option><option>Malerkotla</option><option>Sangrur</option><option>Dhuri</option><option>Sunam</option></select></td><td><input id="${uid}_ret" value="${data.ret||'Empty Yard'}" class="text-center font-bold"></td><td><input type="number" id="${uid}_disc" value="${data.disc||''}" class="bg-yellow-50 text-red-600 font-bold"></td><td><textarea id="${uid}_base" class="text-xs font-bold resize-none">${data.base||''}</textarea></td><td class="no-print"><button onclick="this.closest('tr').remove()" class="text-red-500"><i class="fas fa-times"></i></button></td>`;
+            tbody.appendChild(tr);
+            if(data.trans) document.getElementById(`${uid}_trans`).value = data.trans;
+            if(data.dest) document.getElementById(`${uid}_dest`).value = data.dest;
+        }
+        function addIncentiveRow(data={}) {
+            const tbody = document.getElementById('tbodyIncentive'); const tr = document.createElement('tr'); const uid = `inc_${Date.now()}`;
+            tr.innerHTML = `<td><select id="${uid}_line" onchange="const v=this.value==='MSC'?300:(this.value==='NON MSC'?600:0);document.getElementById('${uid}_d20').value=v;document.getElementById('${uid}_d40').value=v" class="font-bold w-full"><option value="">--</option><option>MSC</option><option>NON MSC</option></select></td><td><input type="number" id="${uid}_d20" value="${data.d20||''}" class="bg-teal-50 font-bold"></td><td><input type="number" id="${uid}_d40" value="${data.d40||''}" class="bg-teal-50 font-bold"></td><td><textarea id="${uid}_rem" class="text-xs font-bold resize-none">${data.rem||''}</textarea></td><td class="no-print"><button onclick="this.closest('tr').remove()" class="text-red-500"><i class="fas fa-times"></i></button></td>`;
+            tbody.appendChild(tr);
+            if(data.line) document.getElementById(`${uid}_line`).value = data.line;
+        }
+
+        function resetForm() { 
+            if (prompt("Enter Password to Create New:") !== "Honey@143143") return alert("Wrong Password");
+            if(!confirm("Clear form?")) return; 
             loadedRecordId = null; 
-            
-            // Generate NEW Ref No
-            document.getElementById('tariffNo').value = `TS-${new Date().getFullYear()}${Math.floor(1000+Math.random()*9000)}`;
-            
-            alert("Ready! Check dates and Save.");
+            document.getElementById('recordIdStore').value = ""; 
+            document.querySelectorAll('input:not([readonly]),textarea,select').forEach(e => e.value = ""); 
+            document.getElementById('version').value = "Version 1"; 
+            document.getElementById('chaName').value = "Various"; 
+            toggleReadOnly(false); 
+            addTransportRow(); 
+            addIncentiveRow(); 
         }
         
-        async function startSync() { 
-            const statusEl = document.getElementById('syncStatus'); 
-            statusEl.innerHTML = '<i class="fas fa-circle-notch fa-spin mr-1"></i> Loading...'; 
+        function revalidateRecord() { 
+            if(prompt("Password:") !== "Honey@143143") return; 
+            toggleReadOnly(false); 
+            
+            // KEY FIX: CLEAR ID so it saves as NEW record
+            loadedRecordId = null;
+            document.getElementById('recordIdStore').value = "";
 
-            // Point 6: Clear Filter on Refresh
-            document.getElementById('filterInput').value = "";
-            filterDropdown("");
-
-            try { 
-                const response = await fetch(DIRECT_CSV_URL + '&t=' + Date.now()); 
-                if (!response.ok) throw new Error("Blocked"); 
-                const text = await response.text(); 
-                const rows = parseCSV(text); 
-                if (rows.length > 0) { 
-                    statusEl.innerHTML = `<i class="fas fa-circle text-green-500 mr-1" style="font-size: 8px;"></i> System Online`; 
-                    processCloudData(rows); 
-                } 
-            } catch (e) { syncWithVizApi(); } 
+            const v = document.getElementById('version'); 
+            v.value = "Version " + ((parseInt(v.value.replace(/\D/g,''))||1)+1); 
+            document.getElementById('dateToday').valueAsDate = new Date(); 
+            alert("Version Updated. Clicking Save will create a NEW RECORD."); 
         }
 
-        function syncWithVizApi() { /* ... */ const callbackName = 'jsonp_' + Date.now(); window[callbackName] = function(response) { if (response.status === 'error') return; const rows = response.table.rows.map(r => { const row = []; for(let i=0; i<26; i++) row.push(r.c[i]?.v || ""); return row; }); document.getElementById('syncStatus').innerHTML = `<i class="fas fa-circle text-green-500 mr-1" style="font-size: 8px;"></i> System Online`; processCloudData(rows); document.getElementById(callbackName).remove(); delete window[callbackName]; }; const script = document.createElement('script'); script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=${TARGET_GID}&tqx=responseHandler:${callbackName}&tq=SELECT%20*`; script.id = callbackName; document.body.appendChild(script); }
-        function parseCSV(str) { /* ... */ const arr = []; let q = false, c = 0, r = 0; for (let i = 0; i < str.length; i++) { let cc = str[i], nc = str[i + 1]; arr[r] = arr[r] || []; arr[r][c] = arr[r][c] || ''; if (cc == '"' && q && nc == '"') { arr[r][c] += '"'; ++i; } else if (cc == '"') { q = !q; } else if (cc == ',' && !q) { ++c; } else if (cc == '\r' && !q && nc == '\n') { ++r; c = 0; ++i; } else if (cc == '\n' && !q) { ++r; c = 0; } else { arr[r][c] += cc; } } return arr; }
-        function renderTable(tableId, data, colCount) { /* ... */ const tbody = document.getElementById(tableId).querySelector('tbody'); tbody.innerHTML = ''; data.forEach((row, rIdx) => { const tr = document.createElement('tr'); const uid = `${tableId}_${rIdx}`; let html = `<td class="font-bold text-gray-700 whitespace-nowrap text-left px-2 bg-gray-50">${row.slab}</td>`; let pTotal = 0; row.p.forEach((val, cIdx) => { pTotal += val; html += `<td><input type="number" id="${uid}_p${cIdx}" value="${val}" readonly tabindex="-1" class="text-blue-900 font-bold bg-gray-100 pointer-events-none"></td>`; }); html += `<td class="bg-blue-100 font-extrabold text-blue-900" id="${uid}_ptotal">${pTotal.toLocaleString()}</td>`; for(let i=0; i<colCount; i++) { html += `<td><input type="number" id="${uid}_d${i}" value="" oninput="calcRow('${uid}', ${colCount})" class="text-green-700 font-bold border-b border-green-100 focus:bg-green-50"></td>`; } html += `<td class="bg-green-100" style="color: red !important; font-weight: 900 !important; font-size: 1rem;" id="${uid}_dtotal">0</td>`; html += `<td class="bg-black text-white font-bold text-sm" id="${uid}_final">${pTotal.toLocaleString()}</td>`; tr.innerHTML = html; tbody.appendChild(tr); }); }
-        function calcRow(uid, colCount) { /* ... */ let pTotal = 0, dTotal = 0; for(let i=0; i<colCount; i++) pTotal += parseFloat(document.getElementById(`${uid}_p${i}`).value)||0; for(let i=0; i<colCount; i++) dTotal += parseFloat(document.getElementById(`${uid}_d${i}`).value)||0; document.getElementById(`${uid}_dtotal`).innerText = dTotal.toLocaleString(); document.getElementById(`${uid}_final`).innerText = (pTotal - dTotal).toLocaleString(); }
-        function updateFooter(val) { /* ... */ const txt = val ? val.toUpperCase() : "03 DAYS"; document.getElementById('freeDaysDisplay').innerText = `DISCOUNTED: ARRIVAL + ${txt} FREE TIME ONLY`; document.getElementById('prominentFreeDaysText').innerText = txt; }
-        function addTransportRow(data={}) { /* ... */ const tbody = document.getElementById('tbodyTransport'); const tr = document.createElement('tr'); const uid = `trans_${Date.now()}`; const transOpts = ['HCPL','PCS','OTHER','SELF'].map(o => `<option ${data.trans===o?'selected':''}>${o}</option>`).join(''); const dests = ['Ludhiana','Mandi Gobindgarh','Malerkotla','Sangrur','Dhuri','Sunam']; const destOpts = dests.map(o => `<option ${data.dest===o?'selected':''}>${o}</option>`).join(''); tr.innerHTML = `<td><select id="${uid}_trans" class="text-blue-900 font-bold"><option value="">-- Select --</option>${transOpts}</select></td><td><input type="text" value="Kilaraipur" id="${uid}_org" class="w-full text-center uppercase font-bold text-gray-600" readonly></td><td><select id="${uid}_dest" onchange="updateDiscount('${uid}')" class="uppercase font-bold"><option value="">--</option>${destOpts}</select></td><td><input type="text" value="${data.ret||'Empty Yard'}" id="${uid}_ret" class="w-full text-center uppercase font-bold"></td><td><input type="number" value="${data.disc||''}" id="${uid}_disc" class="bg-yellow-50 text-red-600 font-bold"></td><td><textarea id="${uid}_base" class="w-full text-xs bg-yellow-50 font-bold p-1 border-none focus:outline-none resize-none overflow-hidden" rows="2" style="min-height:30px;">${data.base||''}</textarea></td><td class="no-print"><button onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700 no-pdf"><i class="fas fa-times"></i></button></td>`; tbody.appendChild(tr); if(data.trans) document.getElementById(`${uid}_trans`).value = data.trans; if(data.dest) document.getElementById(`${uid}_dest`).value = data.dest; if(!data.disc) updateDiscount(uid); }
-        function updateDiscount(uid) { /* ... */ const dest = document.getElementById(`${uid}_dest`).value; let disc = 0; if(dest === 'Ludhiana') disc = 2000; else if(dest === 'Mandi Gobindgarh') disc = 1500; document.getElementById(`${uid}_disc`).value = disc; }
-        function addIncentiveRow(data={}) { /* ... */ const tbody = document.getElementById('tbodyIncentive'); const tr = document.createElement('tr'); const uid = `inc_${Date.now()}`; const d20Val = data.d20 !== undefined ? data.d20 : ""; const d40Val = data.d40 !== undefined ? data.d40 : ""; tr.innerHTML = `<td><select id="${uid}_line" onchange="updateIncentiveValues('${uid}')" class="text-teal-900 font-bold w-full bg-transparent"><option value="">-- Select --</option><option value="MSC">MSC</option><option value="NON MSC">NON MSC</option></select></td><td><input type="number" value="${d20Val}" id="${uid}_d20" class="w-full bg-teal-50 text-center font-bold"></td><td><input type="number" value="${d40Val}" id="${uid}_d40" class="w-full bg-teal-50 text-center font-bold"></td><td><textarea id="${uid}_rem" class="w-full text-xs bg-teal-50 font-bold p-1 border-none focus:outline-none resize-none overflow-hidden" rows="2" style="min-height:30px;">${data.rem||''}</textarea></td><td class="no-print"><button onclick="this.closest('tr').remove()" class="text-red-500 hover:text-red-700 no-pdf"><i class="fas fa-times"></i></button></td>`; tbody.appendChild(tr); if(data.line) { document.getElementById(`${uid}_line`).value = data.line; } }
-        function updateIncentiveValues(uid) { /* ... */ const line = document.getElementById(`${uid}_line`).value; const d20 = document.getElementById(`${uid}_d20`); const d40 = document.getElementById(`${uid}_d40`); if(line === 'MSC') { d20.value = 300; d40.value = 300; } else if (line === 'NON MSC') { d20.value = 600; d40.value = 600; } else { d20.value = ""; d40.value = ""; } }
+        function calculateMonths() { const d1 = new Date(document.getElementById('dateFrom').value), d2 = new Date(document.getElementById('dateTo').value); if(d1 && d2 && d2 > d1) { let m = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth()); if(d2.getDate() < d1.getDate()) m--; const days = Math.ceil(Math.abs(d2 - d1) / 86400000); document.getElementById('validity').value = `${m} Months (${days} Days)`; const s = document.getElementById('statusBox'); if(new Date() > d2) { s.innerText = "EXPIRED"; s.style.backgroundColor = "#fecaca"; s.style.color = "#7f1d1d"; } else { s.innerText = "Active"; s.style.backgroundColor = "#bbf7d0"; s.style.color = "#14532d"; } } }
+        function updateFooter(v) { const t = v ? v.toUpperCase() : "03 DAYS"; document.getElementById('freeDaysDisplay').innerText = `DISCOUNTED: ARRIVAL + ${t} FREE TIME ONLY`; document.getElementById('prominentFreeDaysText').innerText = t; }
+        function handleDestuffChange() { const v = document.getElementById('destuffType').value; if(v && v !== 'Both') document.getElementById('tariffMode').value = 'Discounted'; toggleTariffTables(); }
+        function toggleTariffTables() { const m = document.getElementById('tariffMode').value, t = document.getElementById('destuffType').value, fs = document.getElementById('factorySection'), is = document.getElementById('icdSection'), pb = document.getElementById('prominentFreeDays'); fs.style.display = 'none'; is.style.display = 'none'; pb.style.display = 'none'; document.getElementById('destuffType').disabled = false; if(m === 'FreeDays') { pb.style.display = 'block'; document.getElementById('destuffType').value = ""; document.getElementById('destuffType').disabled = true; } else { if(t === 'Factory' || t === 'Both') fs.style.display = 'block'; if(t === 'ICD' || t === 'Both') is.style.display = 'block'; } }
+        function filterDropdown(v) { const o = document.getElementById('cloudHistory').options; v = v.toLowerCase(); for(let i=1; i<o.length; i++) o[i].style.display = o[i].text.toLowerCase().includes(v) ? 'block' : 'none'; }
+        
+        function downloadPDF() { document.getElementById('printArea').classList.add('pdf-mode'); const oz = document.body.style.zoom; document.body.style.zoom = "100%"; html2pdf().set({ margin: [5, 5, 5, 5], filename: `${document.getElementById('customerName').value}_Tariff.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } }).from(document.getElementById('printArea')).save().then(() => { document.body.style.zoom = oz; document.getElementById('printArea').classList.remove('pdf-mode'); }); }
+        function copyToClipboard() { const el = document.getElementById('printArea'), oz = document.body.style.zoom; document.body.style.zoom = "100%"; html2canvas(el, { scale: 2, useCORS: true }).then(c => { const sc = document.createElement('canvas'); sc.width = c.width * 0.6; sc.height = c.height * 0.6; sc.getContext('2d').drawImage(c, 0, 0, sc.width, sc.height); sc.toBlob(b => navigator.clipboard.write([new ClipboardItem({ "image/png": b })]).then(() => alert("Copied!")), 'image/png', 0.9); document.body.style.zoom = oz; }); }
+        function closeReports() { document.getElementById('reportsModal').style.display = 'none'; }
+        function closeLoading() { document.getElementById('loadingOverlay').style.display = 'none'; document.getElementById('progressSection').classList.remove('hidden'); document.getElementById('successSection').classList.add('hidden'); }
+
+        function openReports() { 
+            document.getElementById('reportsModal').style.display = 'flex'; 
+            showReport('Discounted');
+        }
+
+        function showReport(type) {
+            const area = document.getElementById('reportsArea');
+            const countLabel = document.getElementById('reportCount');
+            const btns = document.querySelectorAll('#reportsModal button[id^="btnRep"]');
+            btns.forEach(b => b.classList.remove('bg-indigo-600'));
+            
+            if(type === 'Discounted') document.getElementById('btnRepDisc').classList.add('bg-indigo-600');
+            if(type === 'FreeDays') document.getElementById('btnRepFree').classList.add('bg-indigo-600');
+            if(type === 'Expired') document.getElementById('btnRepExp').classList.add('bg-indigo-600');
+            
+            area.innerHTML = '';
+            
+            const latestVersions = {};
+            globalRecords.forEach(r => {
+                const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1;
+                if (!latestVersions[r.name] || vNum > latestVersions[r.name]) {
+                    latestVersions[r.name] = vNum;
+                }
+            });
+
+            let filtered = [];
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            if (type === 'Expired') {
+                filtered = globalRecords.filter(r => {
+                    let isExpiredDate = false;
+                    if (r.dates && r.dates.includes('to')) {
+                        const end = new Date(r.dates.split('to')[1]?.trim());
+                        if(end < today) isExpiredDate = true;
+                    }
+                    const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1;
+                    const isSuperseded = vNum < latestVersions[r.name];
+                    return isExpiredDate || isSuperseded;
+                });
+            } else {
+                filtered = globalRecords.filter(r => {
+                    if (r.mode !== type) return false;
+                    const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1;
+                    const isOldVer = vNum < latestVersions[r.name];
+                    return !isOldVer;
+                });
+            }
+
+            currentReportData = filtered; 
+
+            if (filtered.length === 0) {
+                area.innerHTML = '<div class="p-4 text-center text-gray-500 text-sm">No records found for this category.</div>';
+            } else {
+                filtered.sort((a,b) => a.name.localeCompare(b.name));
+                filtered.forEach(r => {
+                    const endDateStr = r.dates ? r.dates.split('to')[1]?.trim() : "N/A";
+                    let status = "Active";
+                    let statusClass = "text-green-600 bg-green-100";
+                    
+                    if (endDateStr !== "N/A") {
+                        const end = new Date(endDateStr);
+                        if (end < today) { status = "Expired"; statusClass = "text-red-600 bg-red-100"; }
+                    }
+                    
+                    const vNum = parseInt((r.ver || "Version 1").replace(/\D/g, '')) || 1;
+                    if (vNum < latestVersions[r.name]) {
+                        status = "Old Ver";
+                        statusClass = "text-gray-600 bg-gray-200";
+                    }
+
+                    let detailsHtml = "";
+                    if (type === 'FreeDays') {
+                        detailsHtml = `<span class="text-green-700 font-extrabold">${r.free || 'N/A'}</span>`;
+                    } else {
+                        let slabDetails = [];
+                        try {
+                            if (r.jF) {
+                                const fInputs = JSON.parse(r.jF);
+                                fInputs.forEach((row, idx) => {
+                                    if(factoryData[idx]) {
+                                        const dTotal = row.reduce((a,b)=>a+(parseFloat(b)||0),0);
+                                        let sName = factoryData[idx].slab.replace('(20) ','').replace('For ','');
+                                        if (dTotal > 0) slabDetails.push(`${sName}: ₹${dTotal}`);
+                                    }
+                                });
+                            }
+                            if (r.jI) {
+                                const iInputs = JSON.parse(r.jI);
+                                iInputs.forEach((row, idx) => {
+                                    if(icdData[idx]) {
+                                        const dTotal = row.reduce((a,b)=>a+(parseFloat(b)||0),0);
+                                        let sName = icdData[idx].slab.replace('(20) ','').replace('For ','');
+                                        if (dTotal > 0) slabDetails.push(`ICD ${sName}: ₹${dTotal}`);
+                                    }
+                                });
+                            }
+                        } catch(e) {}
+                        if(slabDetails.length > 0) detailsHtml = `<span class="text-[10px] text-gray-600 font-bold">${slabDetails.join(' | ')}</span>`;
+                        else detailsHtml = `<span class="text-gray-400">No Discount</span>`;
+                    }
+
+                    const div = document.createElement('div');
+                    div.className = "flex justify-between items-center px-4 py-2 border-b border-gray-200 hover:bg-gray-50 text-xs text-gray-800";
+                    div.innerHTML = `
+                        <div class="w-1/5 font-bold text-blue-900">${r.name} <span class="text-[10px] text-gray-400 font-normal">(${r.ver || 'V1'})</span></div>
+                        <div class="w-1/12">${r.mode || '-'}</div>
+                        <div class="w-1/2 overflow-hidden text-ellipsis whitespace-nowrap">${detailsHtml}</div>
+                        <div class="w-1/12 text-center font-mono">${endDateStr}</div>
+                        <div class="w-1/12 text-right"><span class="px-2 py-0.5 rounded ${statusClass} font-bold text-[10px] whitespace-nowrap">${status}</span></div>
+                    `;
+                    div.onclick = () => { closeReports(); loadRecord(r); };
+                    div.style.cursor = 'pointer';
+                    area.appendChild(div);
+                });
+            }
+            countLabel.innerText = `${filtered.length} Records found`;
+        }
+
+        function downloadReportExcel() {
+            if (!currentReportData || currentReportData.length === 0) return alert("No data to download!");
+            
+            const headers = [
+                "Customer Name", "Version", "Mode", 
+                "Discount Details (Summary)", // New Column matching UI
+                "End Date", "Status", 
+                // Keep detailed columns for calculation utility
+                "Factory 0-27MT (₹)", "Factory 27-30MT (₹)", "Factory >31MT (₹)", "Factory 40\" (₹)", 
+                "ICD 0-27MT (₹)", "ICD 27-30MT (₹)", "ICD >31MT (₹)", "ICD 40\" (₹)", 
+                "Free Days"
+            ];
+            
+            let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
+            
+            currentReportData.forEach(r => {
+                const endDateStr = r.dates ? r.dates.split('to')[1]?.trim() : "N/A";
+                
+                // 1. Calculate Summary Text (Matching UI)
+                let slabDetails = [];
+                let fDisc = ["0","0","0","0"];
+                let iDisc = ["0","0","0","0"];
+
+                try {
+                    if (r.jF) {
+                        const fInputs = JSON.parse(r.jF);
+                        fInputs.forEach((row, idx) => {
+                            if(factoryData[idx]) {
+                                const dTotal = row.reduce((a,b)=>a+(parseFloat(b)||0),0);
+                                if(idx < 4) fDisc[idx] = dTotal > 0 ? dTotal : "0"; // For columns
+                                
+                                let sName = factoryData[idx].slab.replace('(20) ','').replace('For ','');
+                                if (dTotal > 0) slabDetails.push(`${sName}: ₹${dTotal}`);
+                            }
+                        });
+                    }
+                    if (r.jI) {
+                        const iInputs = JSON.parse(r.jI);
+                        iInputs.forEach((row, idx) => {
+                            if(icdData[idx]) {
+                                const dTotal = row.reduce((a,b)=>a+(parseFloat(b)||0),0);
+                                if(idx < 4) iDisc[idx] = dTotal > 0 ? dTotal : "0"; // For columns
+
+                                let sName = icdData[idx].slab.replace('(20) ','').replace('For ','');
+                                if (dTotal > 0) slabDetails.push(`ICD ${sName}: ₹${dTotal}`);
+                            }
+                        });
+                    }
+                } catch(e) {}
+
+                let summaryText = "";
+                if(r.mode === 'FreeDays') {
+                    summaryText = `Free Days: ${r.free || 'N/A'}`;
+                } else {
+                    summaryText = slabDetails.length > 0 ? slabDetails.join(' | ') : "No Discount";
+                }
+                
+                // Escape quotes for CSV
+                const safeName = `"${(r.name || "").replace(/"/g, '""')}"`;
+                const safeSummary = `"${summaryText.replace(/"/g, '""')}"`;
+                
+                const freeDaysVal = r.mode === 'FreeDays' ? (r.free || "0") : "0";
+                
+                const row = [
+                    safeName, 
+                    r.ver || 'V1', 
+                    r.mode || '-', 
+                    safeSummary, // Added
+                    endDateStr, 
+                    "Active",
+                    fDisc[0], fDisc[1], fDisc[2], fDisc[3],
+                    iDisc[0], iDisc[1], iDisc[2], iDisc[3],
+                    freeDaysVal
+                ];
+                
+                csvContent += row.join(",") + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "Tariff_Report.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function handleApproval(input) {
+            const file = input.files[0]; if (!file) return;
+            const custName = document.getElementById('customerName').value || "Unknown";
+            const version = document.getElementById('version').value || "V1";
+            const ext = file.name.split('.').pop();
+            const newFileName = `${custName.replace(/[^a-z0-9]/gi, '_')}_${version}.${ext}`;
+            const link = document.createElement('a'); link.href = URL.createObjectURL(file); link.download = newFileName; document.body.appendChild(link); link.click(); document.body.removeChild(link);
+            const previewSection = document.getElementById('approvalPreviewSection');
+            const container = document.getElementById('previewContainer');
+            document.getElementById('approvalFileName').innerText = `Attached: ${newFileName}`;
+            previewSection.classList.remove('hidden'); container.innerHTML = '';
+            if (['jpg', 'jpeg', 'png'].includes(ext.toLowerCase())) {
+                const img = document.createElement('img'); img.src = URL.createObjectURL(file); img.className = "max-h-full max-w-full object-contain"; container.appendChild(img);
+            } else { container.innerHTML = `<p class="text-red-500 font-bold">Saved to PC (No Preview)</p>`; }
+        }
     </script>
 </body>
 </html>
