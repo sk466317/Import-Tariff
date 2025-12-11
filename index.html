@@ -38,6 +38,8 @@
         #reportsModal { background: rgba(0,0,0,0.8); display: none; z-index: 3000; align-items: flex-start; padding-top: 50px; }
         .btn-uniform { height: 34px; padding: 0 16px; font-size: 0.75rem; font-weight: 700; border-radius: 0.25rem; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .btn-uniform:hover { transform: translateY(-1px); }
+        .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="p-2 md:p-4 overflow-hidden" id="mainBody">
@@ -120,25 +122,29 @@
             </div>
             <div class="flex flex-col md:flex-row gap-2 w-full items-center">
                 <div id="syncStatus" class="text-[10px] font-bold text-gray-400 mr-2 whitespace-nowrap"><i class="fas fa-circle-notch fa-spin mr-1"></i> Connecting...</div>
+                
                 <div class="flex gap-2 items-center flex-1 w-full">
-    
-    <div class="relative w-96"> 
-        <input type="text" id="filterInput" autocomplete="off" 
-               class="border border-gray-400 rounded px-2 py-1 text-xs w-full text-black font-bold h-8" 
-               placeholder="Type Customer Name..." 
-               onkeyup="filterDropdown(this.value); suggestFilter(this.value)">
-        <div id="filterSuggestionBox" class="hidden absolute z-50 w-full bg-white border border-gray-400 shadow-xl max-h-60 overflow-y-auto mt-1 rounded-b text-left"></div>
-    </div>
+                    <!-- Filter Input (Moved to LEFT & Width Doubled to w-96) -->
+                    <div class="relative w-96"> 
+                        <input type="text" id="filterInput" autocomplete="off" 
+                               class="border border-gray-400 rounded px-2 py-1 text-xs w-full text-black font-bold h-8" 
+                               placeholder="Type Customer Name..." 
+                               onkeyup="filterDropdown(this.value); suggestFilter(this.value)">
+                        <!-- Filter Suggestion Box -->
+                        <div id="filterSuggestionBox" class="hidden absolute z-50 w-full bg-white border border-gray-400 shadow-xl max-h-60 overflow-y-auto mt-1 rounded-b text-left"></div>
+                    </div>
 
-    <select id="cloudHistory" class="border border-gray-400 rounded px-2 py-1 text-xs flex-1 text-blue-900 font-bold bg-blue-50 h-8">
-        <option value="">-- Select Customer (A-Z) --</option>
-    </select>
+                    <!-- Dropdown -->
+                    <select id="cloudHistory" class="border border-gray-400 rounded px-2 py-1 text-xs flex-1 text-blue-900 font-bold bg-blue-50 h-8">
+                        <option value="">-- Select Customer (A-Z) --</option>
+                    </select>
 
-    <button onclick="loadFromDropdown(document.getElementById('cloudHistory').value)" class="btn-uniform bg-indigo-800 hover:bg-indigo-900 text-white w-16 shadow-md border border-indigo-900">SHOW</button>
+                    <!-- Show Button -->
+                    <button onclick="loadFromDropdown(document.getElementById('cloudHistory').value)" class="btn-uniform bg-indigo-800 hover:bg-indigo-900 text-white w-16 shadow-md border border-indigo-900">SHOW</button>
 
-    <button onclick="startSync()" class="btn-uniform bg-green-400 hover:bg-gray-700 text-white w-20 !px-0"><i class="fas fa-sync-alt"></i>Refresh</button>
-
-</div>
+                    <!-- Sync Button -->
+                    <button onclick="startSync()" class="btn-uniform bg-green-400 hover:bg-gray-700 text-white w-20 !px-0"><i class="fas fa-sync-alt"></i> Refresh</button>
+                </div>
             </div>
         </div>
     </div>
@@ -158,10 +164,10 @@
             <div class="col-span-1"><label class="block text-[10px] font-bold text-purple-700 uppercase">Tariff Mode <span class="text-red-600">*</span></label><select id="tariffMode" onchange="toggleTariffTables()" class="input-field h-8 bg-purple-50 border-purple-300 text-purple-900"><option value="">-- Select Mode --</option><option value="Discounted">Discounted Tariff</option><option value="FreeDays">Free Days Only</option></select></div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-blue-700 uppercase">Destuffing Type</label><select id="destuffType" onchange="handleDestuffChange()" class="input-field h-8 bg-blue-50 border-blue-300 text-blue-900"><option value="">-- Select --</option><option value="Both">Both (Factory & ICD)</option><option value="Factory">Factory Destuffing</option><option value="ICD">ICD Destuffing</option></select></div>
             <div class="col-span-2 relative">
-    <label class="block text-[10px] font-bold text-gray-600 uppercase">Customer Name <span class="text-red-600">*</span></label>
-    <input type="text" id="customerName" onkeyup="suggestCustomer(this.value)" autocomplete="off" class="input-field font-bold text-blue-900 h-8 bg-white uppercase border-l-4 border-blue-600" placeholder="ENTER NAME">
-    <div id="suggestionBox" class="hidden absolute z-50 w-full bg-white border border-gray-400 shadow-xl max-h-40 overflow-y-auto mt-1 rounded-b"></div>
-</div>
+                <label class="block text-[10px] font-bold text-gray-600 uppercase">Customer Name <span class="text-red-600">*</span></label>
+                <input type="text" id="customerName" onkeyup="suggestCustomer(this.value)" autocomplete="off" class="input-field font-bold text-blue-900 h-8 bg-white uppercase border-l-4 border-blue-600" placeholder="ENTER NAME">
+                <div id="suggestionBox" class="hidden absolute z-50 w-full bg-white border border-gray-400 shadow-xl max-h-40 overflow-y-auto mt-1 rounded-b"></div>
+            </div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Customer Type <span class="text-red-600">*</span></label><select id="customerType" class="input-field h-8 bg-white uppercase"><option value="">-- Select --</option><option>Importer</option><option>CHA</option><option>Forwarder</option><option>Shipping Line</option><option>Transporter</option></select></div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Vol / Month <span class="text-red-600">*</span></label><input type="text" id="volMonth" class="input-field h-8 bg-white uppercase" placeholder="TEUs"></div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">CHA / Forwarder</label><input type="text" id="chaName" class="input-field h-8 bg-white uppercase" value="Various"></div>
@@ -175,6 +181,17 @@
         </div>
 
         <div id="prominentFreeDays" class="hidden mb-6 bg-green-50 border-2 border-green-500 p-6 rounded text-center shadow-lg"><h3 class="text-green-800 text-lg font-bold uppercase mb-2">Free Days Allocation</h3><p id="prominentFreeDaysText" class="text-4xl font-extrabold text-green-600">03 DAYS</p></div>
+        
+        <!-- NEW ADD TABLE BUTTON -->
+        <div class="flex justify-between items-center mb-4 no-print">
+            <h3 class="text-sm font-bold text-gray-500 uppercase">Tariff Tables</h3>
+            <button onclick="askAddTable()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2 rounded shadow flex items-center gap-2 transition-all">
+                <i class="fas fa-plus-circle"></i> ADD NEW TABLE
+            </button>
+        </div>
+
+        <!-- Container for Dynamic Tables -->
+        <div id="dynamicTablesArea"></div>
 
         <div id="tariffsContainer">
             <div id="factorySection" class="mb-6" style="display:none;"><div class="bg-blue-900 text-white text-xs font-bold px-3 py-1.5 uppercase mb-0 rounded-t flex justify-between items-center shadow"><span><i class="fas fa-industry mr-2"></i>1. Factory Destuffing Tariff</span><span class="text-[10px] text-yellow-300 bg-blue-800 px-2 py-0.5 rounded">Details Head Wise</span></div><table class="tariff-table border-2 border-blue-900" id="tableFactory"><thead><tr><th class="bg-gray-700 text-white w-[10%]" rowspan="2">Weight Slab</th><th class="bg-header-public" colspan="7">PUBLIC TARIFF (INR)</th><th class="bg-header-discount" colspan="7">DISCOUNTED TARIFF (INR)</th><th class="bg-black text-white w-[8%]" rowspan="2">Total Billing<br><span class="text-[9px] font-normal">(Public - Disc)</span></th></tr><tr class="text-[9px]"><th class="bg-blue-800 text-white w-[5.8%]">Terminal Handing</th> <th class="bg-blue-800 text-white w-[5.8%]">Infra.</th> <th class="bg-blue-800 text-white w-[5.8%]">Weighment</th> <th class="bg-blue-800 text-white w-[5.8%]">Energy Surcharge</th> <th class="bg-blue-800 text-white w-[5.8%]">EIC AND Congesion</th> <th class="bg-blue-800 text-white w-[5.8%]">Port SSR</th> <th class="bg-blue-900 border-l border-white text-white w-[5.8%]">Total</th><th class="bg-green-700 text-white w-[5.8%]">Terminal Handing</th> <th class="bg-green-700 text-white w-[5.8%]">Infra.</th> <th class="bg-green-700 text-white w-[5.8%]">Weighment</th> <th class="bg-green-700 text-white w-[5.8%]">Energy Surcharge</th> <th class="bg-green-700 text-white w-[5.8%]">EIC AND Congesion</th> <th class="bg-green-700 text-white w-[5.8%]">Port SSR</th> <th class="bg-green-900 border-l border-white text-white w-[5.8%]">Total Disc</th></tr></thead><tbody></tbody></table></div>
@@ -297,15 +314,7 @@
             if(!mode) return alert("Error: Tariff Mode is Required");
             if(!document.getElementById('dateFrom').value) return alert("Error: Dates are Required");
 
-            // CRITICAL CHANGE: Update vs New Logic
-            // If loadedRecordId exists, it's an EDIT/UPDATE of an existing record.
-            // If it's null (New or Revalid), we create a NEW timestamp ID.
-            
             let entryId = loadedRecordId || document.getElementById('recordIdStore').value;
-            
-            // REMOVED: The logic that searched by Name to find ID. 
-            // This prevents accidental overwriting when Revalidating (creating new copy) of a customer with same name.
-            
             if (!entryId) {
                 entryId = Date.now().toString(); // Create New ID
             }
@@ -331,6 +340,8 @@
                     for(let k=0; k<7; k++) vals.push(document.getElementById(`tableICD_${i}_d${k}`).value || "");
                     icdValues.push(vals);
                 }
+                
+                // --- Save Dynamic Tables ---
                 const transValues = [];
                 document.querySelectorAll('#tbodyTransport tr').forEach(tr => {
                     const uid = tr.querySelector('select').id.split('_trans')[0];
@@ -341,6 +352,34 @@
                         v: document.getElementById(`${uid}_disc`).value
                     });
                 });
+
+                const dynTables = [];
+                document.querySelectorAll('.dynamic-table-wrapper').forEach(wrapper => {
+                    const type = wrapper.dataset.type;
+                    const start = wrapper.querySelector('.dyn-start-date').value;
+                    const end = wrapper.querySelector('.dyn-end-date').value;
+                    const colCount = type === 'Factory' ? 6 : 7;
+                    const rowCount = 4; // Rows are fixed currently
+                    
+                    const tableValues = [];
+                    const inputs = wrapper.querySelectorAll('.dyn-input');
+                    
+                    for (let i = 0; i < rowCount; i++) {
+                        const rowVals = [];
+                        for (let k = 0; k < colCount; k++) {
+                            const index = (i * colCount) + k;
+                            rowVals.push(inputs[index].value);
+                        }
+                        tableValues.push(rowVals);
+                    }
+
+                    dynTables.push({ type, start, end, values: tableValues });
+                });
+
+                if(dynTables.length > 0) {
+                    transValues.push({ _sys_type: 'DYNAMIC_DATA', payload: dynTables });
+                }
+
                 const incValues = [];
                 document.querySelectorAll('#tbodyIncentive tr').forEach(tr => {
                     const uid = tr.querySelector('select').id.split('_line')[0];
@@ -354,7 +393,6 @@
 
                 const fd = new FormData();
                 fd.append('Date', document.getElementById('dateToday').value);
-                // Send ID in name field for update logic
                 fd.append('Name', `[MASTER] ${cust} [ID:${entryId}]`);
                 fd.append('Email', `Ref: ${document.getElementById('tariffNo').value} | Dates: ${document.getElementById('dateFrom').value} to ${document.getElementById('dateTo').value} | Mode: ${mode} | Type: ${document.getElementById('destuffType').value}`);
                 fd.append('Phone', `Valid: ${document.getElementById('validity').value} | Free: ${document.getElementById('freeDays').value} | CType: ${document.getElementById('customerType').value} | Vol: ${document.getElementById('volMonth').value}`);
@@ -365,7 +403,6 @@
                 fd.append('Data3', JSON.stringify(transValues));
                 fd.append('Data4', JSON.stringify(incValues));
 
-                // ADDING CACHE BUSTER AND NO-CACHE HEADERS
                 await fetch(SCRIPT_SAVE_URL + '?t=' + Date.now(), { 
                     method: 'POST', 
                     body: fd, 
@@ -373,6 +410,41 @@
                     cache: 'no-store',
                     keepalive: true
                 });
+
+                // --- MANUALLY UPDATE LOCAL RECORDS (OPTIMISTIC UPDATE) ---
+                // This fixes the issue where reloading immediately shows old data because Google Sheet hasn't updated the CSV yet.
+                const newRec = {
+                    id: entryId,
+                    date: document.getElementById('dateToday').value,
+                    name: cust,
+                    ref: document.getElementById('tariffNo').value,
+                    dates: `${document.getElementById('dateFrom').value} to ${document.getElementById('dateTo').value}`,
+                    mode: mode,
+                    type: document.getElementById('destuffType').value,
+                    valid: document.getElementById('validity').value,
+                    free: document.getElementById('freeDays').value,
+                    cType: document.getElementById('customerType').value,
+                    vol: document.getElementById('volMonth').value,
+                    sales: document.getElementById('salesPerson').value,
+                    cha: document.getElementById('chaName').value,
+                    tc: document.getElementById('transportClaimedBy').value,
+                    ic: document.getElementById('incentiveClaimedBy').value,
+                    ver: document.getElementById('version').value,
+                    rem: document.getElementById('remarks').value,
+                    jF: JSON.stringify(factoryValues),
+                    jI: JSON.stringify(icdValues),
+                    jT: JSON.stringify(transValues), 
+                    jInc: JSON.stringify(incValues)
+                };
+
+                const existingIndex = globalRecords.findIndex(r => r.id === entryId);
+                if (existingIndex >= 0) {
+                    globalRecords[existingIndex] = newRec;
+                } else {
+                    globalRecords.push(newRec);
+                }
+                updateDropdown(); // Update the dropdown immediately
+                // ---------------------------------------------------------
 
                 clearInterval(interval);
                 progressBar.style.width = '100%';
@@ -382,7 +454,7 @@
                     loadedRecordId = entryId;
                     document.getElementById('recordIdStore').value = entryId;
                     toggleReadOnly(true);
-                    startSync(); 
+                    // REMOVED startSync() here to prevent overwriting our fresh local data with stale cloud data
                 }, 500);
 
             } catch(e) {
@@ -400,7 +472,7 @@
                 if (!response.ok) throw new Error("Blocked");
                 const text = await response.text();
                 processCloudData(parseCSV(text));
-                statusEl.innerHTML = `<i class="fas fa-circle text-green-500 mr-1" style="font-size: 8px;"></i> Online`;
+                statusEl.innerHTML = `<i class="fas fa-circle text-green-600 mr-1" style="font-size: 8px;"></i> <span class="font-extrabold text-green-900">Online</span>`;
             } catch (e) {
                 syncWithVizApi();
             }
@@ -410,7 +482,7 @@
             window[callbackName] = function(response) {
                 if (response.status === 'error') return;
                 const rows = response.table.rows.map(r => r.c.map(c => c ? c.v : ""));
-                document.getElementById('syncStatus').innerHTML = `<i class="fas fa-circle text-green-500 mr-1" style="font-size: 8px;"></i> Online (API)`;
+                document.getElementById('syncStatus').innerHTML = `<i class="fas fa-circle text-green-600 mr-1" style="font-size: 8px;"></i> <span class="font-extrabold text-green-900">Online (API)</span>`;
                 processCloudData(rows);
                 document.getElementById(callbackName).remove();
                 delete window[callbackName];
@@ -443,6 +515,10 @@
                 }
             });
             globalRecords = Array.from(recordMap.values());
+            updateDropdown();
+        }
+
+        function updateDropdown() {
             const dd = document.getElementById('cloudHistory');
             dd.innerHTML = '<option value="">-- Select Customer (A-Z) --</option>';
             globalRecords.sort((a,b) => a.name.localeCompare(b.name)).forEach(r => {
@@ -450,6 +526,7 @@
                 const opt = document.createElement('option'); opt.value = r.id; opt.text = `${r.name} - ${r.ver} (${r.mode})${dInfo}`; dd.appendChild(opt);
             });
         }
+
         function val(arr, key) { const f = arr.find(s => s.includes(key)); return f ? f.split(key)[1].trim() : ""; }
 
         function loadFromDropdown(id) { const r = globalRecords.find(x => x.id == id); if(r) loadRecord(r); }
@@ -469,8 +546,31 @@
             fillT('tableFactory', rec.jF, 4, 6);
             fillT('tableICD', rec.jI, 4, 7);
             
+            // --- Load Dynamic Tables ---
+            document.getElementById('dynamicTablesArea').innerHTML = ''; // Clear existing dynamic tables
             document.getElementById('tbodyTransport').innerHTML = '';
-            (JSON.parse(rec.jT||'[]')).forEach(x => addTransportRow({trans:x.t, dest:x.d, base:x.b, disc:x.v}));
+            
+            const rawTransportData = JSON.parse(rec.jT||'[]');
+            
+            const realTransData = [];
+            const dynDataList = [];
+
+            rawTransportData.forEach(item => {
+                if (item._sys_type === 'DYNAMIC_DATA') {
+                    item.payload.forEach(tbl => dynDataList.push(tbl));
+                } else {
+                    realTransData.push(item);
+                }
+            });
+
+            // Render Transport Rows
+            realTransData.forEach(x => addTransportRow({trans:x.t, dest:x.d, base:x.b, disc:x.v}));
+            
+            // Render Dynamic Tables
+            dynDataList.forEach(tbl => {
+                createDynamicTable(tbl.type, tbl);
+            });
+            // ---------------------------
             
             document.getElementById('tbodyIncentive').innerHTML = '';
             (JSON.parse(rec.jInc||'[]')).forEach(x => addIncentiveRow({line:x.l, d20:x.d20, d40:x.d40, rem:x.rem}));
@@ -519,6 +619,9 @@
             if(!confirm("Clear form?")) return; 
             loadedRecordId = null; 
             document.getElementById('recordIdStore').value = ""; 
+            // --- Clear Dynamic Tables ---
+            document.getElementById('dynamicTablesArea').innerHTML = ''; 
+            // ----------------------------
             document.querySelectorAll('input:not([readonly]),textarea,select').forEach(e => e.value = ""); 
             document.getElementById('version').value = "Version 1"; 
             document.getElementById('chaName').value = "Various"; 
@@ -530,11 +633,8 @@
         function revalidateRecord() { 
             if(prompt("Password:") !== "Honey@143143") return; 
             toggleReadOnly(false); 
-            
-            // KEY FIX: CLEAR ID so it saves as NEW record
             loadedRecordId = null;
             document.getElementById('recordIdStore').value = "";
-
             const v = document.getElementById('version'); 
             v.value = "Version " + ((parseInt(v.value.replace(/\D/g,''))||1)+1); 
             document.getElementById('dateToday').valueAsDate = new Date(); 
@@ -676,9 +776,8 @@
             
             const headers = [
                 "Customer Name", "Version", "Mode", 
-                "Discount Details (Summary)", // New Column matching UI
+                "Discount Details (Summary)", 
                 "End Date", "Status", 
-                // Keep detailed columns for calculation utility
                 "Factory 0-27MT (₹)", "Factory 27-30MT (₹)", "Factory >31MT (₹)", "Factory 40\" (₹)", 
                 "ICD 0-27MT (₹)", "ICD 27-30MT (₹)", "ICD >31MT (₹)", "ICD 40\" (₹)", 
                 "Free Days"
@@ -689,7 +788,6 @@
             currentReportData.forEach(r => {
                 const endDateStr = r.dates ? r.dates.split('to')[1]?.trim() : "N/A";
                 
-                // 1. Calculate Summary Text (Matching UI)
                 let slabDetails = [];
                 let fDisc = ["0","0","0","0"];
                 let iDisc = ["0","0","0","0"];
@@ -700,8 +798,7 @@
                         fInputs.forEach((row, idx) => {
                             if(factoryData[idx]) {
                                 const dTotal = row.reduce((a,b)=>a+(parseFloat(b)||0),0);
-                                if(idx < 4) fDisc[idx] = dTotal > 0 ? dTotal : "0"; // For columns
-                                
+                                if(idx < 4) fDisc[idx] = dTotal > 0 ? dTotal : "0"; 
                                 let sName = factoryData[idx].slab.replace('(20) ','').replace('For ','');
                                 if (dTotal > 0) slabDetails.push(`${sName}: ₹${dTotal}`);
                             }
@@ -712,7 +809,7 @@
                         iInputs.forEach((row, idx) => {
                             if(icdData[idx]) {
                                 const dTotal = row.reduce((a,b)=>a+(parseFloat(b)||0),0);
-                                if(idx < 4) iDisc[idx] = dTotal > 0 ? dTotal : "0"; // For columns
+                                if(idx < 4) iDisc[idx] = dTotal > 0 ? dTotal : "0"; 
 
                                 let sName = icdData[idx].slab.replace('(20) ','').replace('For ','');
                                 if (dTotal > 0) slabDetails.push(`ICD ${sName}: ₹${dTotal}`);
@@ -728,7 +825,6 @@
                     summaryText = slabDetails.length > 0 ? slabDetails.join(' | ') : "No Discount";
                 }
                 
-                // Escape quotes for CSV
                 const safeName = `"${(r.name || "").replace(/"/g, '""')}"`;
                 const safeSummary = `"${summaryText.replace(/"/g, '""')}"`;
                 
@@ -738,7 +834,7 @@
                     safeName, 
                     r.ver || 'V1', 
                     r.mode || '-', 
-                    safeSummary, // Added
+                    safeSummary, 
                     endDateStr, 
                     "Active",
                     fDisc[0], fDisc[1], fDisc[2], fDisc[3],
@@ -773,7 +869,8 @@
                 const img = document.createElement('img'); img.src = URL.createObjectURL(file); img.className = "max-h-full max-w-full object-contain"; container.appendChild(img);
             } else { container.innerHTML = `<p class="text-red-500 font-bold">Saved to PC (No Preview)</p>`; }
         }
-// --- CUSTOMER SUGGESTION LOGIC ---
+
+        // --- CUSTOMER SUGGESTION LOGIC ---
         function suggestCustomer(val) {
             const box = document.getElementById('suggestionBox');
             if (!val || val.length < 2) { 
@@ -781,10 +878,7 @@
                 return; 
             }
 
-            // 1. Existing globalRecords se unique naam nikaalein
             const uniqueNames = [...new Set(globalRecords.map(r => r.name))];
-            
-            // 2. Filter karein jo type kiya hai usse match ho
             const matches = uniqueNames.filter(n => n.toLowerCase().includes(val.toLowerCase()));
 
             if (matches.length === 0) { 
@@ -792,7 +886,6 @@
                 return; 
             }
 
-            // 3. HTML banayein list ke liye
             let html = '';
             matches.forEach(name => {
                 html += `<div onclick="selectSuggestion('${name}')" class="p-2 hover:bg-blue-100 cursor-pointer text-xs font-bold text-blue-900 border-b border-gray-100 uppercase">${name}</div>`;
@@ -807,32 +900,15 @@
             document.getElementById('suggestionBox').classList.add('hidden');
         }
 
-// GLOBAL CLICK LISTENER (Dono boxes ko band karne ke liye)
-        document.addEventListener('click', function(e) {
-            // Customer Name Box ke liye
-            if (e.target.id !== 'customerName') {
-                const box = document.getElementById('suggestionBox');
-                if(box) box.classList.add('hidden');
-            }
-            // Filter Box ke liye
-            if (e.target.id !== 'filterInput') {
-                const box = document.getElementById('filterSuggestionBox');
-                if(box) box.classList.add('hidden');
-            }
-        });// --- FILTER BOX SUGGESTION LOGIC ---
+        // --- FILTER BOX SUGGESTION LOGIC ---
         function suggestFilter(val) {
             const box = document.getElementById('filterSuggestionBox');
-            
-            // Agar box khali hai to suggestion chupao
             if (!val) { 
                 box.classList.add('hidden'); 
                 return; 
             }
 
-            // Global records se unique naam nikalo
             const uniqueNames = [...new Set(globalRecords.map(r => r.name))];
-            
-            // Filter karo
             const matches = uniqueNames.filter(n => n.toLowerCase().includes(val.toLowerCase()));
 
             if (matches.length === 0) { 
@@ -840,7 +916,6 @@
                 return; 
             }
 
-            // List banao
             let html = '';
             matches.forEach(name => {
                 html += `<div onclick="selectFilterSuggestion('${name}')" class="p-2 hover:bg-blue-100 cursor-pointer text-xs font-bold text-gray-800 border-b border-gray-100 uppercase">${name}</div>`;
@@ -853,12 +928,111 @@
         function selectFilterSuggestion(name) {
             const input = document.getElementById('filterInput');
             input.value = name;
-            
-            // Suggestion box band karo
             document.getElementById('filterSuggestionBox').classList.add('hidden');
-            
-            // Main Dropdown ko bhi update karo (Taaki user 'SHOW' click kar sake)
             filterDropdown(name);
+        }
+
+        // GLOBAL CLICK LISTENER
+        document.addEventListener('click', function(e) {
+            if (e.target.id !== 'customerName') {
+                const box = document.getElementById('suggestionBox');
+                if(box) box.classList.add('hidden');
+            }
+            if (e.target.id !== 'filterInput') {
+                const box = document.getElementById('filterSuggestionBox');
+                if(box) box.classList.add('hidden');
+            }
+        });
+
+        // --- DYNAMIC TABLE LOGIC ---
+        function askAddTable() {
+            let type = prompt("Enter Table Type:\n1 for Factory Destuffing\n2 for ICD Destuffing");
+            if (type === '1') {
+                createDynamicTable('Factory');
+            } else if (type === '2') {
+                createDynamicTable('ICD');
+            } else if (type) {
+                alert("Invalid Selection! Enter 1 or 2.");
+            }
+        }
+
+        function createDynamicTable(type, savedData = null) {
+            const container = document.getElementById('dynamicTablesArea');
+            const uniqueID = Date.now() + Math.floor(Math.random() * 1000); 
+            const wrapper = document.createElement('div');
+            wrapper.className = "mb-8 animate-fade-in dynamic-table-wrapper"; 
+            wrapper.id = `wrapper_${uniqueID}`;
+            wrapper.dataset.type = type; 
+
+            const isFactory = type === 'Factory';
+            const colorClass = isFactory ? 'blue' : 'purple';
+            const colCount = isFactory ? 6 : 7;
+            const dataSet = isFactory ? factoryData : icdData;
+            const title = isFactory ? 'Factory Destuffing Tariff' : 'ICD Destuffing Weight Slab';
+            const icon = isFactory ? 'fa-industry' : 'fa-warehouse';
+
+            const valStart = savedData ? savedData.start : '';
+            const valEnd = savedData ? savedData.end : '';
+
+            let html = `
+                <div class="bg-gray-200 p-2 rounded-t flex justify-between items-center border border-gray-400 border-b-0">
+                    <div class="flex gap-4 items-center">
+                        <span class="text-${colorClass}-900 font-extrabold text-sm uppercase"><i class="fas ${icon} mr-2"></i>${title}</span>
+                    </div>
+                    <div class="flex gap-2 items-center">
+                        <div class="flex items-center bg-white px-2 py-0.5 rounded border border-gray-300">
+                            <span class="text-[10px] font-bold text-gray-500 mr-2 uppercase">Start:</span>
+                            <input type="date" value="${valStart}" class="dyn-start-date text-xs font-bold text-blue-900 border-none outline-none bg-transparent h-6">
+                        </div>
+                        <div class="flex items-center bg-white px-2 py-0.5 rounded border border-gray-300">
+                            <span class="text-[10px] font-bold text-gray-500 mr-2 uppercase">End:</span>
+                            <input type="date" value="${valEnd}" class="dyn-end-date text-xs font-bold text-blue-900 border-none outline-none bg-transparent h-6">
+                        </div>
+                        <button onclick="document.getElementById('wrapper_${uniqueID}').remove()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-[10px] font-bold uppercase shadow ml-2">
+                            <i class="fas fa-trash mr-1"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            html += `<table class="tariff-table border-2 border-${colorClass}-900"><thead><tr>
+                    <th class="bg-gray-700 text-white w-[10%]" rowspan="2">Weight Slab</th>
+                    <th class="bg-header-public" colspan="${isFactory ? 7 : 8}">PUBLIC TARIFF (INR)</th>
+                    <th class="bg-header-discount" colspan="${isFactory ? 7 : 8}">DISCOUNTED TARIFF (INR)</th>
+                    <th class="bg-black text-white w-[8%]" rowspan="2">Total Billing<br><span class="text-[9px] font-normal">(Public - Disc)</span></th>
+                    </tr><tr class="text-[9px]">
+                    ${isFactory ? '' : `<th class="bg-${colorClass}-800 text-white">Destuff</th>`}
+                    <th class="bg-${colorClass}-800 text-white">THC</th> <th class="bg-${colorClass}-800 text-white">Infra.</th> <th class="bg-${colorClass}-800 text-white">Weighment</th> <th class="bg-${colorClass}-800 text-white">Energy</th> <th class="bg-${colorClass}-800 text-white">EIC/Cong</th> <th class="bg-${colorClass}-800 text-white">Port SSR</th> <th class="bg-${colorClass}-900 border-l border-white text-white">Total</th>
+                    ${isFactory ? '' : `<th class="bg-green-700 text-white">Destuff</th>`}
+                    <th class="bg-green-700 text-white">THC</th> <th class="bg-green-700 text-white">Infra.</th> <th class="bg-green-700 text-white">Weighment</th> <th class="bg-green-700 text-white">Energy</th> <th class="bg-green-700 text-white">EIC/Cong</th> <th class="bg-green-700 text-white">Port SSR</th> <th class="bg-green-900 border-l border-white text-white">Total Disc</th>
+                    </tr></thead><tbody>`;
+
+            dataSet.forEach((row, rIdx) => {
+                const uid = `dyn_${uniqueID}_${rIdx}`;
+                let pTotal = 0;
+                
+                const savedRowVals = savedData ? savedData.values[rIdx] : null;
+
+                html += `<tr><td class="font-bold text-left px-2 bg-gray-50">${row.slab}</td>`;
+                row.p.forEach((val, cIdx) => {
+                    pTotal += val;
+                    html += `<td><input type="number" id="${uid}_p${cIdx}" value="${val}" readonly tabindex="-1" class="text-blue-900 font-bold bg-gray-100 pointer-events-none"></td>`;
+                });
+                html += `<td class="bg-blue-100 font-extrabold text-blue-900" id="${uid}_ptotal">${pTotal}</td>`;
+
+                for(let i=0; i<colCount; i++) {
+                    const v = savedRowVals ? savedRowVals[i] : '';
+                    html += `<td><input type="number" id="${uid}_d${i}" value="${v}" oninput="calcRow('${uid}', ${colCount})" class="dyn-input text-green-700 font-bold border-b border-green-100"></td>`;
+                }
+
+                html += `<td class="bg-green-100 text-red-600 font-extrabold" id="${uid}_dtotal">0</td><td class="bg-black text-white font-bold" id="${uid}_final">${pTotal}</td></tr>`;
+            });
+
+            html += `</tbody></table>`;
+            wrapper.innerHTML = html;
+            container.appendChild(wrapper);
+
+            dataSet.forEach((_, rIdx) => calcRow(`dyn_${uniqueID}_${rIdx}`, colCount));
         }
     </script>
 </body>
