@@ -137,7 +137,7 @@
                 
                 <div class="flex gap-2 items-center flex-1 w-full">
                     <!-- Filter Input -->
-                    <div class="relative w-96"> 
+                    <div class="relative w-64"> 
                         <input type="text" id="filterInput" autocomplete="off" 
                                class="border border-gray-400 rounded px-2 py-1 text-xs w-full text-black font-bold h-8" 
                                placeholder="Type Customer Name..." 
@@ -147,7 +147,7 @@
                     </div>
 
                     <!-- Dropdown -->
-                    <select id="cloudHistory" class="border border-gray-400 rounded px-2 py-1 text-xs flex-1 text-blue-900 font-bold bg-blue-50 h-8">
+                    <select id="cloudHistory" class="border border-gray-400 rounded px-2 py-1 text-xs flex-1 w-0 text-blue-900 font-bold bg-blue-50 h-8">
                         <option value="">-- Select Customer (A-Z) --</option>
                     </select>
 
@@ -187,7 +187,7 @@
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Sales Person</label><select id="salesPerson" class="input-field h-8 bg-white uppercase"><option value="">-- Select --</option><option>Rajesh Kumar</option><option>Kunal Sahi</option><option>Anurag Pandey</option><option>Damanjit Singh</option><option>Chirag Rana</option><option>Mohik Sharma</option></select></div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Effective From</label><input type="date" id="dateFrom" onchange="calculateMonths()" class="input-field h-8 bg-white"></div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">End Date</label><input type="date" id="dateTo" onchange="calculateMonths()" class="input-field h-8 bg-white"></div>
-            <div class="col-span-1"><label class="block text-[10px] font-bold text-green-700 uppercase">Free Days</label><input type="text" id="freeDays" oninput="updateFooter(this.value); toggleTariffTables(); calculateMonths();" placeholder="" class="input-field h-8 bg-yellow-300 text-black border-yellow-500 font-extrabold"></div>
+            <div class="col-span-1"><label class="block text-[10px] font-bold text-green-700 uppercase">Free Days</label><input type="text" id="freeDays" oninput="updateFooter(this.value); toggleTariffTables(); calculateMonths(true);" placeholder="" class="input-field h-8 bg-yellow-300 text-black border-yellow-500 font-extrabold"></div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Valid For</label><input type="text" id="validity" readonly class="input-field bg-transparent border-none text-red-700 font-bold text-xs h-8"></div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Tariff Status</label><div id="statusBox" class="input-field h-8 flex items-center justify-center font-bold text-[10px] uppercase rounded border text-center" style="background-color: #bbf7d0; color: #14532d; border-color: #15803d;">Approved & Valid</div></div>
         </div>
@@ -381,7 +381,7 @@
             const mode = document.getElementById('tariffMode').value;
             if(!cust) return alert("Please create or load a tariff first.");
             const to = "aman.sharma@hindterminals.com;sourav.thakur@hindterminals.com;sukhwinder.singh@hindterminals.com";
-            const cc = "rajesh.kumar@hindterminals.com;rajeev.sharma@hindterminals.com;dinesh.negi@hindterminals.com;ekta@hindterminals.com;kraccounts@hindterminals.com";
+            const cc = "rajesh.kumar@hindterminals.com;rajeev.sharma@hindterminals.com;dinesh.negi@hindterminals.com;ekta@hindterminals.com";
             const subject = `Import Tariff Sheet of "${cust}" ${mode}`;
             const body = `Dear Accounts Team,%0D%0A%0D%0APlease find attached Tariff Sheet of "${cust}"%0D%0A"${mode}"%0D%0A%0D%0AThanks and Regards,%0D%0AVikram Singh%0D%0AHind Terminals Pvt Ltd.`;
             window.location.href = `mailto:${to}?cc=${cc}&subject=${subject}&body=${body}`;
@@ -419,7 +419,7 @@
         }
 
         async function initiateSave() {
-            calculateMonths();
+            calculateMonths(true); // Don't reset manual date changes
             const cust = document.getElementById('customerName').value.trim();
             const mode = document.getElementById('tariffMode').value;
             if(!cust) return alert("Error: Customer Name is Required");
@@ -733,7 +733,8 @@
             document.getElementById('tbodyIncentive').innerHTML = '';
             (JSON.parse(rec.jInc||'[]')).forEach(x => addIncentiveRow({line:x.l, d20:x.d20, d40:x.d40, rem:x.rem}));
 
-            calculateMonths(); updateFooter(rec.free); toggleTariffTables(); toggleReadOnly(true);
+            calculateMonths(true); // Don't overwrite loaded table dates
+            updateFooter(rec.free); toggleTariffTables(); toggleReadOnly(true);
         }
         function fillT(tid, json, r, c) { try { const d = JSON.parse(json); d.forEach((rw, i) => { rw.forEach((v, j) => { const e = document.getElementById(`${tid}_${i}_d${j}`); if(e) e.value = v; }); calcRow(`${tid}_${i}`, c); }); } catch(e){} }
 
@@ -777,19 +778,35 @@
             if(!confirm("Clear form?")) return; 
             loadedRecordId = null; 
             document.getElementById('recordIdStore').value = ""; 
-            // --- Clear Dynamic Tables ---
+            
+            // Clear Dynamic Tables
             document.getElementById('dynamicTablesArea').innerHTML = ''; 
-            // ----------------------------
+            
+            // Clear all inputs
             document.querySelectorAll('input:not([readonly]),textarea,select').forEach(e => e.value = ""); 
+            
+            // Reset specific defaults
             document.getElementById('version').value = "Version 1"; 
             document.getElementById('chaName').value = "Various"; 
             document.getElementById('factoryStatusSelect').value = "Active";
             document.getElementById('icdStatusSelect').value = "Active";
+            
+            // Recalculate Main Tables to clear totals
+            factoryData.forEach((_, i) => calcRow(`tableFactory_${i}`, 6));
+            icdData.forEach((_, i) => calcRow(`tableICD_${i}`, 7));
+
+            // Update statuses UI
             updateTableStatus('factory');
             updateTableStatus('icd');
-            toggleReadOnly(false); 
+            
+            // Reset Transport/Incentive tables to single empty row
+            document.getElementById('tbodyTransport').innerHTML = '';
             addTransportRow(); 
+            
+            document.getElementById('tbodyIncentive').innerHTML = '';
             addIncentiveRow(); 
+            
+            toggleReadOnly(false); 
         }
         
         function revalidateRecord() { 
@@ -803,10 +820,34 @@
             alert("Version Updated. Clicking Save will create a NEW RECORD."); 
         }
 
-        function calculateMonths() { 
-            const d1 = new Date(document.getElementById('dateFrom').value);
-            const d2 = new Date(document.getElementById('dateTo').value);
+        function calculateMonths(skipTableSync = false) { 
+            const dateFromVal = document.getElementById('dateFrom').value;
+            const dateToVal = document.getElementById('dateTo').value;
+            
+            const d1 = new Date(dateFromVal);
+            const d2 = new Date(dateToVal);
             const s = document.getElementById('statusBox');
+
+            // --- SYNC DATES TO TABLES (Only if not skipped) ---
+            if (!skipTableSync) {
+                if(dateFromVal) {
+                    const fStart = document.getElementById('factoryStartDate');
+                    const iStart = document.getElementById('icdStartDate');
+                    if(fStart) fStart.value = dateFromVal;
+                    if(iStart) iStart.value = dateFromVal;
+                }
+                if(dateToVal) {
+                    const fEnd = document.getElementById('factoryEndDate');
+                    const iEnd = document.getElementById('icdEndDate');
+                    if(fEnd) fEnd.value = dateToVal;
+                    if(iEnd) iEnd.value = dateToVal;
+                    
+                    // Update table status colors based on new date
+                    updateTableStatus('factory');
+                    updateTableStatus('icd');
+                }
+            }
+            // -----------------------------
 
             if(d1 && d2 && d2 > d1) { 
                 let m = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth()); 
@@ -827,7 +868,24 @@
         function toggleTariffTables() { const m = document.getElementById('tariffMode').value, t = document.getElementById('destuffType').value, fs = document.getElementById('factorySection'), is = document.getElementById('icdSection'), pb = document.getElementById('prominentFreeDays'); fs.style.display = 'none'; is.style.display = 'none'; pb.style.display = 'none'; document.getElementById('destuffType').disabled = false; if(m === 'FreeDays') { pb.style.display = 'block'; document.getElementById('destuffType').value = ""; document.getElementById('destuffType').disabled = true; } else { if(t === 'Factory' || t === 'Both') fs.style.display = 'block'; if(t === 'ICD' || t === 'Both') is.style.display = 'block'; } }
         function filterDropdown(v) { const o = document.getElementById('cloudHistory').options; v = v.toLowerCase(); for(let i=1; i<o.length; i++) o[i].style.display = o[i].text.toLowerCase().includes(v) ? 'block' : 'none'; }
         
-        function downloadPDF() { document.getElementById('printArea').classList.add('pdf-mode'); const oz = document.body.style.zoom; document.body.style.zoom = "100%"; html2pdf().set({ margin: [5, 5, 5, 5], filename: `${document.getElementById('customerName').value}_Tariff.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' } }).from(document.getElementById('printArea')).save().then(() => { document.body.style.zoom = oz; document.getElementById('printArea').classList.remove('pdf-mode'); }); }
+        function downloadPDF() {
+            document.getElementById('printArea').classList.add('pdf-mode');
+            const oz = document.body.style.zoom;
+            document.body.style.zoom = "100%";
+            
+            html2pdf().set({
+                margin: [5, 5, 5, 5],
+                filename: `${document.getElementById('customerName').value}_Tariff.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true },
+                // YAHAN HAI PAGE SIZE SETTING (Change 'a4' here if needed)
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+            }).from(document.getElementById('printArea')).save().then(() => {
+                document.body.style.zoom = oz;
+                document.getElementById('printArea').classList.remove('pdf-mode');
+            });
+        }
+
         function copyToClipboard() { const el = document.getElementById('printArea'), oz = document.body.style.zoom; document.body.style.zoom = "100%"; html2canvas(el, { scale: 2, useCORS: true }).then(c => { const sc = document.createElement('canvas'); sc.width = c.width * 0.6; sc.height = c.height * 0.6; sc.getContext('2d').drawImage(c, 0, 0, sc.width, sc.height); sc.toBlob(b => navigator.clipboard.write([new ClipboardItem({ "image/png": b })]).then(() => alert("Copied!")), 'image/png', 0.9); document.body.style.zoom = oz; }); }
         function closeReports() { document.getElementById('reportsModal').style.display = 'none'; }
         function closeLoading() { document.getElementById('loadingOverlay').style.display = 'none'; document.getElementById('progressSection').classList.remove('hidden'); document.getElementById('successSection').classList.add('hidden'); }
@@ -1171,7 +1229,7 @@
                         </div>
                         <div class="flex items-center bg-white px-2 py-0.5 rounded border border-gray-300">
                             <span class="text-[10px] font-bold text-gray-500 mr-2 uppercase">End:</span>
-                            <input type="date" value="${valEnd}" id="dynEnd_${uniqueID}" class="dyn-end-date text-xs font-bold text-blue-900 border-none outline-none bg-transparent h-6">
+                            <input type="date" value="${valEnd}" id="dynEnd_${uniqueID}" onchange="updateDynamicTableStatus('${uniqueID}')" class="dyn-end-date text-xs font-bold text-blue-900 border-none outline-none bg-transparent h-6">
                         </div>
                         <button onclick="document.getElementById('wrapper_${uniqueID}').remove()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded text-[10px] font-bold uppercase shadow ml-2">
                             <i class="fas fa-trash mr-1"></i> Delete
@@ -1223,4 +1281,3 @@
     </script>
 </body>
 </html>
-
