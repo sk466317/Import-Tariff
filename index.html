@@ -25,14 +25,45 @@
         .pdf-mode th, .pdf-mode td { border: 1px solid #000 !important; }
         tr { page-break-inside: avoid !important; } table { page-break-inside: auto !important; }
         .input-field { border: 1px solid #6b7280; border-radius: 4px; padding: 4px 8px; width: 100%; font-size: 0.75rem; background-color: #f3f4f6; color: #111827; font-weight: 700; transition: 0.2s; }
-        .input-field:focus { outline: none; border-color: #2563eb; background-color: #ffffff; }
+        
+        /* YELLOW HIGHLIGHT ON FOCUS (CURSOR) */
+        .input-field:focus, input:focus, select:focus, textarea:focus { 
+            outline: none; 
+            border-color: #ca8a04 !important; 
+            background-color: #fef08a !important; /* Yellow-200 */
+            color: #000 !important;
+            box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.3);
+            transform: scale(1.02);
+            z-index: 10;
+        }
+
         .tariff-table { width: 100%; border-collapse: collapse; font-size: 0.65rem; table-layout: fixed; } 
         .tariff-table th { border: 1px solid #fff; padding: 5px 2px; text-align: center; font-weight: 800; text-transform: uppercase; overflow: hidden; }
         .tariff-table td { border: 1px solid #9ca3af; padding: 2px; text-align: center; background-color: white; color: black; }
-        .tariff-table input, .tariff-table select { width: 100%; text-align: center; background: transparent; border: none; font-size: 0.7rem; font-weight: 700; color: #111827; outline: none; }
-        .tariff-table textarea { width: 100%; text-align: left; background: transparent; border: none; font-size: 0.7rem; font-weight: 700; color: #111827; resize: none; padding: 2px; line-height: 1.1; }
+        .tariff-table input, .tariff-table select { width: 100%; text-align: center; background: transparent; border: none; font-size: 0.7rem; font-weight: 700; color: #111827; outline: none; transition: 0.2s; }
+        .tariff-table textarea { width: 100%; text-align: left; background: transparent; border: none; font-size: 0.7rem; font-weight: 700; color: #111827; resize: none; padding: 2px; line-height: 1.1; transition: 0.2s; }
         
-        .view-mode .input-field, .view-mode input, .view-mode select, .view-mode textarea { pointer-events: none; background-color: #e5e7eb !important; color: #4b5563 !important; border-color: transparent; }
+        /* VIEW MODE STYLES - Updated for Black Borders */
+        .view-mode .input-field, .view-mode input, .view-mode select, .view-mode textarea { 
+            pointer-events: none; 
+            background-color: #e5e7eb !important; 
+            color: #000 !important; 
+            border: 1px solid #000 !important; /* Black Border */
+        }
+        
+        /* FIX: Allow View Button Click in Read-Only & Make Red */
+        .view-mode #btnViewApproval { 
+            pointer-events: auto !important; 
+            cursor: pointer !important; 
+            color: #dc2626 !important; /* Red Color */
+        }
+        /* Make animation continue in read-only but red */
+        .view-mode .animate-heartbeat {
+            color: #dc2626 !important;
+            text-shadow: 0 0 5px rgba(220, 38, 38, 0.3);
+        }
+
+
         /* FIX: Status Colors ko View Mode me Grey hone se bachayein */
         .view-mode .bg-green-200 { background-color: #bbf7d0 !important; color: #14532d !important; -webkit-text-fill-color: #14532d !important; }
         .view-mode .bg-red-200 { background-color: #fecaca !important; color: #7f1d1d !important; -webkit-text-fill-color: #7f1d1d !important; }
@@ -42,9 +73,11 @@
 
         .view-mode #freeDays { background-color: #fde047 !important; color: #000 !important; border: 2px solid #eab308 !important; }
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 2000; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        #loadingOverlay { background: rgba(0,0,0,0.8); display: none; z-index: 1000; } 
-        #accessOverlay { background: #111827; }
-        #reportsModal { background: rgba(0,0,0,0.8); display: none; z-index: 3000; align-items: flex-start; padding-top: 50px; }
+        #loadingOverlay { background: rgba(0,0,0,0.8); display: none; z-index: 3000; } 
+        #accessOverlay { background: #111827; z-index: 4000; }
+        #reportsModal { background: rgba(0,0,0,0.8); display: none; z-index: 2500; align-items: flex-start; padding-top: 50px; }
+        #uploadModal { background: rgba(0,0,0,0.8); display: none; z-index: 2600; align-items: center; justify-content: center; }
+
         .btn-uniform { height: 34px; padding: 0 16px; font-size: 0.75rem; font-weight: 700; border-radius: 0.25rem; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
         .btn-uniform:hover { transform: translateY(-1px); }
         .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
@@ -52,6 +85,28 @@
         /* Custom Date Input Styling */
         input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; filter: invert(1); opacity: 0.6; }
         input[type="date"]::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+
+        /* HEARTBEAT ANIMATION */
+        @keyframes heartbeat {
+            0% { transform: scale(1); }
+            14% { transform: scale(1.1); }
+            28% { transform: scale(1); }
+            42% { transform: scale(1.1); }
+            70% { transform: scale(1); }
+        }
+        .animate-heartbeat {
+            animation: heartbeat 1.5s infinite;
+            color: #16a34a; /* Green-600 */
+            font-weight: 900;
+            text-shadow: 0 0 5px rgba(22, 163, 74, 0.3);
+        }
+
+        /* UPLOAD MODAL STYLES */
+        .upload-box { border: 2px dashed #007bff; padding: 20px; text-align: center; background: #eef6ff; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .upload-box:hover { background: #dceeff; }
+        .btn-upload-save { width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin-top: 15px; font-weight: bold; }
+        .btn-upload-save:hover { background-color: #218838; }
+        .btn-upload-save:disabled { background-color: #ccc; cursor: not-allowed; }
     </style>
 </head>
 <body class="p-2 md:p-4 overflow-hidden" id="mainBody">
@@ -70,7 +125,8 @@
     <!-- REPORTS MODAL -->
     <div id="reportsModal" class="overlay" onclick="if(event.target===this)closeReports()">
         <div class="bg-white w-11/12 max-w-7xl rounded-lg shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
-            <div class="bg-indigo-900 p-4 flex justify-between items-center text-white">
+            <!-- ... existing reports modal code ... -->
+             <div class="bg-indigo-900 p-4 flex justify-between items-center text-white">
                 <div class="flex gap-4 items-center">
                     <h3 class="font-bold text-lg"><i class="fas fa-chart-bar mr-2"></i> Tariff Reports</h3>
                     <div class="flex bg-indigo-800 rounded p-1 gap-1">
@@ -93,6 +149,32 @@
             </div>
             <div class="p-0 overflow-y-auto flex-1 bg-white" id="reportsArea"></div>
             <div class="bg-gray-100 p-2 text-right text-xs text-gray-500 border-t border-gray-300" id="reportCount">0 Records</div>
+        </div>
+    </div>
+
+    <!-- UPLOAD MODAL -->
+    <div id="uploadModal" class="overlay">
+        <div class="bg-white rounded-lg shadow-2xl p-6 w-full max-w-md relative">
+            <button onclick="closeUploadModal()" class="absolute top-2 right-3 text-gray-500 hover:text-red-500 text-2xl font-bold">&times;</button>
+            <h2 class="text-xl font-bold text-gray-800 mb-4 border-b-2 border-blue-500 inline-block">📄 Document Form</h2>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-bold text-gray-700 mb-1">Customer Name:</label>
+                <input type="text" id="uploadCustomerName" readonly class="w-full bg-gray-100 border border-gray-300 rounded p-2 text-sm font-bold text-gray-600">
+            </div>
+
+            <label class="block text-sm font-bold text-gray-700 mb-1">Upload Document <span class="text-red-600">*</span>:</label>
+            <div class="upload-box" onclick="document.getElementById('cloudFileInput').click()">
+                <span style="font-size:24px;">📂</span><br>
+                <span id="uploadStatusText" class="text-sm font-bold text-gray-600">Click to Upload PDF/JPG</span>
+            </div>
+            <input type="file" id="cloudFileInput" style="display:none" onchange="uploadToCloudinary(this)">
+            
+            <div id="previewArea" class="mt-4 hidden text-center">
+                 <a id="modalPreviewLink" href="#" target="_blank" class="bg-blue-100 text-blue-700 px-3 py-1 rounded text-sm font-bold border border-blue-300 hover:bg-blue-200"><i class="fas fa-eye mr-1"></i> Open Preview</a>
+            </div>
+
+            <button id="btnConfirmSave" onclick="executeFinalSave()" class="btn-upload-save"><i class="fas fa-save mr-2"></i> 💾 Save Record</button>
         </div>
     </div>
 
@@ -123,12 +205,14 @@
                 <button onclick="downloadPDF()" class="btn-uniform bg-red-600 hover:bg-red-700 text-white"><i class="fas fa-file-pdf mr-2"></i> PDF</button>
                 <div class="relative inline-block">
                     <input type="file" id="approvalUpload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" onchange="handleApproval(this)">
-                    <button onclick="document.getElementById('approvalUpload').click()" class="btn-uniform bg-yellow-600 hover:bg-yellow-700 text-white border border-yellow-500"><i class="fas fa-file-upload mr-2"></i> Upload Approval</button>
+                    <!-- Existing Local Upload (Optional) -->
+                    <!-- <button onclick="document.getElementById('approvalUpload').click()" class="btn-uniform bg-yellow-600 hover:bg-yellow-700 text-white border border-yellow-500"><i class="fas fa-file-upload mr-2"></i> Local Upload</button> -->
                 </div>
                 <button onclick="enableEdit()" id="btnEdit" class="hidden btn-uniform bg-orange-500 hover:bg-orange-600 text-white"><i class="fas fa-edit mr-2"></i> Edit</button>
                 <button onclick="revalidateRecord()" id="btnRevalid" class="hidden btn-uniform bg-purple-600 hover:bg-purple-700 text-white"><i class="fas fa-copy mr-2"></i> Revalid</button>
                 <div class="w-px h-6 bg-gray-300 mx-1"></div>
-                <button id="btnSave" onclick="initiateSave()" class="btn-uniform bg-green-600 hover:bg-green-700 text-white animate-pulse"><i class="fas fa-save mr-2"></i> SAVE / UPDATE</button>
+                <!-- Changed onclick to preSaveCheck -->
+                <button id="btnSave" onclick="preSaveCheck()" class="btn-uniform bg-green-600 hover:bg-green-700 text-white animate-pulse"><i class="fas fa-save mr-2"></i> SAVE / UPDATE</button>
                 <button onclick="window.print()" class="btn-uniform bg-blue-600 hover:bg-blue-700 text-white w-10 !px-0"><i class="fas fa-print"></i></button>
                 <button type="button" onclick="resetForm()" class="btn-uniform bg-red-500 hover:bg-red-600 text-white"><i class="fas fa-plus mr-2"></i> New</button>
             </div>
@@ -164,6 +248,8 @@
     <!-- MAIN FORM AREA -->
     <div id="printArea" class="page-container max-w-[1350px] mx-auto bg-white-100 shadow-2xl p-6 rounded-lg border border-gray-100 opacity-0 transition-opacity duration-500 text-black min-h-[800px] bg-white">
         <input type="hidden" id="recordIdStore" value="">
+        <input type="hidden" id="finalDocLink"> <!-- Stores the Cloudinary URL -->
+
         <div class="border-b-4 border-blue-900 pb-2 mb-4 flex justify-between items-start">
             <div><h2 class="text-3xl font-extrabold text-blue-900 uppercase tracking-wide">Import Tariff Sheet</h2><p class="text-gray-600 text-sm font-bold uppercase">(Discounted THC & Free days)</p><p class="text-blue-800 text-lg font-bold uppercase tracking-wide mt-1">Hind Terminals Pvt Ltd</p></div>
             <div class="text-right">
@@ -190,8 +276,17 @@
             <div class="col-span-1"><label class="block text-[10px] font-bold text-green-700 uppercase">Free Days <span class="text-red-600">*</span></label><input type="text" id="freeDays" oninput="updateFooter(this.value); toggleTariffTables(); calculateMonths(true);" placeholder="" class="input-field h-8 bg-yellow-300 text-black border-yellow-500 font-extrabold"></div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Valid For</label><input type="text" id="validity" readonly class="input-field bg-transparent border-none text-red-700 font-bold text-xs h-8"></div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Tariff Status</label><div id="statusBox" class="input-field h-8 flex items-center justify-center font-bold text-[10px] uppercase rounded border text-center" style="background-color: #bbf7d0; color: #14532d; border-color: #15803d;">Approved & Valid</div></div>
+            <!-- NEW APPROVAL DOC BOX WITH HEARTBEAT -->
+            <div class="col-span-1">
+                <label class="block text-[10px] font-bold text-blue-800 uppercase">Approval Doc <span class="text-red-600">*</span></label>
+                <div class="input-field h-8 flex items-center justify-center gap-2 bg-white border-blue-300">
+                    <a id="btnViewApproval" href="#" target="_blank" class="hidden flex items-center animate-heartbeat"><i class="fas fa-eye mr-1"></i> VIEW</a>
+                    <span id="noApprovalText" class="text-gray-400 text-[10px] font-bold uppercase">Pending</span>
+                </div>
+            </div>
         </div>
 
+        <!-- ... remaining HTML content ... -->
         <div id="prominentFreeDays" class="hidden mb-6 bg-green-50 border-2 border-green-500 p-6 rounded text-center shadow-lg"><h3 class="text-green-800 text-lg font-bold uppercase mb-2">Free Days Allocation</h3><p id="prominentFreeDaysText" class="text-4xl font-extrabold text-green-600">03 DAYS</p></div>
         
         <!-- NEW ADD TABLE BUTTON -->
@@ -302,6 +397,8 @@
         const SCRIPT_SAVE_URL = 'https://script.google.com/macros/s/AKfycbxXE8V02fHhcNWbPzUEhPREj9KbnRJiPzIjJFnNkF5HtCGOCB1cqActpBg1LgWpZTMJ/exec';
         const SHEET_ID = '11LsDU-tfxh8vJ4RK_JYcF5AYJQBzLSMZDmOvfKcPE5s';
         const DIRECT_CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=0`;
+        const CLOUD_NAME = "drbrz3rqv"; 
+        const UPLOAD_PRESET = "ml_default";
 
         const factoryData = [{slab:"(20) 0 - 27MT",p:[3595,2300,200,337,2500,150]},{slab:"(20) 27 - 30MT",p:[4494,2300,200,337,2500,150]},{slab:"(20) > 31MT",p:[7190,2300,200,337,2500,150]},{slab:"For 40\"",p:[6790,4500,200,509,3500,300]}];
         const icdData = [{slab:"(20) 0 - 27MT",p:[900,4345,2300,200,337,2500,150]},{slab:"(20) 27 - 30MT",p:[900,5431,2300,200,337,2500,150]},{slab:"(20) > 31MT",p:[900,8690,2300,200,337,2500,150]},{slab:"For 40\"",p:[1800,8240,4500,200,509,3500,300]}];
@@ -309,6 +406,7 @@
         let globalRecords = [];
         let loadedRecordId = null;
         let currentReportData = []; 
+        let uploadedFileType = ""; 
 
         function checkAccess() {
             if (document.getElementById('accessPass').value === "16111980") {
@@ -341,15 +439,12 @@
             const val = statusSelect.value;
             let isExpired = (val === 'Expired');
 
-            // Update UI Colors & Header Background
             if (isExpired) {
                 statusSelect.className = "ml-3 text-[9px] font-extrabold uppercase rounded border px-1 h-5 outline-none cursor-pointer transition-colors bg-red-200 text-red-900 border-red-600";
-                // Force Header to RED
                 header.classList.remove('bg-blue-900', 'bg-purple-900');
                 header.classList.add('bg-red-900-imp'); 
             } else {
                 statusSelect.className = "ml-3 text-[9px] font-extrabold uppercase rounded border px-1 h-5 outline-none cursor-pointer transition-colors bg-green-200 text-green-900 border-green-600";
-                // Revert Header to original color
                 header.classList.remove('bg-red-900-imp');
                 if (type === 'factory') header.classList.add('bg-blue-900');
                 if (type === 'icd') header.classList.add('bg-purple-900');
@@ -418,11 +513,10 @@
             }
         }
 
-        async function initiateSave() {
-            calculateMonths(true); // Don't reset manual date changes
+        function preSaveCheck() {
+            // Validations First
             const cust = document.getElementById('customerName').value.trim();
             const mode = document.getElementById('tariffMode').value;
-            // NEW VALIDATIONS
             const sales = document.getElementById('salesPerson').value;
             const dFrom = document.getElementById('dateFrom').value;
             const dTo = document.getElementById('dateTo').value;
@@ -430,12 +524,101 @@
 
             if(!cust) return alert("Error: Customer Name is Required");
             if(!mode) return alert("Error: Tariff Mode is Required");
-            
-            // New alerts
             if(!sales) return alert("Error: Sales Person is Required");
             if(!dFrom) return alert("Error: Effective From Date is Required");
             if(!dTo) return alert("Error: End Date is Required");
             if(!free) return alert("Error: Free Days are Required");
+
+            // Open Upload Modal
+            openUploadModal();
+        }
+
+        // --- UPLOAD LOGIC ---
+        function openUploadModal() {
+            const modal = document.getElementById("uploadModal");
+            const cName = document.getElementById('customerName').value;
+            document.getElementById('uploadCustomerName').value = cName;
+            
+            const link = document.getElementById("finalDocLink").value;
+            const previewArea = document.getElementById("previewArea");
+            const previewLink = document.getElementById("modalPreviewLink");
+            const statusText = document.getElementById("uploadStatusText");
+            
+            if(link) {
+                previewLink.href = link;
+                previewArea.classList.remove('hidden');
+                statusText.innerHTML = "✅ Document Attached";
+                statusText.style.color = "green";
+            } else {
+                previewArea.classList.add('hidden');
+                statusText.innerHTML = "Click to Upload PDF/JPG";
+                statusText.style.color = "#4b5563";
+            }
+
+            modal.style.display = "flex";
+        }
+
+        function closeUploadModal() {
+            document.getElementById("uploadModal").style.display = "none";
+        }
+
+        function uploadToCloudinary(input) {
+            const file = input.files[0];
+            const statusText = document.getElementById("uploadStatusText");
+            const saveBtn = document.getElementById("btnConfirmSave");
+
+            if (!file) return;
+
+            statusText.innerHTML = "⏳ Uploading...";
+            statusText.style.color = "blue";
+            saveBtn.disabled = true;
+
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("upload_preset", UPLOAD_PRESET);
+
+            fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/auto/upload`, {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.secure_url) {
+                    document.getElementById("finalDocLink").value = data.secure_url;
+                    statusText.innerHTML = "✅ <b>" + file.name + "</b> Uploaded!";
+                    statusText.style.color = "green";
+                    
+                    document.getElementById("modalPreviewLink").href = data.secure_url;
+                    document.getElementById("previewArea").classList.remove('hidden');
+                    
+                    saveBtn.disabled = false;
+                } else {
+                    statusText.innerText = "❌ Failed";
+                    saveBtn.disabled = false;
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                statusText.innerText = "❌ Error";
+                saveBtn.disabled = false;
+            });
+        }
+
+        async function executeFinalSave() {
+            const docLink = document.getElementById("finalDocLink").value;
+            if(!docLink) {
+                alert("Error: Approval Document is Mandatory! Please upload.");
+                return;
+            }
+            closeUploadModal();
+            initiateSave();
+        }
+
+        async function initiateSave() {
+            calculateMonths(true); 
+            const cust = document.getElementById('customerName').value.trim();
+            const mode = document.getElementById('tariffMode').value;
+            // No need to re-validate basic fields here as preSaveCheck did it
 
             let entryId = loadedRecordId || document.getElementById('recordIdStore').value;
             if (!entryId) {
@@ -457,7 +640,6 @@
                     for(let k=0; k<6; k++) vals.push(document.getElementById(`tableFactory_${i}_d${k}`).value || "");
                     factoryValues.push(vals);
                 }
-                // Save Factory Dates Metadata & Status Override
                 factoryValues.push({ 
                     meta: 'DATES', 
                     s: document.getElementById('factoryStartDate').value, 
@@ -471,7 +653,6 @@
                     for(let k=0; k<7; k++) vals.push(document.getElementById(`tableICD_${i}_d${k}`).value || "");
                     icdValues.push(vals);
                 }
-                // Save ICD Dates Metadata & Status Override
                 icdValues.push({ 
                     meta: 'DATES', 
                     s: document.getElementById('icdStartDate').value, 
@@ -479,7 +660,6 @@
                     status: document.getElementById('icdStatusSelect').value
                 });
                 
-                // --- Save Dynamic Tables ---
                 const transValues = [];
                 document.querySelectorAll('#tbodyTransport tr').forEach(tr => {
                     const uid = tr.querySelector('select').id.split('_trans')[0];
@@ -498,11 +678,9 @@
                     const end = wrapper.querySelector('.dyn-end-date').value;
                     const status = wrapper.querySelector('.dyn-status-select').value;
                     const colCount = type === 'Factory' ? 6 : 7;
-                    const rowCount = 4; // Rows are fixed currently
-                    
+                    const rowCount = 4;
                     const tableValues = [];
                     const inputs = wrapper.querySelectorAll('.dyn-input');
-                    
                     for (let i = 0; i < rowCount; i++) {
                         const rowVals = [];
                         for (let k = 0; k < colCount; k++) {
@@ -511,7 +689,6 @@
                         }
                         tableValues.push(rowVals);
                     }
-
                     dynTables.push({ type, start, end, status, values: tableValues });
                 });
 
@@ -530,13 +707,16 @@
                     });
                 });
 
+                // Get Approval Doc Link
+                const approvalDocUrl = document.getElementById('finalDocLink').value || "";
+
                 const fd = new FormData();
                 fd.append('Date', document.getElementById('dateToday').value);
                 fd.append('Name', `[MASTER] ${cust} [ID:${entryId}]`);
                 fd.append('Email', `Ref: ${document.getElementById('tariffNo').value} | Dates: ${document.getElementById('dateFrom').value} to ${document.getElementById('dateTo').value} | Mode: ${mode} | Type: ${document.getElementById('destuffType').value}`);
                 fd.append('Phone', `Valid: ${document.getElementById('validity').value} | Free: ${document.getElementById('freeDays').value} | CType: ${document.getElementById('customerType').value} | Vol: ${document.getElementById('volMonth').value}`);
                 fd.append('Department', `Sales: ${document.getElementById('salesPerson').value} | CHA: ${document.getElementById('chaName').value} | TC: ${document.getElementById('transportClaimedBy').value} | IC: ${document.getElementById('incentiveClaimedBy').value}`);
-                fd.append('City', `Ver: ${document.getElementById('version').value} | Rem: ${document.getElementById('remarks').value}`);
+                fd.append('City', `Ver: ${document.getElementById('version').value} | Rem: ${document.getElementById('remarks').value} | AppDoc: ${approvalDocUrl}`);
                 fd.append('Data1', JSON.stringify(factoryValues));
                 fd.append('Data2', JSON.stringify(icdValues));
                 fd.append('Data3', JSON.stringify(transValues));
@@ -550,7 +730,6 @@
                     keepalive: true
                 });
 
-                // --- MANUALLY UPDATE LOCAL RECORDS (OPTIMISTIC UPDATE) ---
                 const newRec = {
                     id: entryId,
                     date: document.getElementById('dateToday').value,
@@ -569,6 +748,7 @@
                     ic: document.getElementById('incentiveClaimedBy').value,
                     ver: document.getElementById('version').value,
                     rem: document.getElementById('remarks').value,
+                    appDoc: approvalDocUrl, // Save Locally
                     jF: JSON.stringify(factoryValues),
                     jI: JSON.stringify(icdValues),
                     jT: JSON.stringify(transValues), 
@@ -582,7 +762,9 @@
                     globalRecords.push(newRec);
                 }
                 updateDropdown(); 
-                // ---------------------------------------------------------
+                
+                // Update Approval Doc UI
+                updateApprovalDocUI(approvalDocUrl);
 
                 clearInterval(interval);
                 progressBar.style.width = '100%';
@@ -646,7 +828,8 @@
                         ref: val(m1,'Ref:'), dates: val(m1,'Dates:'), mode: val(m1,'Mode:'), type: val(m1,'Type:'),
                         valid: val(m2,'Valid:'), free: val(m2,'Free:'), cType: val(m2,'CType:'), vol: val(m2,'Vol:'),
                         sales: val(m3,'Sales:'), cha: val(m3,'CHA:'), tc: val(m3,'TC:'), ic: val(m3,'IC:'),
-                        ver: val(m4,'Ver:'), rem: val(m4,'Rem:'),
+                        ver: val(m4,'Ver:'), rem: val(m4,'Rem:'), 
+                        appDoc: val(m4, 'AppDoc:'), // Load Approval Doc
                         jF: r[6], jI: r[7], jT: r[8], jInc: r[9]
                     });
                 }
@@ -718,12 +901,11 @@
             updateTableStatus('icd');
             fillT('tableICD', JSON.stringify(iData), 4, 7);
             
-            // --- Load Dynamic Tables ---
+            // Load Dynamic Tables
             document.getElementById('dynamicTablesArea').innerHTML = ''; 
             document.getElementById('tbodyTransport').innerHTML = '';
             
             const rawTransportData = JSON.parse(rec.jT||'[]');
-            
             const realTransData = [];
             const dynDataList = [];
 
@@ -744,9 +926,31 @@
             document.getElementById('tbodyIncentive').innerHTML = '';
             (JSON.parse(rec.jInc||'[]')).forEach(x => addIncentiveRow({line:x.l, d20:x.d20, d40:x.d40, rem:x.rem}));
 
+            // Handle Approval Doc
+            const appUrl = rec.appDoc || "";
+            document.getElementById("finalDocLink").value = appUrl;
+            updateApprovalDocUI(appUrl);
+
             calculateMonths(true); // Don't overwrite loaded table dates
             updateFooter(rec.free); toggleTariffTables(); toggleReadOnly(true);
         }
+
+        function updateApprovalDocUI(url) {
+            const btn = document.getElementById("btnViewApproval");
+            const txt = document.getElementById("noApprovalText");
+            if (url && url.length > 5) {
+                btn.href = url;
+                btn.classList.remove('hidden');
+                txt.classList.add('hidden');
+            } else {
+                btn.classList.add('hidden');
+                txt.classList.remove('hidden');
+            }
+        }
+        function viewApprovalDoc() {
+            // Helper if needed, but anchor tag handles it
+        }
+
         function fillT(tid, json, r, c) { try { const d = JSON.parse(json); d.forEach((rw, i) => { rw.forEach((v, j) => { const e = document.getElementById(`${tid}_${i}_d${j}`); if(e) e.value = v; }); calcRow(`${tid}_${i}`, c); }); } catch(e){} }
 
         function renderTable(tableId, data, colCount) {
@@ -801,6 +1005,11 @@
             document.getElementById('chaName').value = "Various"; 
             document.getElementById('factoryStatusSelect').value = "Active";
             document.getElementById('icdStatusSelect').value = "Active";
+            
+            // Reset Doc Link
+            document.getElementById('finalDocLink').value = "";
+            updateApprovalDocUI("");
+
             updateTableStatus('factory');
             updateTableStatus('icd');
             
@@ -1253,10 +1462,7 @@
 
             html += `<table class="tariff-table border-2 border-${colorClass}-900"><thead><tr>
                     <th class="bg-gray-700 text-white w-[10%]" rowspan="2">Weight Slab</th>
-                    <th class="bg-header-public" colspan="${isFactory ? 7 : 8}">PUBLIC TARIFF (INR)</th>
-                    <th class="bg-header-discount" colspan="${isFactory ? 7 : 8}">DISCOUNTED TARIFF (INR)</th>
-                    <th class="bg-black text-white w-[8%]" rowspan="2">Total Billing<br><span class="text-[9px] font-normal">(Public - Disc)</span></th>
-                    </tr><tr class="text-[9px]">
+                    <th class="bg-header-public" colspan="${isFactory ? 7 : 8}">PUBLIC TARIFF (INR)</th><th class="bg-header-discount" colspan="${isFactory ? 7 : 8}">DISCOUNTED TARIFF (INR)</th><th class="bg-black text-white w-[8%]" rowspan="2">Total Billing<br><span class="text-[9px] font-normal">(Public - Disc)</span></th></tr><tr class="text-[9px]">
                     ${isFactory ? '' : `<th class="bg-${colorClass}-800 text-white">Destuff</th>`}
                     <th class="bg-${colorClass}-800 text-white">THC</th> <th class="bg-${colorClass}-800 text-white">Infra.</th> <th class="bg-${colorClass}-800 text-white">Weighment</th> <th class="bg-${colorClass}-800 text-white">Energy</th> <th class="bg-${colorClass}-800 text-white">EIC/Cong</th> <th class="bg-${colorClass}-800 text-white">Port SSR</th> <th class="bg-${colorClass}-900 border-l border-white text-white">Total</th>
                     ${isFactory ? '' : `<th class="bg-green-700 text-white">Destuff</th>`}
