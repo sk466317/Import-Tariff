@@ -184,10 +184,10 @@
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Vol / Month <span class="text-red-600">*</span></label><input type="text" id="volMonth" class="input-field h-8 bg-white uppercase" placeholder="TEUs"></div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">CHA / Forwarder</label><input type="text" id="chaName" class="input-field h-8 bg-white uppercase" value="Various"></div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Version</label><input type="text" id="version" value="Version 1" class="input-field h-8 bg-white text-center"></div>
-            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Sales Person</label><select id="salesPerson" class="input-field h-8 bg-white uppercase"><option value="">-- Select --</option><option>Rajesh Kumar</option><option>Kunal Sahi</option><option>Anurag Pandey</option><option>Damanjit Singh</option><option>Chirag Rana</option><option>Mohik Sharma</option></select></div>
-            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Effective From</label><input type="date" id="dateFrom" onchange="calculateMonths()" class="input-field h-8 bg-white"></div>
-            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">End Date</label><input type="date" id="dateTo" onchange="calculateMonths()" class="input-field h-8 bg-white"></div>
-            <div class="col-span-1"><label class="block text-[10px] font-bold text-green-700 uppercase">Free Days</label><input type="text" id="freeDays" oninput="updateFooter(this.value); toggleTariffTables(); calculateMonths(true);" placeholder="" class="input-field h-8 bg-yellow-300 text-black border-yellow-500 font-extrabold"></div>
+            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Sales Person <span class="text-red-600">*</span></label><select id="salesPerson" class="input-field h-8 bg-white uppercase"><option value="">-- Select --</option><option>Rajesh Kumar</option><option>Kunal Sahi</option><option>Anurag Pandey</option><option>Damanjit Singh</option><option>Chirag Rana</option><option>Mohik Sharma</option></select></div>
+            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Effective From <span class="text-red-600">*</span></label><input type="date" id="dateFrom" onchange="calculateMonths()" class="input-field h-8 bg-white"></div>
+            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">End Date <span class="text-red-600">*</span></label><input type="date" id="dateTo" onchange="calculateMonths()" class="input-field h-8 bg-white"></div>
+            <div class="col-span-1"><label class="block text-[10px] font-bold text-green-700 uppercase">Free Days <span class="text-red-600">*</span></label><input type="text" id="freeDays" oninput="updateFooter(this.value); toggleTariffTables(); calculateMonths(true);" placeholder="" class="input-field h-8 bg-yellow-300 text-black border-yellow-500 font-extrabold"></div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Valid For</label><input type="text" id="validity" readonly class="input-field bg-transparent border-none text-red-700 font-bold text-xs h-8"></div>
             <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Tariff Status</label><div id="statusBox" class="input-field h-8 flex items-center justify-center font-bold text-[10px] uppercase rounded border text-center" style="background-color: #bbf7d0; color: #14532d; border-color: #15803d;">Approved & Valid</div></div>
         </div>
@@ -422,9 +422,20 @@
             calculateMonths(true); // Don't reset manual date changes
             const cust = document.getElementById('customerName').value.trim();
             const mode = document.getElementById('tariffMode').value;
+            // NEW VALIDATIONS
+            const sales = document.getElementById('salesPerson').value;
+            const dFrom = document.getElementById('dateFrom').value;
+            const dTo = document.getElementById('dateTo').value;
+            const free = document.getElementById('freeDays').value;
+
             if(!cust) return alert("Error: Customer Name is Required");
             if(!mode) return alert("Error: Tariff Mode is Required");
-            if(!document.getElementById('dateFrom').value) return alert("Error: Dates are Required");
+            
+            // New alerts
+            if(!sales) return alert("Error: Sales Person is Required");
+            if(!dFrom) return alert("Error: Effective From Date is Required");
+            if(!dTo) return alert("Error: End Date is Required");
+            if(!free) return alert("Error: Free Days are Required");
 
             let entryId = loadedRecordId || document.getElementById('recordIdStore').value;
             if (!entryId) {
@@ -790,6 +801,8 @@
             document.getElementById('chaName').value = "Various"; 
             document.getElementById('factoryStatusSelect').value = "Active";
             document.getElementById('icdStatusSelect').value = "Active";
+            updateTableStatus('factory');
+            updateTableStatus('icd');
             
             // Recalculate Main Tables to clear totals
             factoryData.forEach((_, i) => calcRow(`tableFactory_${i}`, 6));
@@ -1016,8 +1029,8 @@
                 "Customer Name", "Version", "Mode", 
                 "Discount Details (Summary)", 
                 "End Date", "Status", 
-                "Factory 0-27MT (₹)", "Factory 27-30MT (₹)", "Factory >31MT (₹)", "Factory 40\" (₹)", 
-                "ICD 0-27MT (₹)", "ICD 27-30MT (₹)", "ICD >31MT (₹)", "ICD 40\" (₹)", 
+                "Factory 0-27MT (Rs)", "Factory 27-30MT (Rs)", "Factory >31MT (Rs)", "Factory 40\" (Rs)", 
+                "ICD 0-27MT (Rs)", "ICD 27-30MT (Rs)", "ICD >31MT (Rs)", "ICD 40\" (Rs)", 
                 "Free Days"
             ];
             
@@ -1066,7 +1079,7 @@
                 const safeName = `"${(r.name || "").replace(/"/g, '""')}"`;
                 const safeSummary = `"${summaryText.replace(/"/g, '""')}"`;
                 
-                const freeDaysVal = r.mode === 'FreeDays' ? (r.free || "0") : "0";
+                const freeDaysVal = r.free ? `"${r.free.replace(/"/g, '""')}"` : "0"; 
                 
                 const row = [
                     safeName, 
