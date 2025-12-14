@@ -439,12 +439,15 @@
             const val = statusSelect.value;
             let isExpired = (val === 'Expired');
 
+            // Update UI Colors & Header Background
             if (isExpired) {
                 statusSelect.className = "ml-3 text-[9px] font-extrabold uppercase rounded border px-1 h-5 outline-none cursor-pointer transition-colors bg-red-200 text-red-900 border-red-600";
+                // Force Header to RED
                 header.classList.remove('bg-blue-900', 'bg-purple-900');
                 header.classList.add('bg-red-900-imp'); 
             } else {
                 statusSelect.className = "ml-3 text-[9px] font-extrabold uppercase rounded border px-1 h-5 outline-none cursor-pointer transition-colors bg-green-200 text-green-900 border-green-600";
+                // Revert Header to original color
                 header.classList.remove('bg-red-900-imp');
                 if (type === 'factory') header.classList.add('bg-blue-900');
                 if (type === 'icd') header.classList.add('bg-purple-900');
@@ -616,6 +619,9 @@
 
         async function initiateSave() {
             calculateMonths(true); 
+            // Removed: document.getElementById('dateToday').valueAsDate = new Date();
+            // This prevents overwriting the date on edit
+
             const cust = document.getElementById('customerName').value.trim();
             const mode = document.getElementById('tariffMode').value;
             // No need to re-validate basic fields here as preSaveCheck did it
@@ -837,13 +843,64 @@
             globalRecords = Array.from(recordMap.values());
             updateDropdown();
         }
+        
+        function parseDateToISO(dateStr) {
+            if (!dateStr) return "";
+            dateStr = dateStr.trim();
+            
+            // 1. Check for ISO format (YYYY-MM-DD)
+            const isoMatch = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})/);
+            if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+
+            // 2. Check for DD/MM/YYYY or DD-MM-YYYY
+            const dmyMatch = dateStr.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/);
+            if (dmyMatch) {
+                return `${dmyMatch[3]}-${dmyMatch[2].padStart(2,'0')}-${dmyMatch[1].padStart(2,'0')}`;
+            }
+            
+            // 3. Handle M/D/YYYY or MM/DD/YYYY (Common from Google Sheets US locale)
+            // Assumes if not ISO and not DD/MM/YYYY match above, it might be M/D/Y
+            // We check for slash
+            if (dateStr.includes('/')) {
+                const parts = dateStr.split('/');
+                if (parts.length === 3) {
+                    // Try to guess: if first part > 12, it must be day -> DD/MM/YYYY
+                    // else, assume MM/DD/YYYY or DD/MM/YYYY based on context.
+                    // Google Sheets API v4 often returns serial number or formatted string.
+                    // If visual string: usually depends on sheet locale.
+                    // Let's assume DD/MM/YYYY for Indian context since "Hind Terminals".
+                    // (Already covered by regex above)
+                }
+            }
+
+            // 4. Handle GViz format Date(yyyy,m,d)
+            const gvizMatch = dateStr.match(/Date\((\d+),(\d+),(\d+)\)/);
+            if (gvizMatch) {
+                const y = gvizMatch[1];
+                const m = String(parseInt(gvizMatch[2]) + 1).padStart(2, '0');
+                const d = String(gvizMatch[3]).padStart(2, '0');
+                return `${y}-${m}-${d}`;
+            }
+
+            // 5. Fallback: Javascript Date Parser (handles "Dec 14, 2025" etc)
+            const d = new Date(dateStr);
+            if (!isNaN(d.getTime())) {
+                return d.toISOString().split('T')[0];
+            }
+
+            return "";
+        }
 
         function updateDropdown() {
             const dd = document.getElementById('cloudHistory');
             dd.innerHTML = '<option value="">-- Select Customer (A-Z) --</option>';
             globalRecords.sort((a,b) => a.name.localeCompare(b.name)).forEach(r => {
-                let dInfo = ""; if(r.dates && r.dates.includes('to')) { const p = r.dates.split('to'); if(p[1]) dInfo = ` [Till ${p[1].trim()}]`; }
-                const opt = document.createElement('option'); opt.value = r.id; opt.text = `${r.name} - ${r.ver} (${r.mode})${dInfo}`; dd.appendChild(opt);
+                // Modified per request: Name (Mode) only
+                const opt = document.createElement('option'); 
+                opt.value = r.id; 
+                opt.text = `${r.name} (${r.mode})`; 
+                opt.style.fontWeight = "bold"; // Ensure options are bold if supported
+                dd.appendChild(opt);
             });
         }
 
@@ -856,6 +913,14 @@
             document.getElementById('recordIdStore').value = rec.id;
             document.getElementById('customerName').value = rec.name;
             document.getElementById('tariffNo').value = rec.ref;
+            
+            // DATE PARSING LOGIC: Handle common formats
+            const parsedDate = parseDateToISO(rec.date);
+            if (parsedDate) {
+                document.getElementById('dateToday').value = parsedDate;
+            }
+
+
             if(rec.dates && rec.dates.includes('to')) { const p = rec.dates.split('to'); document.getElementById('dateFrom').value = p[0].trim(); document.getElementById('dateTo').value = p[1].trim(); }
             
             const map = {'tariffMode':'mode','destuffType':'type','customerType':'cType','volMonth':'vol','chaName':'cha','salesPerson':'sales','freeDays':'free','validity':'valid','version':'ver','remarks':'rem'};
@@ -1005,7 +1070,8 @@
             document.getElementById('chaName').value = "Various"; 
             document.getElementById('factoryStatusSelect').value = "Active";
             document.getElementById('icdStatusSelect').value = "Active";
-            
+            document.getElementById('dateToday').valueAsDate = new Date(); // Reset to today
+
             // Reset Doc Link
             document.getElementById('finalDocLink').value = "";
             updateApprovalDocUI("");
@@ -1235,12 +1301,13 @@
             if (!currentReportData || currentReportData.length === 0) return alert("No data to download!");
             
             const headers = [
-                "Customer Name", "Version", "Mode", 
-                "Discount Details (Summary)", 
+                "Customer Name", "Version", "Mode", "Destuffing Type",
                 "End Date", "Status", 
                 "Factory 0-27MT (Rs)", "Factory 27-30MT (Rs)", "Factory >31MT (Rs)", "Factory 40\" (Rs)", 
                 "ICD 0-27MT (Rs)", "ICD 27-30MT (Rs)", "ICD >31MT (Rs)", "ICD 40\" (Rs)", 
-                "Free Days"
+                "Free Days", 
+                "Status", "Add. Tbl Type", "Add. Tbl End Date", // New Columns
+                "Add. Tbl 0-27MT", "Add. Tbl 27-30MT", "Add. Tbl >31MT", "Add. Tbl 40\""
             ];
             
             let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
@@ -1284,22 +1351,92 @@
                 } else {
                     summaryText = slabDetails.length > 0 ? slabDetails.join(' | ') : "No Discount";
                 }
+
+                // DYNAMIC TABLES INFO - SPLIT COLUMNS
+                let addTblStatus = "N/A"; 
+                let addTblType = "N/A";
+                let addTblEndDate = "N/A";
+                let addTblDiscs = ["0", "0", "0", "0"]; // 0-27, 27-30, >31, 40
+
+                try {
+                    const tData = JSON.parse(r.jT || '[]');
+                    const dynObj = tData.find(x => x._sys_type === 'DYNAMIC_DATA');
+                    if(dynObj && dynObj.payload && dynObj.payload.length > 0) {
+                        // Taking ONLY the first additional table as requested for CSV format
+                        const tbl = dynObj.payload[0];
+                        
+                        addTblType = tbl.type || "N/A";
+                        addTblEndDate = tbl.end || "N/A";
+
+                        // Status Logic
+                        let rawStatus = tbl.status || "Auto";
+                        if (rawStatus === 'Active' || rawStatus === 'Expired') {
+                            addTblStatus = rawStatus;
+                        } else {
+                            // Auto Calculation
+                            if (tbl.end) {
+                                 const endDate = new Date(tbl.end);
+                                 const today = new Date(); today.setHours(0,0,0,0);
+                                 addTblStatus = endDate < today ? "Expired" : "Active";
+                            } else {
+                                 addTblStatus = "Active"; // Default if no date
+                            }
+                        }
+                        
+                        tbl.values.forEach((rowInputs, rowIndex) => {
+                            let rowTotal = rowInputs.reduce((acc, curr) => acc + (parseFloat(curr) || 0), 0);
+                            if(rowIndex < 4) addTblDiscs[rowIndex] = rowTotal > 0 ? rowTotal : "0";
+                        });
+                    }
+                } catch(e) {}
                 
                 const safeName = `"${(r.name || "").replace(/"/g, '""')}"`;
                 const safeSummary = `"${summaryText.replace(/"/g, '""')}"`;
                 
                 const freeDaysVal = r.free ? `"${r.free.replace(/"/g, '""')}"` : "0"; 
+
+                // Determine Status for Excel based on saved tag (if available) or date
+                let excelStatus = "Active"; // Default
+
+                try {
+                    if (r.jF) {
+                        const fData = JSON.parse(r.jF);
+                        if (fData.length > 0 && fData[fData.length - 1].meta === 'DATES') {
+                            const meta = fData[fData.length - 1];
+                            if (meta.status === 'Expired') excelStatus = "Expired";
+                            else if (meta.status === 'Active') excelStatus = "Active";
+                            // If meta status is something else or missing, fallback to date check logic below
+                            else if (endDateStr !== "N/A") {
+                                const d = new Date(endDateStr);
+                                if(d < new Date().setHours(0,0,0,0)) excelStatus = "Expired";
+                            }
+                        } else {
+                             // Fallback if no meta
+                             if(endDateStr !== "N/A") {
+                                 const d = new Date(endDateStr);
+                                 if(d < new Date().setHours(0,0,0,0)) excelStatus = "Expired";
+                            }
+                        }
+                    }
+                } catch (e) {
+                    // Fallback logic
+                }
                 
                 const row = [
                     safeName, 
                     r.ver || 'V1', 
                     r.mode || '-', 
-                    safeSummary, 
+                    r.type || 'Both', // Added Destuffing Type value
+                    // Removed Discount Details (Summary) as per request
                     endDateStr, 
-                    "Active",
+                    excelStatus,
                     fDisc[0], fDisc[1], fDisc[2], fDisc[3],
                     iDisc[0], iDisc[1], iDisc[2], iDisc[3],
-                    freeDaysVal
+                    freeDaysVal,
+                    `"${addTblStatus}"`, 
+                    `"${addTblType}"`,
+                    `"${addTblEndDate}"`,
+                    addTblDiscs[0], addTblDiscs[1], addTblDiscs[2], addTblDiscs[3]
                 ];
                 
                 csvContent += row.join(",") + "\n";
@@ -1462,7 +1599,10 @@
 
             html += `<table class="tariff-table border-2 border-${colorClass}-900"><thead><tr>
                     <th class="bg-gray-700 text-white w-[10%]" rowspan="2">Weight Slab</th>
-                    <th class="bg-header-public" colspan="${isFactory ? 7 : 8}">PUBLIC TARIFF (INR)</th><th class="bg-header-discount" colspan="${isFactory ? 7 : 8}">DISCOUNTED TARIFF (INR)</th><th class="bg-black text-white w-[8%]" rowspan="2">Total Billing<br><span class="text-[9px] font-normal">(Public - Disc)</span></th></tr><tr class="text-[9px]">
+                    <th class="bg-header-public" colspan="${isFactory ? 7 : 8}">PUBLIC TARIFF (INR)</th>
+                    <th class="bg-header-discount" colspan="${isFactory ? 7 : 8}">DISCOUNTED TARIFF (INR)</th>
+                    <th class="bg-black text-white w-[8%]" rowspan="2">Total Billing<br><span class="text-[9px] font-normal">(Public - Disc)</span></th>
+                    </tr><tr class="text-[9px]">
                     ${isFactory ? '' : `<th class="bg-${colorClass}-800 text-white">Destuff</th>`}
                     <th class="bg-${colorClass}-800 text-white">THC</th> <th class="bg-${colorClass}-800 text-white">Infra.</th> <th class="bg-${colorClass}-800 text-white">Weighment</th> <th class="bg-${colorClass}-800 text-white">Energy</th> <th class="bg-${colorClass}-800 text-white">EIC/Cong</th> <th class="bg-${colorClass}-800 text-white">Port SSR</th> <th class="bg-${colorClass}-900 border-l border-white text-white">Total</th>
                     ${isFactory ? '' : `<th class="bg-green-700 text-white">Destuff</th>`}
