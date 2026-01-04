@@ -107,6 +107,21 @@
         .btn-upload-save { width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin-top: 15px; font-weight: bold; }
         .btn-upload-save:hover { background-color: #218838; }
         .btn-upload-save:disabled { background-color: #ccc; cursor: not-allowed; }
+<style>
+    /* मौजूदा स्टाइल्स के बाद जोड़ें */
+    .view-mode button {
+        pointer-events: none !important;
+        opacity: 0.5 !important;
+        cursor: not-allowed !important;
+    }
+    
+    /* विशेष रूप से Add Free Days बटन के लिए (अगर जरूरी हो) */
+    .view-mode .btn-add-free-days {
+        pointer-events: none !important;
+        opacity: 0.5 !important;
+        cursor: not-allowed !important;
+    }
+</style>
     </style>
 </head>
 <body class="p-2 md:p-4 overflow-hidden" id="mainBody">
@@ -259,36 +274,55 @@
         </div>
 
         <div class="grid grid-cols-6 gap-3 mb-4 bg-blue-200 p-4 rounded border border-blue-900 shadow-sm">
-            <div class="col-span-1"><label class="block text-[10px] font-bold text-purple-700 uppercase">Tariff Mode <span class="text-red-600">*</span></label><select id="tariffMode" onchange="toggleTariffTables()" class="input-field h-8 bg-purple-50 border-purple-300 text-purple-900"><option value="">-- Select Mode --</option><option value="Discounted">Discounted Tariff</option><option value="FreeDays">Free Days Only</option></select></div>
-            <div class="col-span-1"><label class="block text-[10px] font-bold text-blue-700 uppercase">Destuffing Type</label><select id="destuffType" onchange="handleDestuffChange()" class="input-field h-8 bg-blue-50 border-blue-300 text-blue-900"><option value="">-- Select --</option><option value="Both">Both (Factory & ICD)</option><option value="Factory">Factory Destuffing</option><option value="ICD">ICD Destuffing</option></select></div>
-            <div class="col-span-2 relative">
-                <label class="block text-[10px] font-bold text-gray-600 uppercase">Customer Name <span class="text-red-600">*</span></label>
-                <input type="text" id="customerName" onkeyup="suggestCustomer(this.value)" autocomplete="off" class="input-field font-bold text-blue-900 h-8 bg-white uppercase border-l-4 border-blue-600" placeholder="ENTER NAME">
-                <div id="suggestionBox" class="hidden absolute z-50 w-full bg-white border border-gray-400 shadow-xl max-h-40 overflow-y-auto mt-1 rounded-b"></div>
-            </div>
-            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Customer Type <span class="text-red-600">*</span></label><select id="customerType" class="input-field h-8 bg-white uppercase"><option value="">-- Select --</option><option>Importer</option><option>CHA</option><option>Forwarder</option><option>Shipping Line</option><option>Transporter</option></select></div>
-            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Vol / Month <span class="text-red-600">*</span></label><input type="text" id="volMonth" class="input-field h-8 bg-white uppercase" placeholder="TEUs"></div>
-            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">CHA / Forwarder</label><input type="text" id="chaName" class="input-field h-8 bg-white uppercase" value="Various"></div>
-            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Version</label><input type="text" id="version" value="Version 1" class="input-field h-8 bg-white text-center"></div>
-            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Sales Person <span class="text-red-600">*</span></label><select id="salesPerson" class="input-field h-8 bg-white uppercase"><option value="">-- Select --</option><option>Rajesh Kumar</option><option>Kunal Sahi</option><option>Anurag Pandey</option><option>Damanjit Singh</option><option>Chirag Rana</option><option>Mohik Sharma</option></select></div>
-            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Effective From <span class="text-red-600">*</span></label><input type="date" id="dateFrom" onchange="calculateMonths()" class="input-field h-8 bg-white"></div>
-            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">End Date <span class="text-red-600">*</span></label><input type="date" id="dateTo" onchange="calculateMonths()" class="input-field h-8 bg-white"></div>
-            <div class="col-span-1"><label class="block text-[10px] font-bold text-green-700 uppercase">Free Days <span class="text-red-600">*</span></label><input type="text" id="freeDays" oninput="updateFooter(this.value); toggleTariffTables(); calculateMonths(true);" placeholder="" class="input-field h-8 bg-yellow-300 text-black border-yellow-500 font-extrabold"></div>
-            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Valid For</label><input type="text" id="validity" readonly class="input-field bg-transparent border-none text-red-700 font-bold text-xs h-8"></div>
-            <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Tariff Status</label><div id="statusBox" class="input-field h-8 flex items-center justify-center font-bold text-[10px] uppercase rounded border text-center" style="background-color: #bbf7d0; color: #14532d; border-color: #15803d;">Approved & Valid</div></div>
-            <!-- NEW APPROVAL DOC BOX WITH HEARTBEAT -->
-            <div class="col-span-1">
-                <label class="block text-[10px] font-bold text-blue-800 uppercase">Approval Doc <span class="text-red-600">*</span></label>
-                <div class="input-field h-8 flex items-center justify-center gap-2 bg-white border-blue-300">
-                    <a id="btnViewApproval" href="#" target="_blank" class="hidden flex items-center animate-heartbeat"><i class="fas fa-eye mr-1"></i> VIEW</a>
-                    <span id="noApprovalText" class="text-gray-400 text-[10px] font-bold uppercase">Pending</span>
-                </div>
-            </div>
+    <div class="col-span-1"><label class="block text-[10px] font-bold text-purple-700 uppercase">Tariff Mode <span class="text-red-600">*</span></label><select id="tariffMode" onchange="toggleTariffTables()" class="input-field h-8 bg-purple-50 border-purple-300 text-purple-900"><option value="">-- Select Mode --</option><option value="Discounted">Discounted Tariff</option><option value="FreeDays">Free Days Only</option></select></div>
+    <div class="col-span-1"><label class="block text-[10px] font-bold text-blue-700 uppercase">Destuffing Type</label><select id="destuffType" onchange="handleDestuffChange()" class="input-field h-8 bg-blue-50 border-blue-300 text-blue-900"><option value="">-- Select --</option><option value="Both">Both (Factory & ICD)</option><option value="Factory">Factory Destuffing</option><option value="ICD">ICD Destuffing</option></select></div>
+    <div class="col-span-2 relative">
+        <label class="block text-[10px] font-bold text-gray-600 uppercase">Customer Name <span class="text-red-600">*</span></label>
+        <input type="text" id="customerName" onkeyup="suggestCustomer(this.value)" autocomplete="off" class="input-field font-bold text-blue-900 h-8 bg-white uppercase border-l-4 border-blue-600" placeholder="ENTER NAME">
+        <div id="suggestionBox" class="hidden absolute z-50 w-full bg-white border border-gray-400 shadow-xl max-h-40 overflow-y-auto mt-1 rounded-b"></div>
+    </div>
+    <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Customer Type <span class="text-red-600">*</span></label><select id="customerType" class="input-field h-8 bg-white uppercase"><option value="">-- Select --</option><option>Importer</option><option>CHA</option><option>Forwarder</option><option>Shipping Line</option><option>Transporter</option></select></div>
+    <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Vol / Month <span class="text-red-600">*</span></label><input type="text" id="volMonth" class="input-field h-8 bg-white uppercase" placeholder="TEUs"></div>
+    <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">CHA / Forwarder</label><input type="text" id="chaName" class="input-field h-8 bg-white uppercase" value="Various"></div>
+    <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Version</label><input type="text" id="version" value="Version 1" class="input-field h-8 bg-white text-center"></div>
+    <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Sales Person <span class="text-red-600">*</span></label><select id="salesPerson" class="input-field h-8 bg-white uppercase"><option value="">-- Select --</option><option>Rajesh Kumar</option><option>Kunal Sahi</option><option>Anurag Pandey</option><option>Damanjit Singh</option><option>Chirag Rana</option><option>Mohik Sharma</option></select></div>
+    <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Effective From <span class="text-red-600">*</span></label><input type="date" id="dateFrom" onchange="calculateMonths()" class="input-field h-8 bg-white"></div>
+    <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">End Date <span class="text-red-600">*</span></label><input type="date" id="dateTo" onchange="calculateMonths()" class="input-field h-8 bg-white"></div>
+    
+    <!-- Valid For - End Date के बाद -->
+    <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Valid For</label><input type="text" id="validity" readonly class="input-field bg-transparent border-none text-red-700 font-bold text-xs h-8"></div>
+    
+    <!-- Free Days कॉलम - Valid For के बाद -->
+    <div class="col-span-1 relative">
+        <label class="block text-[10px] font-bold text-green-700 uppercase">Free Days <span class="text-red-600">*</span></label>
+        <textarea id="freeDays" rows="3"
+                  oninput="updateProminentFreeDaysDisplay(); toggleTariffTables(); calculateMonths(true);"
+                  placeholder="e.g. ARRIVAL +10 DAYS FREE TIME ONLY"
+                  class="input-field w-full bg-yellow-300 text-black border-yellow-500 font-extrabold resize-none mb-2"></textarea>       
+        <button onclick="extendFreeDays()"
+        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-bold w-full no-print btn-add-free-days">
+    Add Free Days
+</button>
+    </div>
+    
+    <!-- Tariff Status -->
+    <div class="col-span-1"><label class="block text-[10px] font-bold text-gray-600 uppercase">Tariff Status</label><div id="statusBox" class="input-field h-8 flex items-center justify-center font-bold text-[10px] uppercase rounded border text-center" style="background-color: #bbf7d0; color: #14532d; border-color: #15803d;">Approved & Valid</div></div>
+    
+    <!-- Approval Doc -->
+    <div class="col-span-1">
+        <label class="block text-[10px] font-bold text-blue-800 uppercase">Approval Doc <span class="text-red-600">*</span></label>
+        <div class="input-field h-8 flex items-center justify-center gap-2 bg-white border-blue-300">
+            <a id="btnViewApproval" href="#" target="_blank" class="hidden flex items-center animate-heartbeat"><i class="fas fa-eye mr-1"></i> VIEW</a>
+            <span id="noApprovalText" class="text-gray-400 text-[10px] font-bold uppercase">Pending</span>
         </div>
+    </div>
+</div>
 
         <!-- ... remaining HTML content ... -->
-        <div id="prominentFreeDays" class="hidden mb-6 bg-green-50 border-2 border-green-500 p-6 rounded text-center shadow-lg"><h3 class="text-green-800 text-lg font-bold uppercase mb-2">Free Days Allocation</h3><p id="prominentFreeDaysText" class="text-4xl font-extrabold text-green-600">03 DAYS</p></div>
-        
+        <div id="prominentFreeDays" class="hidden mb-6 bg-gray-100 border-2 border-gray-900 p-6 rounded shadow-lg">
+    <h3 class="text-green-800 text-xl font-bold uppercase text-center mb-4">Free Days Allocation</h3>
+    <div id="prominentFreeDaysContent" class="text-green-700 font-bold text-sm space-y-2"></div>
+</div> 
         <!-- NEW ADD TABLE BUTTON -->
         <div class="flex justify-between items-center mb-4 no-print">
             <h3 class="text-sm font-bold text-gray-500 uppercase">Tariff Tables</h3>
@@ -913,7 +947,9 @@
             document.getElementById('recordIdStore').value = rec.id;
             document.getElementById('customerName').value = rec.name;
             document.getElementById('tariffNo').value = rec.ref;
-            
+                updateProminentFreeDaysDisplay();
+    toggleTariffTables();
+    toggleReadOnly(true);
             // DATE PARSING LOGIC: Handle common formats
             const parsedDate = parseDateToISO(rec.date);
             if (parsedDate) {
@@ -997,7 +1033,9 @@
             updateApprovalDocUI(appUrl);
 
             calculateMonths(true); // Don't overwrite loaded table dates
-            updateFooter(rec.free); toggleTariffTables(); toggleReadOnly(true);
+            updateProminentFreeDaysDisplay();
+toggleTariffTables();
+toggleReadOnly(true);
         }
 
         function updateApprovalDocUI(url) {
@@ -1027,7 +1065,7 @@
                 row.p.forEach((val, cIdx) => { pTotal += val; html += `<td><input type="number" id="${uid}_p${cIdx}" value="${val}" readonly tabindex="-1" class="text-blue-900 font-bold bg-gray-100 pointer-events-none"></td>`; });
                 html += `<td class="bg-blue-100 font-extrabold text-blue-900" id="${uid}_ptotal">${pTotal}</td>`;
                 for(let i=0; i<colCount; i++) html += `<td><input type="number" id="${uid}_d${i}" oninput="calcRow('${uid}', ${colCount})" class="text-green-700 font-bold border-b border-green-100"></td>`;
-                html += `<td class="bg-green-100 text-red-600 font-extrabold" id="${uid}_dtotal">0</td><td class="bg-black text-white font-bold" id="${uid}_final">${pTotal}</td>`;
+                html += `<td class="bg-yellow-100 text-red-600 font-extrabold" id="${uid}_dtotal">0</td><td class="bg-black text-white font-bold" id="${uid}_final">${pTotal}</td>`;
                 tr.innerHTML = html; tbody.appendChild(tr);
             });
         }
@@ -1097,16 +1135,30 @@
             toggleReadOnly(false); 
         }
         
-        function revalidateRecord() { 
-            if(prompt("Password:") !== "Honey@143143") return; 
-            toggleReadOnly(false); 
-            loadedRecordId = null;
-            document.getElementById('recordIdStore').value = "";
-            const v = document.getElementById('version'); 
-            v.value = "Version " + ((parseInt(v.value.replace(/\D/g,''))||1)+1); 
-            document.getElementById('dateToday').valueAsDate = new Date(); 
-            alert("Version Updated. Clicking Save will create a NEW RECORD."); 
-        }
+        function revalidateRecord() {
+    if(prompt("Password:") !== "Honey@143143") return;
+    
+    toggleReadOnly(false);
+    loadedRecordId = null;
+    document.getElementById('recordIdStore').value = "";
+    
+    const v = document.getElementById('version');
+    v.value = "Version " + ((parseInt(v.value.replace(/\D/g,''))||1)+1);
+    
+    document.getElementById('dateToday').valueAsDate = new Date();
+    
+    // नई लाइन्स: Effective From और End Date खाली करें
+    document.getElementById('dateFrom').value = "";
+    document.getElementById('dateTo').value = "";
+    
+    // Validity field भी खाली हो जाएगा (calculateMonths ट्रिगर करके)
+    calculateMonths();
+    
+    // Prominent Free Days display अपडेट करें (dates N/A दिखाने के लिए)
+    updateProminentFreeDaysDisplay();
+    
+    alert("Version Updated. Effective From और End Date खाली कर दिए गए हैं। नई dates भरकर Save करें – यह एक NEW RECORD बनेगा।");
+}
 
         function calculateMonths(skipTableSync = false) { 
             const dateFromVal = document.getElementById('dateFrom').value;
@@ -1151,7 +1203,7 @@
                 } 
             } 
         }
-        function updateFooter(v) { const t = v ? v.toUpperCase() : "03 DAYS"; document.getElementById('freeDaysDisplay').innerText = `DISCOUNTED: ARRIVAL + ${t} FREE TIME ONLY`; document.getElementById('prominentFreeDaysText').innerText = t; }
+	       
         function handleDestuffChange() { const v = document.getElementById('destuffType').value; if(v && v !== 'Both') document.getElementById('tariffMode').value = 'Discounted'; toggleTariffTables(); }
         function toggleTariffTables() { const m = document.getElementById('tariffMode').value, t = document.getElementById('destuffType').value, fs = document.getElementById('factorySection'), is = document.getElementById('icdSection'), pb = document.getElementById('prominentFreeDays'); fs.style.display = 'none'; is.style.display = 'none'; pb.style.display = 'none'; document.getElementById('destuffType').disabled = false; if(m === 'FreeDays') { pb.style.display = 'block'; document.getElementById('destuffType').value = ""; document.getElementById('destuffType').disabled = true; } else { if(t === 'Factory' || t === 'Both') fs.style.display = 'block'; if(t === 'ICD' || t === 'Both') is.style.display = 'block'; } }
         function filterDropdown(v) { const o = document.getElementById('cloudHistory').options; v = v.toLowerCase(); for(let i=1; i<o.length; i++) o[i].style.display = o[i].text.toLowerCase().includes(v) ? 'block' : 'none'; }
@@ -1637,6 +1689,176 @@
             dataSet.forEach((_, rIdx) => calcRow(`dyn_${uniqueID}_${rIdx}`, colCount));
             updateDynamicTableStatus(uniqueID);
         }
+function getCurrentFreeDays() {
+    const textarea = document.getElementById('freeDays');
+    const lines = textarea.value.trim().split('\n').map(l => l.trim()).filter(l => l !== '');
+    for (let i = lines.length - 1; i >= 0; i--) {
+        if (!lines[i].endsWith('(Expired)')) {
+            return lines[i];
+        }
+    }
+    return '';
+}
+
+function extendFreeDays() {
+    // Current dates को DD-MM-YYYY में दिखाएं
+    const currentFromInput = document.getElementById('dateFrom').value;
+    const currentToInput = document.getElementById('dateTo').value;
+    let currentFromDisplay = 'N/A';
+    let currentToDisplay = 'N/A';
+    if (currentFromInput) {
+        const d = new Date(currentFromInput);
+        currentFromDisplay = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
+    }
+    if (currentToInput) {
+        const d = new Date(currentToInput);
+        currentToDisplay = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
+    }
+
+    // Prompt में DD-MM-YYYY फॉर्मेट
+    let newDates = prompt(
+        `Enter New Effective Period\nFormat: DD-MM-YYYY to DD-MM-YYYY\n\nCurrent: ${currentFromDisplay} to ${currentToDisplay}`,
+        `${currentFromDisplay} to ${currentToDisplay}`
+    );
+
+    if (!newDates) return; // Cancel
+
+    newDates = newDates.trim();
+    const dateParts = newDates.split(' to ');
+    if (dateParts.length !== 2) {
+        alert('Invalid format. Please use: DD-MM-YYYY to DD-MM-YYYY');
+        return;
+    }
+
+    const newFromDisplay = dateParts[0].trim();
+    const newToDisplay = dateParts[1].trim();
+
+    // DD-MM-YYYY validation
+    const regex = /^(\d{2})-(\d{2})-(\d{4})$/;
+    if (!regex.test(newFromDisplay) || !regex.test(newToDisplay)) {
+        alert('Invalid date format. Use DD-MM-YYYY');
+        return;
+    }
+
+    const [d1, m1, y1] = newFromDisplay.split('-').map(Number);
+    const [d2, m2, y2] = newToDisplay.split('-').map(Number);
+
+    const newFromDate = new Date(y1, m1 - 1, d1);
+    const newToDate = new Date(y2, m2 - 1, d2);
+
+    if (isNaN(newFromDate.getTime()) || isNaN(newToDate.getTime())) {
+        alert('Invalid date values. Please check DD, MM, YYYY.');
+        return;
+    }
+
+    if (newFromDate >= newToDate) {
+        alert('Effective From must be before End Date');
+        return;
+    }
+
+    // ISO format में fields अपडेट करें (date input के लिए जरूरी)
+    const newFromISO = `${y1}-${String(m1).padStart(2,'0')}-${String(d1).padStart(2,'0')}`;
+    const newToISO = `${y2}-${String(m2).padStart(2,'0')}-${String(d2).padStart(2,'0')}`;
+
+    document.getElementById('dateFrom').value = newFromISO;
+    document.getElementById('dateTo').value = newToISO;
+
+    // अब नया Free Days value मांगें
+    const textarea = document.getElementById('freeDays');
+    let lines = textarea.value.trim().split('\n').map(l => l.trim()).filter(l => l !== '');
+
+    let currentIndex = -1;
+    for (let i = lines.length - 1; i >= 0; i--) {
+        if (!lines[i].endsWith('(Expired)')) {
+            currentIndex = i;
+            break;
+        }
+    }
+
+    if (currentIndex === -1) {
+        alert('Please enter current Free Days first.');
+        return;
+    }
+
+    const current = lines[currentIndex];
+
+    let newValue = prompt('Enter New Free Days (e.g. ARRIVAL +10 DAYS FREE TIME ONLY):', current);
+    if (!newValue) return;
+    newValue = newValue.trim().toUpperCase();
+
+    const expiredLine = current + ' (Expired)';
+
+    lines[currentIndex] = expiredLine;
+    lines.push(newValue);
+
+    textarea.value = lines.join('\n');
+
+    // अपडेट्स
+    updateProminentFreeDaysDisplay();
+    toggleTariffTables();
+    calculateMonths(true);
+}
+
+function updateProminentFreeDaysDisplay() {
+    const textarea = document.getElementById('freeDays');
+    const lines = textarea.value.trim().split('\n').map(l => l.trim()).filter(l => l !== '');
+
+    let activeValue = '';
+    const expiredValues = [];
+
+    for (let i = lines.length - 1; i >= 0; i--) {
+        const line = lines[i];
+        if (line.endsWith('(Expired)')) {
+            expiredValues.unshift(line);  // पूरा "(Expired)" के साथ
+        } else if (activeValue === '') {
+            activeValue = line;
+        }
+    }
+
+    if (activeValue === '') activeValue = '03 DAYS FREE TIME ONLY';
+
+    let fromDate = 'N/A';
+    let toDate = 'N/A';
+    const rawFrom = document.getElementById('dateFrom').value;
+    const rawTo = document.getElementById('dateTo').value;
+    if (rawFrom) {
+        const d = new Date(rawFrom);
+        fromDate = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
+    }
+    if (rawTo) {
+        const d = new Date(rawTo);
+        toDate = `${String(d.getDate()).padStart(2,'0')}-${String(d.getMonth()+1).padStart(2,'0')}-${d.getFullYear()}`;
+    }
+
+    const contentDiv = document.getElementById('prominentFreeDaysContent');
+    let html = `
+        <hr class="border-green-800 mb-3">
+        <p class="text-base whitespace-nowrap overflow-x-auto">
+            Current Free Days: ${activeValue} Active (${fromDate} to ${toDate})
+        </p>
+        <hr class="border-green-800 my-3">
+    `;
+
+    // हर expired entry के साथ "Previous Free Days:" हैडिंग
+    expiredValues.forEach(exp => {
+        html += `
+            <p class="text-base text-red-600 whitespace-nowrap overflow-x-auto">
+                Previous Free Days: ${exp}
+            </p>
+        `;
+    });
+
+    // अंत में केवल एक लाइन
+    html += `<hr class="border-green-800 mt-3">`;
+
+    contentDiv.innerHTML = html;
+
+    const box = document.getElementById('prominentFreeDays');
+    const isFreeDaysMode = document.getElementById('tariffMode').value === 'FreeDays';
+    box.classList.toggle('hidden', !isFreeDaysMode);
+
+    document.getElementById('freeDaysDisplay').innerText = `DISCOUNTED: ARRIVAL + ${activeValue} FREE TIME ONLY`;
+}	
     </script>
 </body>
 </html>
