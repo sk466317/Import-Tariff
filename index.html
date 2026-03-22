@@ -76,6 +76,7 @@
         #loadingOverlay { background: rgba(0,0,0,0.8); display: none; z-index: 3000; } 
         #accessOverlay { background: #111827; z-index: 4000; }
         #reportsModal { background: rgba(0,0,0,0.8); display: none; z-index: 2500; align-items: flex-start; padding-top: 50px; }
+        #bulkApprovalModal { background: rgba(0,0,0,0.8); display: none; z-index: 2550; align-items: center; justify-content: center; padding-top: 0; }
         #uploadModal { background: rgba(0,0,0,0.8); display: none; z-index: 2600; align-items: center; justify-content: center; }
 
         .btn-uniform { height: 34px; padding: 0 16px; font-size: 0.75rem; font-weight: 700; border-radius: 0.25rem; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap; transition: all 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
@@ -107,6 +108,7 @@
         .btn-upload-save { width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; margin-top: 15px; font-weight: bold; }
         .btn-upload-save:hover { background-color: #218838; }
         .btn-upload-save:disabled { background-color: #ccc; cursor: not-allowed; }
+        .bulk-row-selected { background-color: #eff6ff !important; }
 <style>
     /* मौजूदा स्टाइल्स के बाद जोड़ें */
     .view-mode button {
@@ -167,6 +169,47 @@
         </div>
     </div>
 
+    <!-- BULK APPROVAL MODAL -->
+    <div id="bulkApprovalModal" class="overlay" onclick="if(event.target===this)closeBulkApprovalModal()">
+        <div class="bg-white w-11/12 max-w-6xl rounded-lg shadow-2xl overflow-hidden max-h-[88vh] flex flex-col">
+            <div class="bg-sky-900 p-4 flex justify-between items-center text-white">
+                <div>
+                    <h3 class="font-bold text-lg"><i class="fas fa-user-check mr-2"></i>Bulk Approval Update</h3>
+                    <p class="text-xs text-sky-200 mt-1">Select customers and update Effective From / End Date together.</p>
+                </div>
+                <button onclick="closeBulkApprovalModal()" class="hover:text-red-300"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-4 border-b border-gray-200 bg-gray-50 flex flex-col lg:flex-row gap-4 lg:items-end lg:justify-between">
+                <div class="flex flex-wrap gap-2">
+                    <button onclick="setBulkSelectionMode('one')" id="bulkModeOne" class="btn-uniform bg-blue-600 text-white">Selection One</button>
+                    <button onclick="setBulkSelectionMode('all')" id="bulkModeAll" class="btn-uniform bg-emerald-600 text-white">All</button>
+                    <button onclick="setBulkSelectionMode('custom')" id="bulkModeCustom" class="btn-uniform bg-amber-500 text-white">Custom Selection</button>
+                </div>
+                <div class="flex flex-wrap gap-3 items-end">
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-700 uppercase mb-1">Effective From</label>
+                        <input type="date" id="bulkDateFrom" class="input-field h-9 min-w-[160px]">
+                    </div>
+                    <div>
+                        <label class="block text-[11px] font-bold text-gray-700 uppercase mb-1">End Date</label>
+                        <input type="date" id="bulkDateTo" class="input-field h-9 min-w-[160px]">
+                    </div>
+                    <button onclick="bulkApplyDates()" class="btn-uniform bg-green-600 hover:bg-green-700 text-white h-9">
+                        <i class="fas fa-save mr-2"></i>Update
+                    </button>
+                </div>
+            </div>
+            <div class="px-4 py-2 bg-gray-100 border-b border-gray-300 text-[11px] font-bold text-gray-700 flex">
+                <div class="w-14 text-center">Select</div>
+                <div class="flex-1">Customer Name</div>
+                <div class="w-40 text-center">Effective From</div>
+                <div class="w-40 text-center">End Date</div>
+            </div>
+            <div id="bulkApprovalList" class="flex-1 overflow-y-auto bg-white"></div>
+            <div id="bulkSelectionSummary" class="px-4 py-2 bg-gray-100 border-t border-gray-300 text-xs font-bold text-gray-600">0 selected</div>
+        </div>
+    </div>
+
     <!-- UPLOAD MODAL -->
     <div id="uploadModal" class="overlay">
         <div class="bg-white rounded-lg shadow-2xl p-6 w-full max-w-md relative">
@@ -218,6 +261,7 @@
                 <button onclick="sendEmail()" class="btn-uniform bg-blue-500 hover:bg-blue-600 text-white"><i class="fas fa-envelope mr-2"></i> Email</button>
                 <button onclick="copyToClipboard()" class="btn-uniform bg-teal-600 hover:bg-teal-700 text-white"><i class="fas fa-copy mr-2"></i> Screenshot</button>
                 <button onclick="downloadPDF()" class="btn-uniform bg-red-600 hover:bg-red-700 text-white"><i class="fas fa-file-pdf mr-2"></i> PDF</button>
+                <button onclick="openBulkApprovalModal()" class="btn-uniform bg-sky-700 hover:bg-sky-800 text-white"><i class="fas fa-user-check mr-2"></i> Bulk Approval</button>
                 <div class="relative inline-block">
                     <input type="file" id="approvalUpload" class="hidden" accept=".pdf,.jpg,.jpeg,.png" onchange="handleApproval(this)">
                     <!-- Existing Local Upload (Optional) -->
@@ -225,6 +269,7 @@
                 </div>
                 <button onclick="enableEdit()" id="btnEdit" class="hidden btn-uniform bg-orange-500 hover:bg-orange-600 text-white"><i class="fas fa-edit mr-2"></i> Edit</button>
                 <button onclick="revalidateRecord()" id="btnRevalid" class="hidden btn-uniform bg-purple-600 hover:bg-purple-700 text-white"><i class="fas fa-copy mr-2"></i> Revalid</button>
+                <button onclick="deleteCurrentRecord()" id="btnDeleteRecord" class="hidden btn-uniform bg-rose-700 hover:bg-rose-800 text-white"><i class="fas fa-trash mr-2"></i> Delete Record</button>
                 <div class="w-px h-6 bg-gray-300 mx-1"></div>
                 <!-- Changed onclick to preSaveCheck -->
                 <button id="btnSave" onclick="preSaveCheck()" class="btn-uniform bg-green-600 hover:bg-green-700 text-white animate-pulse"><i class="fas fa-save mr-2"></i> SAVE / UPDATE</button>
@@ -234,7 +279,7 @@
             <div class="flex flex-col md:flex-row gap-2 w-full items-center">
                 <div id="syncStatus" class="text-[10px] font-bold text-gray-400 mr-2 whitespace-nowrap"><i class="fas fa-circle-notch fa-spin mr-1"></i> Connecting...</div>
                 
-                <div class="flex gap-2 items-center flex-1 w-full">
+                <div class="flex gap-2 items-center flex-1 w-full min-w-0">
                     <!-- Filter Input -->
                     <div class="relative w-64"> 
                         <input type="text" id="filterInput" autocomplete="off" 
@@ -246,7 +291,7 @@
                     </div>
 
                     <!-- Dropdown -->
-                    <select id="cloudHistory" class="border border-gray-400 rounded px-2 py-1 text-xs flex-1 w-0 text-blue-900 font-bold bg-blue-50 h-8">
+                    <select id="cloudHistory" class="border border-gray-400 rounded px-2 py-1 text-xs flex-1 w-0 min-w-0 max-w-full text-blue-900 font-bold bg-blue-50 h-8">
                         <option value="">-- Select Customer (A-Z) --</option>
                     </select>
 
@@ -441,6 +486,7 @@
         let loadedRecordId = null;
         let currentReportData = []; 
         let uploadedFileType = ""; 
+        let bulkSelectionMode = 'custom';
 
         function checkAccess() {
             if (document.getElementById('accessPass').value === "16111980") {
@@ -524,12 +570,14 @@
             const badge = document.getElementById('modeBadge');
             const btnEdit = document.getElementById('btnEdit');
             const btnRevalid = document.getElementById('btnRevalid');
+            const btnDelete = document.getElementById('btnDeleteRecord');
             const btnSave = document.getElementById('btnSave');
             if(state) {
                 container.classList.add('view-mode');
                 badge.classList.remove('hidden');
                 btnEdit.classList.remove('hidden');
                 btnRevalid.classList.remove('hidden');
+                btnDelete.classList.remove('hidden');
                 btnSave.disabled = true;
                 btnSave.classList.add('opacity-50', 'cursor-not-allowed');
                 btnSave.classList.remove('animate-pulse');
@@ -538,6 +586,7 @@
                 badge.classList.add('hidden');
                 btnEdit.classList.add('hidden');
                 btnRevalid.classList.add('hidden');
+                btnDelete.classList.add('hidden');
                 btnSave.disabled = false;
                 btnSave.classList.remove('opacity-50', 'cursor-not-allowed');
                 btnSave.classList.add('animate-pulse');
@@ -863,6 +912,11 @@
                     const realID = idMatch ? idMatch[1] : rawName;
                     const realName = rawName.split('[ID')[0].trim();
                     const m1 = (r[2]||"").split('|'), m2 = (r[3]||"").split('|'), m3 = (r[4]||"").split('|'), m4 = (r[5]||"").split('|');
+                    const deletedFlag = val(m4, 'Deleted:');
+                    if ((deletedFlag || '').toLowerCase() === 'yes') {
+                        recordMap.delete(realID);
+                        return;
+                    }
                     recordMap.set(realID, {
                         id: realID, date: r[0], name: realName,
                         ref: val(m1,'Ref:'), dates: val(m1,'Dates:'), mode: val(m1,'Mode:'), type: val(m1,'Type:'),
@@ -876,6 +930,9 @@
             });
             globalRecords = Array.from(recordMap.values());
             updateDropdown();
+            if (document.getElementById('bulkApprovalModal').style.display === 'flex') {
+                renderBulkApprovalList();
+            }
         }
         
         function parseDateToISO(dateStr) {
@@ -1229,10 +1286,230 @@ toggleReadOnly(true);
         function copyToClipboard() { const el = document.getElementById('printArea'), oz = document.body.style.zoom; document.body.style.zoom = "100%"; html2canvas(el, { scale: 2, useCORS: true }).then(c => { const sc = document.createElement('canvas'); sc.width = c.width * 0.6; sc.height = c.height * 0.6; sc.getContext('2d').drawImage(c, 0, 0, sc.width, sc.height); sc.toBlob(b => navigator.clipboard.write([new ClipboardItem({ "image/png": b })]).then(() => alert("Copied!")), 'image/png', 0.9); document.body.style.zoom = oz; }); }
         function closeReports() { document.getElementById('reportsModal').style.display = 'none'; }
         function closeLoading() { document.getElementById('loadingOverlay').style.display = 'none'; document.getElementById('progressSection').classList.remove('hidden'); document.getElementById('successSection').classList.add('hidden'); }
+        function closeBulkApprovalModal() { document.getElementById('bulkApprovalModal').style.display = 'none'; }
 
         function openReports() { 
             document.getElementById('reportsModal').style.display = 'flex'; 
             showReport('Discounted');
+        }
+
+        function openBulkApprovalModal() {
+            if (!globalRecords.length) return alert("No customer records available. Please refresh first.");
+            document.getElementById('bulkDateFrom').value = document.getElementById('dateFrom').value || '';
+            document.getElementById('bulkDateTo').value = document.getElementById('dateTo').value || '';
+            document.getElementById('bulkApprovalModal').style.display = 'flex';
+            renderBulkApprovalList();
+            setBulkSelectionMode('custom');
+        }
+
+        function parseRecordDates(record) {
+            const result = { from: '', to: '' };
+            if (record && record.dates && record.dates.includes('to')) {
+                const parts = record.dates.split('to');
+                result.from = (parts[0] || '').trim();
+                result.to = (parts[1] || '').trim();
+            }
+            return result;
+        }
+
+        function setBulkSelectionMode(mode) {
+            bulkSelectionMode = mode;
+            const records = [...globalRecords].sort((a, b) => a.name.localeCompare(b.name));
+            const loadedId = loadedRecordId || document.getElementById('recordIdStore').value;
+            records.forEach((record, index) => {
+                const checkbox = document.getElementById(`bulkSelect_${record.id}`);
+                if (!checkbox) return;
+                if (mode === 'all') checkbox.checked = true;
+                if (mode === 'custom') checkbox.checked = false;
+                if (mode === 'one') checkbox.checked = record.id === loadedId || (!loadedId && index === 0);
+                highlightBulkRow(record.id);
+            });
+            updateBulkModeButtons();
+            updateBulkSelectionSummary();
+        }
+
+        function updateBulkModeButtons() {
+            [['bulkModeOne', 'one'], ['bulkModeAll', 'all'], ['bulkModeCustom', 'custom']].forEach(([id, mode]) => {
+                const btn = document.getElementById(id);
+                const active = bulkSelectionMode === mode;
+                btn.classList.toggle('ring-2', active);
+                btn.classList.toggle('ring-offset-2', active);
+                btn.classList.toggle('ring-gray-700', active);
+            });
+        }
+
+        function renderBulkApprovalList() {
+            const list = document.getElementById('bulkApprovalList');
+            const records = [...globalRecords].sort((a, b) => a.name.localeCompare(b.name));
+            if (!records.length) {
+                list.innerHTML = '<div class="p-4 text-center text-sm text-gray-500">No records found.</div>';
+                updateBulkSelectionSummary();
+                return;
+            }
+            list.innerHTML = records.map(record => {
+                const dates = parseRecordDates(record);
+                return `
+                    <div id="bulkRow_${record.id}" class="flex items-center px-4 py-2 border-b border-gray-200 text-xs text-gray-800">
+                        <div class="w-14 text-center"><input type="checkbox" id="bulkSelect_${record.id}" onchange="toggleBulkRowSelection('${record.id}')"></div>
+                        <div class="flex-1 font-bold text-blue-900 uppercase">${record.name}</div>
+                        <div class="w-40 text-center font-mono">${dates.from || '-'}</div>
+                        <div class="w-40 text-center font-mono">${dates.to || '-'}</div>
+                    </div>
+                `;
+            }).join('');
+            updateBulkModeButtons();
+        }
+
+        function highlightBulkRow(recordId) {
+            const row = document.getElementById(`bulkRow_${recordId}`);
+            const checkbox = document.getElementById(`bulkSelect_${recordId}`);
+            if (!row || !checkbox) return;
+            row.classList.toggle('bulk-row-selected', checkbox.checked);
+        }
+
+        function toggleBulkRowSelection(recordId) {
+            if (bulkSelectionMode !== 'custom') bulkSelectionMode = 'custom';
+            updateBulkModeButtons();
+            highlightBulkRow(recordId);
+            updateBulkSelectionSummary();
+        }
+
+        function getSelectedBulkRecords() {
+            return globalRecords.filter(record => {
+                const checkbox = document.getElementById(`bulkSelect_${record.id}`);
+                return checkbox && checkbox.checked;
+            });
+        }
+
+        function updateBulkSelectionSummary() {
+            document.getElementById('bulkSelectionSummary').innerText = `${getSelectedBulkRecords().length} selected`;
+        }
+
+        function calculateValidityLabel(fromDate, toDate) {
+            if (!fromDate || !toDate) return '';
+            const d1 = new Date(fromDate);
+            const d2 = new Date(toDate);
+            if (isNaN(d1.getTime()) || isNaN(d2.getTime()) || d2 <= d1) return '';
+            let months = (d2.getFullYear() - d1.getFullYear()) * 12 + (d2.getMonth() - d1.getMonth());
+            if (d2.getDate() < d1.getDate()) months--;
+            const days = Math.ceil(Math.abs(d2 - d1) / 86400000);
+            return `${months} Months (${days} Days)`;
+        }
+
+        function buildRecordFormData(rec, overrides = {}) {
+            const dates = parseRecordDates(rec);
+            const effectiveFrom = overrides.dateFrom ?? dates.from ?? '';
+            const endDate = overrides.dateTo ?? dates.to ?? '';
+            const validity = overrides.validity ?? calculateValidityLabel(effectiveFrom, endDate);
+            const mode = overrides.mode ?? rec.mode ?? '';
+            const type = overrides.type ?? rec.type ?? '';
+            const formData = new FormData();
+            formData.append('Date', overrides.date ?? rec.date ?? new Date().toISOString().split('T')[0]);
+            formData.append('Name', `[MASTER] ${overrides.name ?? rec.name} [ID:${rec.id}]`);
+            formData.append('Email', `Ref: ${overrides.ref ?? rec.ref ?? ''} | Dates: ${effectiveFrom} to ${endDate} | Mode: ${mode} | Type: ${type}`);
+            formData.append('Phone', `Valid: ${validity} | Free: ${overrides.free ?? rec.free ?? ''} | CType: ${overrides.cType ?? rec.cType ?? ''} | Vol: ${overrides.vol ?? rec.vol ?? ''}`);
+            formData.append('Department', `Sales: ${overrides.sales ?? rec.sales ?? ''} | CHA: ${overrides.cha ?? rec.cha ?? ''} | TC: ${overrides.tc ?? rec.tc ?? ''} | IC: ${overrides.ic ?? rec.ic ?? ''}`);
+            formData.append('City', `Ver: ${overrides.ver ?? rec.ver ?? ''} | Rem: ${overrides.rem ?? rec.rem ?? ''} | AppDoc: ${overrides.appDoc ?? rec.appDoc ?? ''}${overrides.deleted ? ' | Deleted: Yes' : ''}`);
+            formData.append('Data1', overrides.jF ?? rec.jF ?? '[]');
+            formData.append('Data2', overrides.jI ?? rec.jI ?? '[]');
+            formData.append('Data3', overrides.jT ?? rec.jT ?? '[]');
+            formData.append('Data4', overrides.jInc ?? rec.jInc ?? '[]');
+            return formData;
+        }
+
+        async function pushRecordUpdate(rec, overrides = {}) {
+            const fd = buildRecordFormData(rec, overrides);
+            await fetch(SCRIPT_SAVE_URL + '?t=' + Date.now(), {
+                method: 'POST',
+                body: fd,
+                mode: 'no-cors',
+                cache: 'no-store',
+                keepalive: true
+            });
+        }
+
+        async function bulkApplyDates() {
+            const selectedRecords = getSelectedBulkRecords();
+            const newFrom = document.getElementById('bulkDateFrom').value;
+            const newTo = document.getElementById('bulkDateTo').value;
+            if (!selectedRecords.length) return alert("Please select at least one customer.");
+            if (!newFrom || !newTo) return alert("Please select Effective From and End Date.");
+            if (new Date(newTo) <= new Date(newFrom)) return alert("End Date should be greater than Effective From.");
+
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.getElementById('loadingText').innerText = `Updating ${selectedRecords.length} record(s)...`;
+            document.getElementById('btnSave').disabled = true;
+            document.getElementById('progressBar').style.width = '0%';
+
+            try {
+                for (let i = 0; i < selectedRecords.length; i++) {
+                    await pushRecordUpdate(selectedRecords[i], { dateFrom: newFrom, dateTo: newTo, date: new Date().toISOString().split('T')[0] });
+                    document.getElementById('progressBar').style.width = `${Math.round(((i + 1) / selectedRecords.length) * 100)}%`;
+                }
+                closeBulkApprovalModal();
+                await startSync();
+                setTimeout(() => {
+                    document.getElementById('progressSection').classList.add('hidden');
+                    document.getElementById('successSection').classList.remove('hidden');
+                }, 300);
+            } catch (e) {
+                alert("Bulk update failed: " + e.message);
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+        }
+
+        async function deleteCurrentRecord() {
+            const recordId = loadedRecordId || document.getElementById('recordIdStore').value;
+            if (!recordId) return alert("Please load a record first.");
+            if (prompt("Enter Password to Delete:") !== "Honey@143143") return alert("Wrong Password!");
+            const record = globalRecords.find(x => x.id == recordId);
+            if (!record) return alert("Current record not found in loaded data.");
+            if (!confirm(`Delete current record for ${record.name}?`)) return;
+
+            document.getElementById('loadingOverlay').style.display = 'flex';
+            document.getElementById('loadingText').innerText = "Deleting Record...";
+            document.getElementById('btnSave').disabled = true;
+            document.getElementById('progressBar').style.width = '40%';
+
+            try {
+                await pushRecordUpdate(record, { deleted: true, date: new Date().toISOString().split('T')[0] });
+                document.getElementById('progressBar').style.width = '100%';
+                loadedRecordId = null;
+                document.getElementById('recordIdStore').value = '';
+                await startSync();
+                resetFormAfterDelete();
+                setTimeout(() => {
+                    document.getElementById('progressSection').classList.add('hidden');
+                    document.getElementById('successSection').classList.remove('hidden');
+                }, 300);
+            } catch (e) {
+                alert("Delete failed: " + e.message);
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }
+        }
+
+        function resetFormAfterDelete() {
+            document.querySelectorAll('input:not([readonly]),textarea,select').forEach(e => e.value = "");
+            document.getElementById('version').value = "Version 1";
+            document.getElementById('chaName').value = "Various";
+            document.getElementById('dateToday').valueAsDate = new Date();
+            document.getElementById('finalDocLink').value = "";
+            updateApprovalDocUI("");
+            document.getElementById('tbodyTransport').innerHTML = '';
+            document.getElementById('tbodyIncentive').innerHTML = '';
+            addTransportRow();
+            addIncentiveRow();
+            factoryData.forEach((_, i) => {
+                for (let k = 0; k < 6; k++) document.getElementById(`tableFactory_${i}_d${k}`).value = '';
+                calcRow(`tableFactory_${i}`, 6);
+            });
+            icdData.forEach((_, i) => {
+                for (let k = 0; k < 7; k++) document.getElementById(`tableICD_${i}_d${k}`).value = '';
+                calcRow(`tableICD_${i}`, 7);
+            });
+            updateProminentFreeDaysDisplay();
+            toggleTariffTables();
+            toggleReadOnly(false);
         }
 
         function showReport(type) {
@@ -1862,4 +2139,3 @@ function updateProminentFreeDaysDisplay() {
     </script>
 </body>
 </html>
-
