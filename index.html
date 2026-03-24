@@ -896,7 +896,7 @@
                 delete window[callbackName];
             };
             const script = document.createElement('script');
-            script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=0&tqx=responseHandler:${callbackName}`;
+            script.src = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?gid=0&headers=0&tqx=responseHandler:${callbackName}`;
             script.id = callbackName;
             document.body.appendChild(script);
         }
@@ -906,8 +906,10 @@
         function processCloudData(rows) {
             const recordMap = new Map();
             rows.forEach(r => {
-                if(r[1] && r[1].includes('[MASTER]')) {
-                    const rawName = r[1].replace('[MASTER]','').trim();
+                const nameCell = (r[1] || "").toString().trim();
+                if (!nameCell || nameCell.toLowerCase() === 'name') return;
+                if(nameCell.includes('[MASTER]')) {
+                    const rawName = nameCell.replace('[MASTER]','').trim();
                     const idMatch = rawName.match(/\[ID:(.*?)\]/);
                     const realID = idMatch ? idMatch[1] : rawName;
                     const realName = rawName.split('[ID')[0].trim();
@@ -2139,3 +2141,4 @@ function updateProminentFreeDaysDisplay() {
     </script>
 </body>
 </html>
+
